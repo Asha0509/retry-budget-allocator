@@ -118,9 +118,11 @@ def generate_explanation(decision: RecoveryDecision, client: OpenAI | None = Non
                 {"role": "user", "content": _prompt_for(decision)},
             ],
             temperature=0.3,
-            max_tokens=400,
+            max_tokens=1000,  # some free-tier models spend real tokens "reasoning" before the JSON answer
         )
         content = response.choices[0].message.content
+        if not content:
+            raise ValueError("LLM returned empty content (response may have been truncated - see finish_reason)")
         parsed = _parse_json_response(content)
         return ExplanationResult(
             reasoning_plain=parsed["reasoning_plain"],

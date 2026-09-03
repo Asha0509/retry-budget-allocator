@@ -33,6 +33,7 @@ from pipeline.compliance import (
     is_peak_window,
 )
 from pipeline.decision import RecoveryDecision
+from pipeline.explain import run_explanation
 from pipeline.funding_window import estimate_funding_window
 from pipeline.ingest import FailedPaymentEvent
 from pipeline.models import FailureCause, StageTrace
@@ -260,6 +261,24 @@ def compute_batch_results(
     return summary, log_lines
 
 
+def _attach_sample_explanations(payments_detail: list[dict], log_lines: list[dict]) -> None:
+    """Stage 7 (PRD Sec 4): generate a real, cached explanation for one representative
+    payment per cause, not all of them - keeps the LLM off the critical path and
+    bounds API calls to a free-tier provider. Cached in the run artifact; the
+    dashboard never regenerates it (PRD Sec 6.2)."""
+    seen_causes: set[str] = set()
+    for payment in payments_detail:
+        cause = payment["cause"]
+        if cause in seen_causes or not payment["allocator_decisions"]:
+            continue
+        seen_causes.add(cause)
+        decision = RecoveryDecision(**payment["allocator_decisions"][0])
+        explanation, trace = run_explanation(decision)
+        payment["explanation"] = explanation.model_dump()
+        payment["allocator_stage_traces"][0].append(trace.model_dump(mode="json"))
+        log_lines.append({"event": "explanation_generated", "payment_id": payment["payment_id"], "generated_by": explanation.generated_by})
+
+
 def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = DEFAULT_PARAMS) -> dict:
     """Run the full batch through both policies and write results + run artifact (PRD Sec 5)."""
     run_id = datetime.now(IST).strftime("run_%Y%m%dT%H%M%S")
@@ -268,6 +287,8 @@ def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = 
     summary, log_lines = compute_batch_results(n, seed, outcome_params, include_details=True)
     for entry in log_lines:
         entry.setdefault("run_id", run_id)
+
+    _attach_sample_explanations(summary["payments"], log_lines)
 
     run_artifact = {
         "run_id": run_id,
