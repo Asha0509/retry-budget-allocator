@@ -1,0 +1,699 @@
+{
+  "n": 60,
+  "seed": 42,
+  "grid_dimensions": {
+    "funding_event_day": [
+      1.5,
+      3.0,
+      5.0
+    ],
+    "funding_event_spread_days": [
+      0.75,
+      1.5,
+      3.0
+    ],
+    "bank_technical_half_life_hours": [
+      18.0,
+      36.0,
+      72.0
+    ]
+  },
+  "rows": [
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 124,
+        "payments_recovered": 32,
+        "amount_recovered_paise": 7632044,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 115,
+        "payments_recovered": 20,
+        "amount_recovered_paise": 4136800,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 9,
+      "recovered_advantage": -12,
+      "amount_advantage_paise": -3495244,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 121,
+        "payments_recovered": 34,
+        "amount_recovered_paise": 7963146,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 110,
+        "payments_recovered": 23,
+        "amount_recovered_paise": 5070900,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 11,
+      "recovered_advantage": -11,
+      "amount_advantage_paise": -2892246,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 120,
+        "payments_recovered": 34,
+        "amount_recovered_paise": 7963146,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 108,
+        "payments_recovered": 24,
+        "amount_recovered_paise": 5362031,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 12,
+      "recovered_advantage": -10,
+      "amount_advantage_paise": -2601115,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 121,
+        "payments_recovered": 37,
+        "amount_recovered_paise": 8632313,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 97,
+        "payments_recovered": 27,
+        "amount_recovered_paise": 5633759,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 24,
+      "recovered_advantage": -10,
+      "amount_advantage_paise": -2998554,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 118,
+        "payments_recovered": 39,
+        "amount_recovered_paise": 8963415,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 92,
+        "payments_recovered": 30,
+        "amount_recovered_paise": 6567859,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 26,
+      "recovered_advantage": -9,
+      "amount_advantage_paise": -2395556,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 117,
+        "payments_recovered": 39,
+        "amount_recovered_paise": 8963415,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 90,
+        "payments_recovered": 31,
+        "amount_recovered_paise": 6858990,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 27,
+      "recovered_advantage": -8,
+      "amount_advantage_paise": -2104425,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 120,
+        "payments_recovered": 38,
+        "amount_recovered_paise": 8937483,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 79,
+        "payments_recovered": 32,
+        "amount_recovered_paise": 6866773,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 41,
+      "recovered_advantage": -6,
+      "amount_advantage_paise": -2070710,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 117,
+        "payments_recovered": 40,
+        "amount_recovered_paise": 9268585,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 74,
+        "payments_recovered": 35,
+        "amount_recovered_paise": 7800873,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 43,
+      "recovered_advantage": -5,
+      "amount_advantage_paise": -1467712,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 1.5,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 116,
+        "payments_recovered": 40,
+        "amount_recovered_paise": 9268585,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 72,
+        "payments_recovered": 36,
+        "amount_recovered_paise": 8092004,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 44,
+      "recovered_advantage": -4,
+      "amount_advantage_paise": -1176581,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 161,
+        "payments_recovered": 26,
+        "amount_recovered_paise": 6396197,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 79,
+        "payments_recovered": 25,
+        "amount_recovered_paise": 5735068,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 82,
+      "recovered_advantage": -1,
+      "amount_advantage_paise": -661129,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 158,
+        "payments_recovered": 28,
+        "amount_recovered_paise": 6727299,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 74,
+        "payments_recovered": 28,
+        "amount_recovered_paise": 6669168,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 84,
+      "recovered_advantage": 0,
+      "amount_advantage_paise": -58131,
+      "allocator_advantage_holds": true
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 157,
+        "payments_recovered": 28,
+        "amount_recovered_paise": 6727299,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 72,
+        "payments_recovered": 29,
+        "amount_recovered_paise": 6960299,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 85,
+      "recovered_advantage": 1,
+      "amount_advantage_paise": 233000,
+      "allocator_advantage_holds": true
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 141,
+        "payments_recovered": 33,
+        "amount_recovered_paise": 7754355,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 79,
+        "payments_recovered": 27,
+        "amount_recovered_paise": 6263316,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 62,
+      "recovered_advantage": -6,
+      "amount_advantage_paise": -1491039,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 138,
+        "payments_recovered": 35,
+        "amount_recovered_paise": 8085457,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 74,
+        "payments_recovered": 30,
+        "amount_recovered_paise": 7197416,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 64,
+      "recovered_advantage": -5,
+      "amount_advantage_paise": -888041,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 137,
+        "payments_recovered": 35,
+        "amount_recovered_paise": 8085457,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 72,
+        "payments_recovered": 31,
+        "amount_recovered_paise": 7488547,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 65,
+      "recovered_advantage": -4,
+      "amount_advantage_paise": -596910,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 123,
+        "payments_recovered": 37,
+        "amount_recovered_paise": 8890334,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 77,
+        "payments_recovered": 30,
+        "amount_recovered_paise": 6786901,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 46,
+      "recovered_advantage": -7,
+      "amount_advantage_paise": -2103433,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 120,
+        "payments_recovered": 39,
+        "amount_recovered_paise": 9221436,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 72,
+        "payments_recovered": 33,
+        "amount_recovered_paise": 7721001,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 48,
+      "recovered_advantage": -6,
+      "amount_advantage_paise": -1500435,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 3.0,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 119,
+        "payments_recovered": 39,
+        "amount_recovered_paise": 9221436,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 70,
+        "payments_recovered": 34,
+        "amount_recovered_paise": 8012132,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 49,
+      "recovered_advantage": -5,
+      "amount_advantage_paise": -1209304,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 169,
+        "payments_recovered": 6,
+        "amount_recovered_paise": 1308897,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 118,
+        "payments_recovered": 6,
+        "amount_recovered_paise": 1014220,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 51,
+      "recovered_advantage": 0,
+      "amount_advantage_paise": -294677,
+      "allocator_advantage_holds": true
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 166,
+        "payments_recovered": 8,
+        "amount_recovered_paise": 1639999,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 113,
+        "payments_recovered": 9,
+        "amount_recovered_paise": 1948320,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 53,
+      "recovered_advantage": 1,
+      "amount_advantage_paise": 308321,
+      "allocator_advantage_holds": true
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 0.75,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 165,
+        "payments_recovered": 8,
+        "amount_recovered_paise": 1639999,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 111,
+        "payments_recovered": 10,
+        "amount_recovered_paise": 2239451,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 54,
+      "recovered_advantage": 2,
+      "amount_advantage_paise": 599452,
+      "allocator_advantage_holds": true
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 165,
+        "payments_recovered": 18,
+        "amount_recovered_paise": 4479730,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 99,
+        "payments_recovered": 17,
+        "amount_recovered_paise": 3486123,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 66,
+      "recovered_advantage": -1,
+      "amount_advantage_paise": -993607,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 162,
+        "payments_recovered": 20,
+        "amount_recovered_paise": 4810832,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 94,
+        "payments_recovered": 20,
+        "amount_recovered_paise": 4420223,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 68,
+      "recovered_advantage": 0,
+      "amount_advantage_paise": -390609,
+      "allocator_advantage_holds": true
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 1.5,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 161,
+        "payments_recovered": 20,
+        "amount_recovered_paise": 4810832,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 92,
+        "payments_recovered": 21,
+        "amount_recovered_paise": 4711354,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 69,
+      "recovered_advantage": 1,
+      "amount_advantage_paise": -99478,
+      "allocator_advantage_holds": true
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 18.0,
+      "baseline": {
+        "attempts_spent": 141,
+        "payments_recovered": 32,
+        "amount_recovered_paise": 7522509,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 80,
+        "payments_recovered": 26,
+        "amount_recovered_paise": 5876564,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 61,
+      "recovered_advantage": -6,
+      "amount_advantage_paise": -1645945,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 36.0,
+      "baseline": {
+        "attempts_spent": 138,
+        "payments_recovered": 34,
+        "amount_recovered_paise": 7853611,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 75,
+        "payments_recovered": 29,
+        "amount_recovered_paise": 6810664,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 63,
+      "recovered_advantage": -5,
+      "amount_advantage_paise": -1042947,
+      "allocator_advantage_holds": false
+    },
+    {
+      "funding_event_day": 5.0,
+      "funding_event_spread_days": 3.0,
+      "bank_technical_half_life_hours": 72.0,
+      "baseline": {
+        "attempts_spent": 137,
+        "payments_recovered": 34,
+        "amount_recovered_paise": 7853611,
+        "attempts_wasted_on_unrecoverable_causes": 42,
+        "compliance_violations": 0,
+        "stopped_early_count": 0
+      },
+      "allocator": {
+        "attempts_spent": 73,
+        "payments_recovered": 30,
+        "amount_recovered_paise": 7101795,
+        "attempts_wasted_on_unrecoverable_causes": 0,
+        "compliance_violations": 0,
+        "stopped_early_count": 17
+      },
+      "attempts_saved": 64,
+      "recovered_advantage": -4,
+      "amount_advantage_paise": -751816,
+      "allocator_advantage_holds": false
+    }
+  ],
+  "advantage_holds_at_n_of_total": "7/27"
+}
