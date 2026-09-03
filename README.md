@@ -38,12 +38,13 @@ decision was made.
 ## Results
 
 Over 60 synthesized failed payments (seed 42), the cause-aware allocator spends
-**46% fewer retry attempts** than a fixed day-1/2/3 schedule (74 vs 138) and
+**45% fewer retry attempts** than a fixed day-1/2/3 schedule (76 vs 138) and
 wastes **zero** on mandates that can never be recovered (vs 42 for the fixed
 schedule) — with zero compliance violations for either policy, asserted
-programmatically. It does **not** always recover more raw payments than the naive
-schedule; a 27-point sensitivity sweep shows why, honestly, rather than reporting
-only the favorable case.
+programmatically, and that attempts-spent advantage holds at every point in a
+27-setting sensitivity sweep. It does **not** recover more raw payments than the
+naive schedule at these parameters (29 vs 35) — reported honestly, with the
+sweep showing exactly when and why, rather than only the favorable case.
 
 **[docs/RESULTS.md](docs/RESULTS.md)** — full headline numbers, the outcome
 model (stated before any number), per-cause breakdown, the sensitivity sweep,
