@@ -1,0 +1,8 @@
+{
+  "_fixture_source": "razorpay.com/docs/errors/payments/upi/ (documented)",
+  "code": "BAD_REQUEST_ERROR",
+  "description": "Customer's bank account did not have enough funds to complete the transaction",
+  "source": "customer",
+  "step": "payment_authorization",
+  "reason": "insufficient_funds"
+}

@@ -1,0 +1,8 @@
+{
+  "_fixture_source": "live - real Razorpay TEST-mode API response, captured by scripts/capture_fixtures.py (see _capture_attempts.json). This is the actual 400 payload returned by every /payments/create/* route on this account.",
+  "code": "BAD_REQUEST_ERROR",
+  "description": "The requested URL was not found on the server.",
+  "source": "internal",
+  "step": "NA",
+  "reason": "NA"
+}

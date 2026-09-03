@@ -1,0 +1,8 @@
+{
+  "_fixture_source": "razorpay.com/docs/errors/payments/list/ (documented) - reason value; AFA context per Sec 2's RBI threshold note, not a literal Razorpay-published reason string for AFA specifically",
+  "code": "GATEWAY_ERROR",
+  "description": "The payment failed as 3D secure, or OTP authentication failed",
+  "source": "customer",
+  "step": "payment_authentication",
+  "reason": "authentication_failed"
+}

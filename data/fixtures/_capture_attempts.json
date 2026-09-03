@@ -1,0 +1,143 @@
+[
+  {
+    "label": "create_customer",
+    "method": "POST",
+    "path": "/customers",
+    "request": {
+      "name": "Retry Budget Test Customer",
+      "email": "retrybudget.test@example.com",
+      "contact": "9000090000",
+      "fail_existing": "0"
+    },
+    "status_code": 200,
+    "response": {
+      "id": "cust_TXTFDIFWaCV5G2",
+      "entity": "customer",
+      "name": "Retry Budget Test Customer",
+      "email": "retrybudget.test@example.com",
+      "contact": "9000090000",
+      "gstin": null,
+      "notes": [],
+      "shipping_address": [],
+      "created_at": 1788418124
+    }
+  },
+  {
+    "label": "create_recurring_order",
+    "method": "POST",
+    "path": "/orders",
+    "request": {
+      "amount": 100,
+      "currency": "INR",
+      "customer_id": "cust_TXTFDIFWaCV5G2",
+      "method": "upi",
+      "token": {
+        "max_amount": 500000,
+        "expire_at": 1819954178,
+        "frequency": "as_presented"
+      }
+    },
+    "status_code": 200,
+    "response": {
+      "amount": 100,
+      "amount_due": 100,
+      "amount_paid": 0,
+      "attempts": 0,
+      "created_at": 1788418179,
+      "currency": "INR",
+      "entity": "order",
+      "id": "order_TXTGBkCXZRUxLR",
+      "notes": [],
+      "offer_id": null,
+      "receipt": null,
+      "status": "created"
+    }
+  },
+  {
+    "label": "authorize_upi_mandate_try__payments_create_upi",
+    "method": "POST",
+    "path": "/payments/create/upi",
+    "request": {
+      "amount": 100,
+      "currency": "INR",
+      "order_id": "order_TXTGBkCXZRUxLR",
+      "customer_id": "cust_TXTFDIFWaCV5G2",
+      "recurring": "1",
+      "email": "retrybudget.test@example.com",
+      "contact": "9000090000",
+      "method": "upi",
+      "vpa": "success@razorpay",
+      "upi": {
+        "flow": "collect",
+        "vpa": "success@razorpay"
+      }
+    },
+    "status_code": 400,
+    "response": {
+      "error": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "The requested URL was not found on the server.",
+        "source": "internal",
+        "step": "NA",
+        "reason": "NA",
+        "metadata": {
+          "order_id": "order_TXTGBkCXZRUxLR"
+        }
+      }
+    }
+  },
+  {
+    "label": "authorize_upi_mandate_try__payments",
+    "method": "POST",
+    "path": "/payments",
+    "request": {
+      "amount": 100,
+      "currency": "INR",
+      "order_id": "order_TXTGBkCXZRUxLR",
+      "customer_id": "cust_TXTFDIFWaCV5G2",
+      "recurring": "1",
+      "email": "retrybudget.test@example.com",
+      "contact": "9000090000",
+      "method": "upi",
+      "vpa": "success@razorpay",
+      "upi": {
+        "flow": "collect",
+        "vpa": "success@razorpay"
+      }
+    },
+    "status_code": 401,
+    "response": {
+      "error": {
+        "description": "Authentication failed",
+        "code": "BAD_REQUEST_ERROR"
+      }
+    }
+  },
+  {
+    "label": "authorize_upi_mandate_try__payments_create_ajax",
+    "method": "POST",
+    "path": "/payments/create/ajax",
+    "request": {
+      "amount": 100,
+      "currency": "INR",
+      "order_id": "order_TXTGBkCXZRUxLR",
+      "customer_id": "cust_TXTFDIFWaCV5G2",
+      "recurring": "1",
+      "email": "retrybudget.test@example.com",
+      "contact": "9000090000",
+      "method": "upi",
+      "vpa": "success@razorpay",
+      "upi": {
+        "flow": "collect",
+        "vpa": "success@razorpay"
+      }
+    },
+    "status_code": 401,
+    "response": {
+      "error": {
+        "code": "BAD_REQUEST_ERROR",
+        "description": "Authentication failed"
+      }
+    }
+  }
+]

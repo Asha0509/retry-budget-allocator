@@ -1,0 +1,8 @@
+{
+  "_fixture_source": "provisional - inferred from Razorpay's documented token-lifecycle status (expired), not a literal published payment-error reason. See data/fixtures/README.md.",
+  "code": "GATEWAY_ERROR",
+  "description": "The customer's UPI AutoPay mandate has expired and can no longer be charged",
+  "source": "customer",
+  "step": "payment_authorization",
+  "reason": "token_expired"
+}

@@ -1,0 +1,8 @@
+{
+  "_fixture_source": "razorpay.com/docs/errors/payments/list/ (documented)",
+  "code": "GATEWAY_ERROR",
+  "description": "The issuing bank was facing technical problems - the Core Banking System encountered a technical error",
+  "source": "gateway",
+  "step": "payment_authorization",
+  "reason": "bank_technical_error"
+}

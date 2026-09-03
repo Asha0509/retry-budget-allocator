@@ -1,0 +1,8 @@
+{
+  "_fixture_source": "provisional - inferred from Razorpay's documented token-lifecycle status (cancelled), not a literal published payment-error reason. See data/fixtures/README.md.",
+  "code": "GATEWAY_ERROR",
+  "description": "The customer's UPI AutoPay mandate has been cancelled by the customer",
+  "source": "customer",
+  "step": "payment_authorization",
+  "reason": "token_cancelled"
+}

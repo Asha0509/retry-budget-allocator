@@ -1,0 +1,8 @@
+{
+  "_fixture_source": "provisional - not independently documented by Razorpay; inferred from the NPCI/RBI mandate max-amount constraint (PRD Sec 2). See data/fixtures/README.md.",
+  "code": "BAD_REQUEST_ERROR",
+  "description": "The debit amount exceeds the maximum amount authorised on this mandate",
+  "source": "business",
+  "step": "payment_authorization",
+  "reason": "amount_exceeds_mandate"
+}
