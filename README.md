@@ -37,10 +37,18 @@ decision was made.
 
 ## Results
 
-**[docs/RESULTS.md](docs/RESULTS.md)** — headline numbers, method, sensitivity
-analysis, and what did not work. Results are a simulation study against a
-published outcome model, not a field measurement; the model is stated before any
-number.
+Over 60 synthesized failed payments (seed 42), the cause-aware allocator spends
+**46% fewer retry attempts** than a fixed day-1/2/3 schedule (74 vs 138) and
+wastes **zero** on mandates that can never be recovered (vs 42 for the fixed
+schedule) — with zero compliance violations for either policy, asserted
+programmatically. It does **not** always recover more raw payments than the naive
+schedule; a 27-point sensitivity sweep shows why, honestly, rather than reporting
+only the favorable case.
+
+**[docs/RESULTS.md](docs/RESULTS.md)** — full headline numbers, the outcome
+model (stated before any number), per-cause breakdown, the sensitivity sweep,
+and what did not work. This is a simulation study against a declared, published
+outcome model, not a field measurement.
 
 ## Docs
 
@@ -56,7 +64,14 @@ number.
     source .venv/bin/activate
     pytest
 
-## Dashboard (build order step 11)
+## Dashboard
 
-    bash setup.sh --dashboard
-    cd dashboard && npm run dev
+Three views (Story, Decision Trace, Batch Results) over a saved run
+artifact - reads static files only, no live API calls (PRD Sec 6.2).
+
+    cd dashboard
+    npm install
+    npm run dev
+
+See [dashboard/README.md](dashboard/README.md) for how to refresh the data
+after a new batch run.
