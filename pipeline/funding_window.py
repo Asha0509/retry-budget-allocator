@@ -21,13 +21,16 @@ from __future__ import annotations
 import os
 import statistics
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 from pipeline.compliance import IST
 from pipeline.models import FundingWindowEstimate, StageTrace, run_stage
 
-load_dotenv()
+# Explicit path, not a bare load_dotenv() upward search - on a slow
+# filesystem (e.g. WSL's /mnt/c) that search is a real, measurable delay.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 DEFAULT_CONFIDENCE_THRESHOLD = 0.5
 SALARY_CREDIT_PRIOR_DAY = 1  # PRD Sec 4's "salary-credit prior" - a generic Indian payday assumption
