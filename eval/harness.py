@@ -33,6 +33,7 @@ from pipeline.compliance import (
     is_peak_window,
 )
 from pipeline.decision import RecoveryDecision
+from pipeline.funding_window import estimate_funding_window
 from pipeline.ingest import FailedPaymentEvent
 from pipeline.models import FailureCause, StageTrace
 from pipeline.run import run_pipeline
@@ -89,6 +90,10 @@ def _simulate_one(
     decisions: list[RecoveryDecision] = []
     traces: list[list[StageTrace]] = []
 
+    funding_estimate = None
+    if policy == "allocator" and not include_details and cause == FailureCause.INSUFFICIENT_FUNDS:
+        funding_estimate = estimate_funding_window(event.failure_time, event.prior_debit_dates)
+
     while True:
         if not attempts_within_cap(attempts_used):
             violations.append(f"attempts_used {attempts_used} exceeds cap of {MAX_RETRY_ATTEMPTS}")
@@ -100,7 +105,7 @@ def _simulate_one(
             traces.append(stage_traces)
             action, scheduled_at = decision.action, decision.scheduled_at
         elif policy == "allocator":
-            allocator_result: AllocatorDecision = allocate(cause, event.failure_time, attempts_used)
+            allocator_result: AllocatorDecision = allocate(cause, event.failure_time, attempts_used, funding_estimate)
             action, scheduled_at = allocator_result.action, allocator_result.scheduled_at
         else:
             baseline_result: AllocatorDecision = baseline_decide(cause, event.failure_time, attempts_used)

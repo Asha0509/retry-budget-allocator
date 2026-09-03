@@ -23,6 +23,12 @@ _RAW_MANDATE_REVOKED = {
     "failure_time": "2026-09-03T08:00:00+05:30",
 }
 
+_RAW_INSUFFICIENT_FUNDS_WITH_HISTORY = {
+    **_RAW_INSUFFICIENT_FUNDS,
+    "payment_id": "pay_C",
+    "prior_debit_dates": ["2026-06-05T08:00:00+05:30", "2026-07-05T08:00:00+05:30", "2026-08-06T08:00:00+05:30"],
+}
+
 
 def test_run_pipeline_produces_five_stage_traces_in_order() -> None:
     event = ingest(_RAW_INSUFFICIENT_FUNDS)
@@ -31,12 +37,22 @@ def test_run_pipeline_produces_five_stage_traces_in_order() -> None:
     assert decision.action == "retry"
 
 
-def test_funding_window_marked_skipped_with_reason_for_insufficient_funds() -> None:
+def test_funding_window_actually_runs_for_insufficient_funds_without_history() -> None:
+    # No prior_debit_dates -> genuinely runs Stage 4, which correctly falls
+    # back to safe spacing rather than being skipped outright.
     event = ingest(_RAW_INSUFFICIENT_FUNDS)
     _, traces = run_pipeline(event)
     funding_trace = next(t for t in traces if t.stage == "funding_window")
-    assert funding_trace.skipped is True
-    assert "build step 9" in funding_trace.skip_reason
+    assert funding_trace.skipped is False
+    assert "used_fallback=True" in funding_trace.output_summary
+
+
+def test_funding_window_uses_real_history_when_available() -> None:
+    event = ingest(_RAW_INSUFFICIENT_FUNDS_WITH_HISTORY)
+    decision, traces = run_pipeline(event)
+    funding_trace = next(t for t in traces if t.stage == "funding_window")
+    assert funding_trace.skipped is False
+    assert decision.action == "retry"
 
 
 def test_funding_window_marked_not_applicable_for_other_causes() -> None:

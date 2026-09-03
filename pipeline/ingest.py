@@ -28,6 +28,7 @@ class FailedPaymentEvent(BaseModel):
     attempts_used: int
     failure_time: datetime
     billing_cycle_successes: int = 0
+    prior_debit_dates: list[datetime] = []  # Stage 4 input (PRD Sec 4) - customer's past successful debits
 
 
 def ingest(raw_event: dict) -> FailedPaymentEvent:

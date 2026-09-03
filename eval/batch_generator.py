@@ -39,6 +39,18 @@ _MIN_AMOUNT_PAISE = 10_000  # RS 100
 _MAX_AMOUNT_PAISE = 500_000  # RS 5,000
 _DATE_SPREAD_DAYS = 30
 
+# For insufficient_funds events only: what fraction have a usable debit
+# history for Stage 4 (funding_window.py) to work with, and how many prior
+# successful debits a customer with history has. A per-customer hidden
+# "typical funded day" is drawn and their history is generated as noisy
+# observations around it - the inference in pipeline/funding_window.py never
+# sees this hidden day directly, only the noisy history, same information
+# asymmetry as the real problem.
+_PROBABILITY_OF_USABLE_HISTORY = 0.6
+_MIN_PRIOR_DEBITS = 3
+_MAX_PRIOR_DEBITS = 5
+_PRIOR_DEBIT_DAY_NOISE = 2  # days of jitter around the hidden typical day
+
 
 def _load_fixture_errors() -> dict[FailureCause, dict]:
     errors: dict[FailureCause, dict] = {}
@@ -47,6 +59,24 @@ def _load_fixture_errors() -> dict[FailureCause, dict]:
         raw.pop("_fixture_source", None)
         errors[cause] = raw
     return errors
+
+
+def _synthesize_prior_debit_dates(rng: random.Random, failure_time: datetime) -> list[datetime]:
+    """A per-customer hidden 'typical funded day', observed noisily (Sec 4 Stage 4 input).
+
+    funding_window.py never sees the hidden day, only these noisy dates - the
+    same information asymmetry as the real inference problem.
+    """
+    if rng.random() > _PROBABILITY_OF_USABLE_HISTORY:
+        return []
+    hidden_day = rng.randint(1, 28)
+    n_debits = rng.randint(_MIN_PRIOR_DEBITS, _MAX_PRIOR_DEBITS)
+    dates = []
+    for months_back in range(1, n_debits + 1):
+        noisy_day = max(1, min(28, hidden_day + rng.randint(-_PRIOR_DEBIT_DAY_NOISE, _PRIOR_DEBIT_DAY_NOISE)))
+        month_date = failure_time - timedelta(days=30 * months_back)
+        dates.append(month_date.replace(day=noisy_day))
+    return sorted(dates)
 
 
 def generate_batch(n: int, seed: int = 42) -> list[FailedPaymentEvent]:
@@ -63,12 +93,14 @@ def generate_batch(n: int, seed: int = 42) -> list[FailedPaymentEvent]:
     for i in range(n):
         cause = rng.choices(causes, weights=weights, k=1)[0]
         failure_time = now - timedelta(days=rng.uniform(0, _DATE_SPREAD_DAYS), hours=rng.uniform(0, 24))
+        prior_debit_dates = _synthesize_prior_debit_dates(rng, failure_time) if cause == FailureCause.INSUFFICIENT_FUNDS else []
         raw_event = {
             "payment_id": f"pay_SYNTH{i:05d}",
             "token_id": f"token_SYNTH{i:05d}",
             "customer_id": f"cust_SYNTH{i:05d}",
             "amount": rng.randint(_MIN_AMOUNT_PAISE, _MAX_AMOUNT_PAISE),
             "error": fixture_errors[cause],
+            "prior_debit_dates": [d.isoformat() for d in prior_debit_dates],
             "attempts_used": 0,
             "failure_time": failure_time.isoformat(),
         }
