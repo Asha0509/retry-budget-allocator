@@ -75,9 +75,9 @@ function SensitivityChart({ sensitivity }) {
         </BarChart>
       </ResponsiveContainer>
       <p className="mt-2 text-xs text-slate-500">
-        Green = allocator recovers at least as many payments as baseline at that setting. Red = it doesn't. The advantage concentrates
-        where the customer's funding event lands late (day 5) - baseline's tight day-1/2/3 schedule structurally can't reach that far,
-        while the allocator's wider PRD-mandated 24h/72h/7d schedule can.
+        Green = allocator recovers at least as many payments as baseline at that setting (never by more than 1). Red = it trails,
+        worst when funding events are both early and tightly clustered. Attempts-spent efficiency (not shown here) holds at every one
+        of the 27 settings - see docs/RESULTS.md Section 4 for the full breakdown of when and why raw recovery count is a near-tie.
       </p>
     </div>
   )

@@ -11,11 +11,23 @@ function Step({ n, children }) {
   )
 }
 
+function fundingNarrative(payment) {
+  const trace = payment.allocator_stage_traces?.[0]?.find((t) => t.stage === 'funding_window')
+  if (!trace || trace.skipped) return null
+  const match = trace.output_summary.match(/confidence=([\d.]+) used_fallback=(True|False)/)
+  if (!match) return null
+  const usedFallback = match[2] === 'True'
+  return usedFallback
+    ? "We don't have enough reliable payment history for this account yet, so instead of guessing, we wait using a documented safe pattern (a day, then three days, then a week)."
+    : `Based on this account's past payment history, we estimate it's usually funded around this time of the month - so we aim the retry near then (confidence ${match[1]}).`
+}
+
 export default function StoryView({ payment }) {
   if (!payment) return null
   const decision = payment.allocator_decisions?.[0]
   const explanation = payment.explanation
   const outcome = payment.allocator
+  const funding = fundingNarrative(payment)
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
@@ -27,11 +39,12 @@ export default function StoryView({ payment }) {
           Why: <strong>{causeLabel(payment.cause)}</strong>.{' '}
           {explanation ? explanation.reasoning_plain : 'This is fixable by trying again at the right time.'}
         </Step>
-        <Step n={3}>
+        {funding && <Step n={3}>{funding}</Step>}
+        <Step n={funding ? 4 : 3}>
           By law, we're allowed at most <strong>3 retry attempts</strong> for this payment, and never during a bank's busy hours.
         </Step>
         {decision && (
-          <Step n={4}>
+          <Step n={funding ? 5 : 4}>
             Decision: <strong>{actionLabel(decision.action)}</strong>.{' '}
             {decision.scheduled_at && (
               <>
@@ -40,7 +53,7 @@ export default function StoryView({ payment }) {
             )}
           </Step>
         )}
-        <Step n={5}>
+        <Step n={funding ? 6 : 5}>
           Outcome: {outcome.recovered ? (
             <span className="font-medium text-emerald-700">Payment recovered - {formatMoney(outcome.amount_recovered)} collected.</span>
           ) : outcome.stopped_early ? (

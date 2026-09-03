@@ -28,14 +28,15 @@ function StageRow({ trace }) {
   )
 }
 
-function CandidateTable({ candidates }) {
+function CandidateTable({ candidates, referenceProbabilities }) {
   return (
     <table className="w-full text-left text-sm">
       <thead>
         <tr className="text-xs uppercase tracking-wide text-slate-400">
           <th className="py-1 pr-2">Offset</th>
           <th className="py-1 pr-2">When</th>
-          <th className="py-1 pr-2">Score</th>
+          <th className="py-1 pr-2">Allocator score</th>
+          <th className="py-1 pr-2">P(success) - frozen model, reference only</th>
           <th className="py-1">Status</th>
         </tr>
       </thead>
@@ -45,6 +46,9 @@ function CandidateTable({ candidates }) {
             <td className="py-1.5 pr-2 font-mono text-xs">{c.offset_label}</td>
             <td className="py-1.5 pr-2">{formatDateTime(c.scheduled_at)}</td>
             <td className="py-1.5 pr-2 font-mono text-xs">{c.score}</td>
+            <td className="py-1.5 pr-2 font-mono text-xs">
+              {referenceProbabilities?.[c.offset_label] !== undefined ? referenceProbabilities[c.offset_label] : '—'}
+            </td>
             <td className="py-1.5 text-xs">
               {c.compliant ? (
                 <span className="text-emerald-600">considered</span>
@@ -63,6 +67,7 @@ export default function DecisionTraceView({ payment }) {
   if (!payment) return null
   const decisions = payment.allocator_decisions ?? []
   const traceSets = payment.allocator_stage_traces ?? []
+  const referenceProbabilitySets = payment.allocator_candidate_reference_probabilities ?? []
 
   return (
     <div className="space-y-6">
@@ -107,10 +112,12 @@ export default function DecisionTraceView({ payment }) {
               <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Every candidate window scored (not just the winner)
               </h4>
-              <CandidateTable candidates={decision.candidates} />
+              <CandidateTable candidates={decision.candidates} referenceProbabilities={referenceProbabilitySets[attemptIndex]} />
               <p className="mt-1 text-xs text-slate-400">
-                Score = recoverability × a declared offset preference (not a probability - the real outcome model is deliberately
-                isolated from this scoring, PRD Sec 5.1).
+                Allocator score = recoverability × a declared offset preference - the allocator never sees or uses the P(success)
+                column. That column is the frozen outcome model's declared probability (eval/outcome_model.py), computed here purely
+                for this display so a technical viewer can compare the allocator's blind heuristic against the "true" simulated
+                probability - shown, never fed back into the decision (PRD Sec 5.1 isolation).
               </p>
             </div>
           )}
