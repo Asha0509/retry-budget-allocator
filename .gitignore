@@ -9,3 +9,5 @@ node_modules/
 dist/
 .DS_Store
 data/runs/
+logs/
+!logs/sample_run.jsonl
