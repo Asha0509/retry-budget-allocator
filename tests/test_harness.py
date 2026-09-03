@@ -131,6 +131,20 @@ def test_candidate_reference_probabilities_are_computed_from_the_frozen_model() 
             assert all(0.0 <= p <= 1.0 for p in probs.values())
 
 
+def test_confidence_fallback_rate_reflects_insufficient_funds_payments_only() -> None:
+    # PRD Sec 5.2 secondary metric: no synthetic customer has enough prior
+    # debit history in the batch generator's default settings to clear the
+    # confidence threshold reliably, so most/all insufficient_funds payments
+    # should show up as "ran" (Stage 4 executed) with a fallback rate in [0, 1].
+    result = run_batch(n=60, seed=9)
+    metric = result["confidence_fallback_rate"]
+    assert metric["n_ran"] > 0
+    assert 0.0 <= metric["fallback_rate"] <= 1.0
+    # every insufficient_funds payment should have run Stage 4 (not skipped)
+    n_insufficient_funds = sum(1 for p in result["payments"] if p["cause"] == "insufficient_funds")
+    assert metric["n_ran"] == n_insufficient_funds
+
+
 def test_raw_error_payload_is_preserved_in_run_artifact() -> None:
     result = run_batch(n=5, seed=6)
     payment = result["payments"][0]

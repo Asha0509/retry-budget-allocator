@@ -202,6 +202,27 @@ def _stop_decision_precision(outcomes: list[PaymentOutcome]) -> dict:
     return {"n_stopped_early": len(stopped), "precision": round(correct / len(stopped), 4)}
 
 
+def _confidence_fallback_rate(payments_detail: list[dict]) -> dict:
+    """PRD Sec 5.2 secondary metric: of insufficient_funds payments where Stage 4
+    (funding-window inference) actually ran, how often confidence was too low and
+    the documented safe-spacing fallback was used instead of a real estimate."""
+    ran = 0
+    used_fallback = 0
+    for payment in payments_detail:
+        traces = payment["allocator_stage_traces"]
+        if not traces:
+            continue
+        funding_trace = next((t for t in traces[0] if t["stage"] == "funding_window"), None)
+        if funding_trace is None or funding_trace["skipped"]:
+            continue
+        ran += 1
+        if "used_fallback=True" in funding_trace["output_summary"]:
+            used_fallback += 1
+    if ran == 0:
+        return {"n_ran": 0, "fallback_rate": None}
+    return {"n_ran": ran, "fallback_rate": round(used_fallback / ran, 4)}
+
+
 def _write_jsonl_log(run_id: str, events: list[dict]) -> Path:
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     path = LOGS_DIR / f"{run_id}.jsonl"
@@ -272,6 +293,7 @@ def compute_batch_results(
     results_table = {"baseline": _aggregate(baseline_outcomes), "allocator": _aggregate(allocator_outcomes)}
     per_cause = {"baseline": _per_cause_breakdown(baseline_outcomes), "allocator": _per_cause_breakdown(allocator_outcomes)}
     stop_precision = {"baseline": _stop_decision_precision(baseline_outcomes), "allocator": _stop_decision_precision(allocator_outcomes)}
+    confidence_fallback = _confidence_fallback_rate(payments_detail)
 
     for policy, table in results_table.items():
         if table["compliance_violations"] != 0:
@@ -285,6 +307,7 @@ def compute_batch_results(
         "results_table": results_table,
         "per_cause_breakdown": per_cause,
         "stop_decision_precision": stop_precision,
+        "confidence_fallback_rate": confidence_fallback,
         "payments": payments_detail,
     }
     return summary, log_lines
