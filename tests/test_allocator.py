@@ -95,6 +95,32 @@ def test_candidate_inside_likely_funding_window_scores_higher() -> None:
     assert boosted_24h.score == baseline_24h.score
 
 
+def test_successive_attempts_pick_distinct_windows_not_the_same_one_again() -> None:
+    """Regression: candidate generation doesn't depend on attempts_used (it's
+    always the same 3 safe-spacing offsets from the original failure), so a
+    second attempt must not re-choose the exact same window the first attempt
+    already tried and failed."""
+    failure_time = _dt("08:00")
+    scheduled_times = set()
+    offset_labels = []
+    for attempts_used in range(3):
+        decision = allocate(FailureCause.INSUFFICIENT_FUNDS, failure_time, attempts_used=attempts_used)
+        assert decision.action == "retry"
+        scheduled_times.add(decision.scheduled_at)
+        offset_labels.append(decision.reason)
+    assert len(scheduled_times) == 3, f"expected 3 distinct scheduled times, got {scheduled_times}"
+
+
+def test_attempt_order_follows_descending_score() -> None:
+    failure_time = _dt("08:00")
+    decisions = [allocate(FailureCause.BANK_TECHNICAL, failure_time, attempts_used=i) for i in range(3)]
+    scores = []
+    for d in decisions:
+        chosen = next(c for c in d.candidates if c.scheduled_at == d.scheduled_at)
+        scores.append(chosen.score)
+    assert scores == sorted(scores, reverse=True)
+
+
 def test_never_exceeds_attempt_cap_across_causes() -> None:
     for cause in FailureCause:
         for attempts_used in range(MAX_RETRY_ATTEMPTS + 3):

@@ -160,8 +160,14 @@ def allocate(
 
     estimate = funding_estimate or _fallback_funding_estimate()
     candidates = _score_candidates(cause, prior.recoverability, failure_time, estimate)
-    compliant = [c for c in candidates if c.compliant]
-    best = max(compliant, key=lambda c: c.score)
+    # Ranked, not just "the single best" - candidate generation doesn't
+    # depend on attempts_used (it's always the same 3 safe-spacing offsets
+    # from the original failure), so a later attempt must pick the next-best
+    # *unused* window, not the same top-scoring one it (by definition)
+    # already tried and that already failed. attempts_used indexes into the
+    # ranking: attempt 1 gets the best window, attempt 2 the next-best, etc.
+    compliant = sorted((c for c in candidates if c.compliant), key=lambda c: c.score, reverse=True)
+    best = compliant[attempts_used]
     assert not is_peak_window(best.scheduled_at), "allocator must never choose a peak-window candidate"
 
     return AllocatorDecision(
