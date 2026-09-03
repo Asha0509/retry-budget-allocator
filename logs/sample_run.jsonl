@@ -1,69 +1,69 @@
-{"event": "batch_started", "n": 60, "seed": 42, "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00000", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-09-03 23:59:47.321375+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00001", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-03 05:01:56.542243+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00002", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-06 00:43:36.925579+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00003", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-24 06:29:52.206860+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00004", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00005", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-15 00:26:09.981743+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00006", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-10 06:39:39.790608+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00007", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-02 06:19:50.103556+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00008", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-17 05:14:06.404949+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00009", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-30 03:53:09.800547+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00010", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-29 00:01:59.167075+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00011", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-09 23:07:39.162529+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00012", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00013", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-08 21:30:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00014", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-20 22:06:50.653292+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00015", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-05 13:00:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00016", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-17 21:30:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00017", "cause": "unknown", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00018", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00019", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-29 09:06:27.740265+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00020", "cause": "mandate_revoked", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00021", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-18 05:56:45.615058+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00022", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-05 13:00:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00023", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00024", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00025", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00026", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-21 06:23:05.924940+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00027", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00028", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-27 16:17:08.200552+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00029", "cause": "mandate_expired", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00030", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-20 03:29:59.620882+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00031", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-29 04:27:04.851096+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00032", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-17 21:38:03.135524+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00033", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00034", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-01 01:23:25.678149+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00035", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-11 15:13:32.745481+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00036", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-31 05:04:54.851218+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00037", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-08 07:26:45.886539+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00038", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-19 00:16:22.681640+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00039", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-22 21:30:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00040", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00041", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-19 13:41:09.523568+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00042", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-02 13:00:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00043", "cause": "unknown", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00044", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-27 13:00:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00045", "cause": "unknown", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00046", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00047", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-03 13:00:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00048", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-27 14:48:42.306967+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00049", "cause": "mandate_expired", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00050", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-06 03:32:42.605035+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00051", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-24 01:32:50.417876+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00052", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-21 00:28:19.109263+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00053", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-13 21:30:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00054", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-09 13:00:00+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00055", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-23 16:55:06.104850+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00056", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-13 22:29:37.948103+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00057", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-23 01:17:20.026784+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00058", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-05 07:41:01.026229+05:30", "run_id": "run_20260904T003617"}
-{"event": "allocator_decision", "payment_id": "pay_SYNTH00059", "cause": "mandate_revoked", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T003617"}
+{"event": "batch_started", "n": 60, "seed": 42, "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00000", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-09-01 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00001", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-31 16:25:38.810224+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00002", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-03 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00003", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-21 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00004", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00005", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-12 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00006", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-07 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00007", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-26 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00008", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-14 16:37:48.672930+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00009", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-27 15:16:52.068528+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00010", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-26 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00011", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-07 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00012", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00013", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-06 08:04:19.857516+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00014", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-18 09:30:32.921273+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00015", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-02 23:26:40.670037+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00016", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-15 05:21:03.896614+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00017", "cause": "unknown", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00018", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00019", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-26 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00020", "cause": "mandate_revoked", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00021", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-19 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00022", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-02 23:40:42.163291+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00023", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00024", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00025", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00026", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-18 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00027", "cause": "amount_exceeds_mandate", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00028", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-25 03:40:50.468533+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00029", "cause": "mandate_expired", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00030", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-17 14:53:41.888863+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00031", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-26 15:50:47.119077+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00032", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-15 09:01:45.403505+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00033", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00034", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-29 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00035", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-13 02:37:15.013462+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00036", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-28 16:28:37.119199+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00037", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-05 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00038", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-16 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00039", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-20 06:38:49.115550+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00040", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00041", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-17 01:04:51.791549+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00042", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-30 22:16:32.224570+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00043", "cause": "unknown", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00044", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-24 23:03:45.530237+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00045", "cause": "unknown", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00046", "cause": "afa_required", "action": "notify", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00047", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-31 22:19:20.977800+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00048", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-25 02:12:24.574948+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00049", "cause": "mandate_expired", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00050", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-03 14:56:24.873016+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00051", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-21 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00052", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-18 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00053", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-11 05:05:49.462864+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00054", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-06 23:35:30.737467+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00055", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-21 04:18:48.372831+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00056", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-08-11 09:53:20.216084+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00057", "cause": "bank_technical", "action": "retry", "scheduled_at": "2026-08-20 13:00:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00058", "cause": "insufficient_funds", "action": "retry", "scheduled_at": "2026-09-02 21:30:00+05:30", "run_id": "run_20260904T013557"}
+{"event": "allocator_decision", "payment_id": "pay_SYNTH00059", "cause": "mandate_revoked", "action": "stop", "scheduled_at": "None", "run_id": "run_20260904T013557"}
 {"event": "explanation_generated", "payment_id": "pay_SYNTH00000", "generated_by": "llm"}
-{"event": "explanation_generated", "payment_id": "pay_SYNTH00001", "generated_by": "template_fallback"}
+{"event": "explanation_generated", "payment_id": "pay_SYNTH00001", "generated_by": "llm"}
 {"event": "explanation_generated", "payment_id": "pay_SYNTH00004", "generated_by": "llm"}
 {"event": "explanation_generated", "payment_id": "pay_SYNTH00017", "generated_by": "llm"}
 {"event": "explanation_generated", "payment_id": "pay_SYNTH00018", "generated_by": "llm"}
 {"event": "explanation_generated", "payment_id": "pay_SYNTH00020", "generated_by": "llm"}
-{"event": "explanation_generated", "payment_id": "pay_SYNTH00029", "generated_by": "template_fallback"}
-{"event": "batch_completed", "run_id": "run_20260904T003617", "results_table": {"baseline": {"attempts_spent": 138, "payments_recovered": 35, "amount_recovered_paise": 8085457, "attempts_wasted_on_unrecoverable_causes": 42, "compliance_violations": 0, "stopped_early_count": 0}, "allocator": {"attempts_spent": 74, "payments_recovered": 30, "amount_recovered_paise": 7197416, "attempts_wasted_on_unrecoverable_causes": 0, "compliance_violations": 0, "stopped_early_count": 17}}}
+{"event": "explanation_generated", "payment_id": "pay_SYNTH00029", "generated_by": "llm"}
+{"event": "batch_completed", "run_id": "run_20260904T013557", "results_table": {"baseline": {"attempts_spent": 138, "payments_recovered": 35, "amount_recovered_paise": 8085457, "attempts_wasted_on_unrecoverable_causes": 42, "compliance_violations": 0, "stopped_early_count": 0}, "allocator": {"attempts_spent": 76, "payments_recovered": 29, "amount_recovered_paise": 7070390, "attempts_wasted_on_unrecoverable_causes": 0, "compliance_violations": 0, "stopped_early_count": 17}}}
