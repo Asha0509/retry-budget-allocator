@@ -23,7 +23,12 @@ from typing import Literal
 
 from eval.baseline import baseline_decide
 from eval.batch_generator import CAUSE_MIX, generate_batch
-from eval.outcome_model import DEFAULT_PARAMS, OutcomeModelParams, simulate_outcome
+from eval.outcome_model import (
+    DEFAULT_PARAMS,
+    OutcomeModelParams,
+    simulate_outcome,
+    success_probability,
+)
 from pipeline.allocator import AllocatorDecision, allocate
 from pipeline.classify import classify_cause
 from pipeline.compliance import (
@@ -35,7 +40,7 @@ from pipeline.compliance import (
 from pipeline.decision import RecoveryDecision
 from pipeline.explain import run_explanation
 from pipeline.funding_window import estimate_funding_window
-from pipeline.ingest import FailedPaymentEvent
+from pipeline.ingest import FailedPaymentEvent, run_ingestion
 from pipeline.models import FailureCause, StageTrace
 from pipeline.run import run_pipeline
 
@@ -128,6 +133,13 @@ def _simulate_one(
         if attempts_used >= MAX_RETRY_ATTEMPTS:
             break
 
+    if include_details and traces:
+        # Stage 1 (Ingest) happens once per event, not once per retry attempt -
+        # prepend it only to the first attempt's trace so every payment shows
+        # all 7 named stages (PRD Sec 6.1), not 6.
+        _, ingest_trace = run_ingestion(event.model_dump(mode="json"))
+        traces[0].insert(0, ingest_trace)
+
     outcome = PaymentOutcome(
         payment_id=event.payment_id,
         cause=cause.value,
@@ -139,6 +151,20 @@ def _simulate_one(
         compliance_violations=violations,
     )
     return outcome, decisions, traces
+
+
+def _reference_probabilities(cause: FailureCause, failure_time: datetime, decision: RecoveryDecision) -> dict[str, float]:
+    """The frozen outcome model's declared P(success) at each candidate time -
+    computed here, in the evaluation layer, purely for dashboard display. Never
+    fed back into pipeline/allocator.py, which still never imports
+    eval.outcome_model (Sec 5.1) - this is the harness annotating its own
+    output after the fact, the same way it already does to score simulated
+    outcomes, not a new coupling."""
+    result = {}
+    for candidate in decision.candidates:
+        hours = (candidate.scheduled_at - failure_time).total_seconds() / 3600.0
+        result[candidate.offset_label] = round(success_probability(cause, hours), 4)
+    return result
 
 
 def _aggregate(outcomes: list[PaymentOutcome]) -> dict:
@@ -237,6 +263,9 @@ def compute_batch_results(
                     "allocator": asdict(a_outcome),
                     "allocator_decisions": [d.model_dump(mode="json") for d in a_decisions],
                     "allocator_stage_traces": [[t.model_dump(mode="json") for t in traces] for traces in a_traces],
+                    "allocator_candidate_reference_probabilities": [
+                        _reference_probabilities(cause, event.failure_time, d) for d in a_decisions
+                    ],
                 }
             )
 
@@ -261,22 +290,42 @@ def compute_batch_results(
     return summary, log_lines
 
 
+_EXPLAIN_NOT_SAMPLED_REASON = (
+    "not sampled for this run - LLM calls are bounded to one representative payment per cause to "
+    "respect free-tier rate limits and keep Stage 7 off the critical path (PRD Sec 4); see a payment "
+    "marked 'has LLM explanation' in the Story tab for a live-generated example."
+)
+
+
 def _attach_sample_explanations(payments_detail: list[dict], log_lines: list[dict]) -> None:
     """Stage 7 (PRD Sec 4): generate a real, cached explanation for one representative
     payment per cause, not all of them - keeps the LLM off the critical path and
     bounds API calls to a free-tier provider. Cached in the run artifact; the
-    dashboard never regenerates it (PRD Sec 6.2)."""
+    dashboard never regenerates it (PRD Sec 6.2). Every OTHER payment still gets an
+    explicit skipped-with-reason Stage 7 trace entry, so all 7 named stages are always
+    present for every payment (PRD Sec 6.1) - never just silently absent."""
     seen_causes: set[str] = set()
     for payment in payments_detail:
-        cause = payment["cause"]
-        if cause in seen_causes or not payment["allocator_decisions"]:
+        if not payment["allocator_decisions"]:
             continue
-        seen_causes.add(cause)
-        decision = RecoveryDecision(**payment["allocator_decisions"][0])
-        explanation, trace = run_explanation(decision)
-        payment["explanation"] = explanation.model_dump()
-        payment["allocator_stage_traces"][0].append(trace.model_dump(mode="json"))
-        log_lines.append({"event": "explanation_generated", "payment_id": payment["payment_id"], "generated_by": explanation.generated_by})
+        cause = payment["cause"]
+        if cause not in seen_causes:
+            seen_causes.add(cause)
+            decision = RecoveryDecision(**payment["allocator_decisions"][0])
+            explanation, trace = run_explanation(decision)
+            payment["explanation"] = explanation.model_dump()
+            payment["allocator_stage_traces"][0].append(trace.model_dump(mode="json"))
+            log_lines.append({"event": "explanation_generated", "payment_id": payment["payment_id"], "generated_by": explanation.generated_by})
+        else:
+            skip_trace = StageTrace(
+                stage="explain",
+                input_summary=f"payment_id={payment['payment_id']!r}",
+                output_summary="skipped",
+                elapsed_ms=0.0,
+                skipped=True,
+                skip_reason=_EXPLAIN_NOT_SAMPLED_REASON,
+            )
+            payment["allocator_stage_traces"][0].append(skip_trace.model_dump(mode="json"))
 
 
 def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = DEFAULT_PARAMS) -> dict:

@@ -89,7 +89,20 @@ def test_allocator_decisions_and_stage_traces_are_recorded_per_payment() -> None
     stages = [t["stage"] for t in first_traces]
     # payment[0] is always the first payment seen for its cause, so it also
     # gets a sample explanation (Stage 7) appended - see test below.
-    assert stages[:5] == ["classify", "priors", "funding_window", "allocate", "decision"]
+    assert stages == ["ingest", "classify", "priors", "funding_window", "allocate", "decision", "explain"]
+
+
+def test_every_payment_shows_all_seven_named_stages_executed_or_skipped() -> None:
+    # PRD Sec 6.1: stages that didn't run must show as skipped-with-reason,
+    # never just be silently absent.
+    result = run_batch(n=40, seed=7)
+    for payment in result["payments"]:
+        stages = [t["stage"] for t in payment["allocator_stage_traces"][0]]
+        assert stages == ["ingest", "classify", "priors", "funding_window", "allocate", "decision", "explain"]
+        explain_trace = payment["allocator_stage_traces"][0][-1]
+        if "explanation" not in payment:
+            assert explain_trace["skipped"] is True
+            assert explain_trace["skip_reason"]
 
 
 def test_first_payment_per_cause_gets_a_cached_explanation() -> None:
@@ -102,6 +115,20 @@ def test_first_payment_per_cause_gets_a_cached_explanation() -> None:
         seen_causes.add(payment["cause"])
         assert "explanation" in payment
         assert payment["explanation"]["generated_by"] == "template_fallback"  # stubbed in this test
+
+
+def test_candidate_reference_probabilities_are_computed_from_the_frozen_model() -> None:
+    # Dashboard-only annotation (PRD Sec 6.1 "P(success at T)") - computed
+    # here in eval/, never fed back into pipeline/allocator.py.
+    result = run_batch(n=20, seed=8)
+    for payment in result["payments"]:
+        probs_per_attempt = payment["allocator_candidate_reference_probabilities"]
+        assert len(probs_per_attempt) == len(payment["allocator_decisions"])
+        for attempt_idx, decision in enumerate(payment["allocator_decisions"]):
+            probs = probs_per_attempt[attempt_idx]
+            candidate_labels = {c["offset_label"] for c in decision["candidates"]}
+            assert set(probs.keys()) == candidate_labels
+            assert all(0.0 <= p <= 1.0 for p in probs.values())
 
 
 def test_raw_error_payload_is_preserved_in_run_artifact() -> None:
