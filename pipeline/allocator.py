@@ -23,7 +23,12 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from pipeline.compliance import IST, MAX_RETRY_ATTEMPTS, PEAK_WINDOWS, is_peak_window
+from pipeline.compliance import (
+    IST,
+    MAX_RETRY_ATTEMPTS,
+    is_peak_window,
+    shift_out_of_peak,
+)
 from pipeline.models import FailureCause, FundingWindowEstimate, StageTrace, run_stage
 from pipeline.priors import get_prior
 
@@ -76,16 +81,6 @@ def _fallback_funding_estimate() -> FundingWindowEstimate:
     return FundingWindowEstimate(likely_window=None, confidence=0.0, used_fallback=True)
 
 
-def _shift_out_of_peak(dt: datetime) -> datetime:
-    """Push a peak-window datetime forward to the window's compliant end boundary."""
-    dt = dt.astimezone(IST)
-    t = dt.time()
-    for start, end in PEAK_WINDOWS:
-        if start <= t < end:
-            return dt.replace(hour=end.hour, minute=end.minute, second=0, microsecond=0)
-    return dt
-
-
 def _score(recoverability: float, offset_weight: float, estimate: FundingWindowEstimate, scheduled_at: datetime) -> float:
     score = recoverability * offset_weight
     if not estimate.used_fallback and estimate.likely_window is not None:
@@ -108,7 +103,7 @@ def _score_candidates(
             candidates.append(
                 CandidateWindow(scheduled_at=naive, offset_label=label, score=0.0, compliant=False, rejected_reason="peak_window")
             )
-            shifted = _shift_out_of_peak(naive)
+            shifted = shift_out_of_peak(naive)
             score = _score(recoverability, weights[hours], estimate, shifted)
             candidates.append(CandidateWindow(scheduled_at=shifted, offset_label=f"{label}_shifted", score=score, compliant=True))
         else:

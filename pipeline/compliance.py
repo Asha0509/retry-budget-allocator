@@ -45,3 +45,17 @@ def is_peak_window(dt: datetime) -> bool:
 def at_most_one_success_per_cycle(successes_in_cycle: int) -> bool:
     """True if at most one successful debit has occurred this billing cycle (PRD Sec 2)."""
     return 0 <= successes_in_cycle <= 1
+
+
+def shift_out_of_peak(dt: datetime) -> datetime:
+    """Push a peak-window datetime forward to that window's compliant end boundary.
+
+    Shared by the allocator and the baseline comparator - both need a
+    schedulable, compliant time when a naive candidate lands in a peak window.
+    """
+    dt = dt.astimezone(IST)
+    t = dt.time()
+    for start, end in PEAK_WINDOWS:
+        if start <= t < end:
+            return dt.replace(hour=end.hour, minute=end.minute, second=0, microsecond=0)
+    return dt
