@@ -11,9 +11,13 @@ import time
 from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict
+
+# The three intervention branches (PRD Sec 3) - shared across allocator,
+# baseline, and decision so they don't each redeclare the same literal.
+Action = Literal["notify", "retry", "stop"]
 
 
 class FailureCause(str, Enum):

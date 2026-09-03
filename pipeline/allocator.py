@@ -19,7 +19,6 @@ without any change needed here.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Literal
 
 from pydantic import BaseModel
 
@@ -29,10 +28,14 @@ from pipeline.compliance import (
     is_peak_window,
     shift_out_of_peak,
 )
-from pipeline.models import FailureCause, FundingWindowEstimate, StageTrace, run_stage
+from pipeline.models import (
+    Action,
+    FailureCause,
+    FundingWindowEstimate,
+    StageTrace,
+    run_stage,
+)
 from pipeline.priors import get_prior
-
-Action = Literal["notify", "retry", "stop"]
 
 # Safe-spacing schedule (PRD Sec 2): 24h / 72h / 7 days.
 _SAFE_SPACING_HOURS: tuple[int, ...] = (24, 72, 168)
