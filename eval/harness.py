@@ -24,7 +24,7 @@ from typing import Literal
 from eval.baseline import baseline_decide
 from eval.batch_generator import CAUSE_MIX, generate_batch
 from eval.outcome_model import DEFAULT_PARAMS, OutcomeModelParams, simulate_outcome
-from pipeline.allocator import AllocatorDecision
+from pipeline.allocator import AllocatorDecision, allocate
 from pipeline.classify import classify_cause
 from pipeline.compliance import (
     IST,
@@ -66,9 +66,21 @@ class PaymentOutcome:
 
 
 def _simulate_one(
-    event: FailedPaymentEvent, cause: FailureCause, policy: PolicyName, outcome_params: OutcomeModelParams, rng: random.Random
+    event: FailedPaymentEvent,
+    cause: FailureCause,
+    policy: PolicyName,
+    outcome_params: OutcomeModelParams,
+    rng: random.Random,
+    include_details: bool = True,
 ) -> tuple[PaymentOutcome, list[RecoveryDecision], list[list[StageTrace]]]:
-    """Run one policy against one event until it recovers, stops, or exhausts the budget."""
+    """Run one policy against one event until it recovers, stops, or exhausts the budget.
+
+    include_details=False skips the full pipeline.run orchestration (decision
+    record + stage traces) for the allocator policy and uses the bare
+    allocate() call instead - the sensitivity sweep (Sec 5.2) only needs
+    aggregate numbers across many grid points and doesn't pay for per-payment
+    decision detail it never reads.
+    """
     attempts_used = event.attempts_used
     attempts_spent = 0
     recovered = False
@@ -82,11 +94,14 @@ def _simulate_one(
             violations.append(f"attempts_used {attempts_used} exceeds cap of {MAX_RETRY_ATTEMPTS}")
             break
 
-        if policy == "allocator":
+        if policy == "allocator" and include_details:
             decision, stage_traces = run_pipeline(event.model_copy(update={"attempts_used": attempts_used}))
             decisions.append(decision)
             traces.append(stage_traces)
             action, scheduled_at = decision.action, decision.scheduled_at
+        elif policy == "allocator":
+            allocator_result: AllocatorDecision = allocate(cause, event.failure_time, attempts_used)
+            action, scheduled_at = allocator_result.action, allocator_result.scheduled_at
         else:
             baseline_result: AllocatorDecision = baseline_decide(cause, event.failure_time, attempts_used)
             action, scheduled_at = baseline_result.action, baseline_result.scheduled_at
@@ -164,13 +179,17 @@ def _write_jsonl_log(run_id: str, events: list[dict]) -> Path:
     return path
 
 
-def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = DEFAULT_PARAMS) -> dict:
-    """Run the full batch through both policies and write results + run artifact (PRD Sec 5)."""
-    run_id = datetime.now(IST).strftime("run_%Y%m%dT%H%M%S")
-    log.info("starting batch run %s: n=%d seed=%d", run_id, n, seed)
+def compute_batch_results(
+    n: int, seed: int, outcome_params: OutcomeModelParams = DEFAULT_PARAMS, include_details: bool = True
+) -> tuple[dict, list[dict]]:
+    """Pure computation: run both policies over one generated batch, no file I/O.
 
+    include_details=False (used by the sensitivity sweep, Sec 5.2) skips
+    building per-payment decision/trace detail - a sweep over many parameter
+    grid points only needs the aggregate numbers.
+    """
     events = generate_batch(n, seed=seed)
-    log_lines: list[dict] = [{"event": "batch_started", "run_id": run_id, "n": n, "seed": seed}]
+    log_lines: list[dict] = [{"event": "batch_started", "n": n, "seed": seed}]
 
     baseline_outcomes: list[PaymentOutcome] = []
     allocator_outcomes: list[PaymentOutcome] = []
@@ -181,8 +200,8 @@ def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = 
         rng_baseline = random.Random(f"{seed}-{event.payment_id}-baseline")
         rng_allocator = random.Random(f"{seed}-{event.payment_id}-allocator")
 
-        b_outcome, _, _ = _simulate_one(event, cause, "baseline", outcome_params, rng_baseline)
-        a_outcome, a_decisions, a_traces = _simulate_one(event, cause, "allocator", outcome_params, rng_allocator)
+        b_outcome, _, _ = _simulate_one(event, cause, "baseline", outcome_params, rng_baseline, include_details)
+        a_outcome, a_decisions, a_traces = _simulate_one(event, cause, "allocator", outcome_params, rng_allocator, include_details)
 
         baseline_outcomes.append(b_outcome)
         allocator_outcomes.append(a_outcome)
@@ -200,19 +219,20 @@ def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = 
                 }
             )
 
-        payments_detail.append(
-            {
-                "payment_id": event.payment_id,
-                "cause": cause.value,
-                "amount": event.amount,
-                "failure_time": event.failure_time.isoformat(),
-                "raw_error": event.error.model_dump(),
-                "baseline": asdict(b_outcome),
-                "allocator": asdict(a_outcome),
-                "allocator_decisions": [d.model_dump(mode="json") for d in a_decisions],
-                "allocator_stage_traces": [[t.model_dump(mode="json") for t in traces] for traces in a_traces],
-            }
-        )
+        if include_details:
+            payments_detail.append(
+                {
+                    "payment_id": event.payment_id,
+                    "cause": cause.value,
+                    "amount": event.amount,
+                    "failure_time": event.failure_time.isoformat(),
+                    "raw_error": event.error.model_dump(),
+                    "baseline": asdict(b_outcome),
+                    "allocator": asdict(a_outcome),
+                    "allocator_decisions": [d.model_dump(mode="json") for d in a_decisions],
+                    "allocator_stage_traces": [[t.model_dump(mode="json") for t in traces] for traces in a_traces],
+                }
+            )
 
     results_table = {"baseline": _aggregate(baseline_outcomes), "allocator": _aggregate(allocator_outcomes)}
     per_cause = {"baseline": _per_cause_breakdown(baseline_outcomes), "allocator": _per_cause_breakdown(allocator_outcomes)}
@@ -222,9 +242,7 @@ def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = 
         if table["compliance_violations"] != 0:
             log.error("%s policy produced %d compliance violations", policy, table["compliance_violations"])
 
-    run_artifact = {
-        "run_id": run_id,
-        "generated_at": datetime.now(IST).isoformat(),
+    summary = {
         "n": n,
         "seed": seed,
         "cause_mix": {c.value: w for c, w in CAUSE_MIX.items()},
@@ -234,16 +252,33 @@ def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = 
         "stop_decision_precision": stop_precision,
         "payments": payments_detail,
     }
+    return summary, log_lines
+
+
+def run_batch(n: int = 60, seed: int = 42, outcome_params: OutcomeModelParams = DEFAULT_PARAMS) -> dict:
+    """Run the full batch through both policies and write results + run artifact (PRD Sec 5)."""
+    run_id = datetime.now(IST).strftime("run_%Y%m%dT%H%M%S")
+    log.info("starting batch run %s: n=%d seed=%d", run_id, n, seed)
+
+    summary, log_lines = compute_batch_results(n, seed, outcome_params, include_details=True)
+    for entry in log_lines:
+        entry.setdefault("run_id", run_id)
+
+    run_artifact = {
+        "run_id": run_id,
+        "generated_at": datetime.now(IST).isoformat(),
+        **summary,
+    }
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     serialized = json.dumps(run_artifact, indent=2, default=str)
     (RESULTS_DIR / f"{run_id}.json").write_text(serialized)
     (RUNS_DIR / f"{run_id}.json").write_text(serialized)
-    log_lines.append({"event": "batch_completed", "run_id": run_id, "results_table": results_table})
+    log_lines.append({"event": "batch_completed", "run_id": run_id, "results_table": summary["results_table"]})
     _write_jsonl_log(run_id, log_lines)
 
-    log.info("batch run %s complete: %s", run_id, results_table)
+    log.info("batch run %s complete: %s", run_id, summary["results_table"])
     return run_artifact
 
 
