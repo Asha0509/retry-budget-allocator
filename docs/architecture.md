@@ -1,0 +1,175 @@
+# Architecture
+
+## Pipeline flowchart (PRD Sec 4)
+
+Seven stages, one event at a time. Stage 4 only runs for `insufficient_funds`
+- every other cause marks it skipped-with-reason (see `pipeline/run.py`).
+Only Stage 7 calls an LLM; everything else is deterministic Python -
+Stages 2/3/5/6 are the "opt for deterministic where AI is unnecessary"
+answer to the AI Judgment criterion, marked below by shape.
+
+```mermaid
+flowchart TD
+    classDef deterministic fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
+    classDef llm fill:#fef3c7,stroke:#b45309,color:#78350f
+
+    A[Stage 1: Ingest<br/>raw event dict] --> B[Stage 2: Classify<br/>RazorpayError to FailureCause]
+    B --> C[Stage 3: Priors<br/>FailureCause to recoverability + action shape]
+    C --> D{cause ==<br/>insufficient_funds?}
+    D -- yes --> E[Stage 4: Funding window<br/>prior debits to FundingWindowEstimate]
+    D -- no --> F[Stage 4: skipped<br/>not applicable]
+    E --> G[Stage 5: Allocate<br/>cause + budget + estimate to AllocatorDecision]
+    F --> G
+    G --> H[Stage 6: Decision<br/>assemble RecoveryDecision]
+    H --> I[Stage 7: Explain<br/>RecoveryDecision to plain text + notification copy]
+
+    class B,C,E,G,H deterministic
+    class I llm
+```
+
+Data contracts are the Pydantic models in `pipeline/models.py`,
+`pipeline/ingest.py`, `pipeline/allocator.py`, and `pipeline/decision.py` -
+every stage function is typed input to typed output, and every stage
+returns a `StageTrace` (stage name, input/output summary, elapsed ms,
+skipped-with-reason) alongside its result, collected by
+`pipeline/run.py::run_pipeline`. The dashboard's Decision Trace view
+renders these traces directly - not a mockup of the pipeline, the actual
+executed trace.
+
+## Decision flowchart (PRD Sec 4, Stage 5)
+
+The allocator's actual branching logic - a non-technical reviewer should be
+able to follow this without reading `pipeline/allocator.py`.
+
+```mermaid
+flowchart TD
+    Start([Cause classified]) --> Cap{Attempts used<br/>>= 3?}
+    Cap -- yes --> Stop1[STOP<br/>budget exhausted]
+    Cap -- no --> Shape{Recoverability<br/>action shape}
+    Shape -- stop --> Stop2[STOP<br/>structurally unrecoverable<br/>mandate_revoked / expired /<br/>amount_exceeds_mandate]
+    Shape -- notify --> Notify[NOTIFY<br/>afa_required / unknown]
+    Shape -- retry --> Score[Score all 3 safe-spacing<br/>candidates: 24h / 72h / 7d]
+    Score --> Peak{Candidate in<br/>a peak window?}
+    Peak -- yes --> Shift[Shift to window's<br/>compliant end boundary]
+    Peak -- no --> Rank
+    Shift --> Rank[Rank compliant candidates<br/>by score, descending]
+    Rank --> Pick[Pick the attempts_used-th<br/>ranked candidate]
+    Pick --> Retry[RETRY at that time]
+```
+
+## Mandate lifecycle state diagram (PRD Sec 2 - bounded budget, explicit stop)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Active3 : payment fails
+    Active3 : active (3 attempts left)
+    Active2 : active (2 attempts left)
+    Active1 : active (1 attempt left)
+
+    Active3 --> Recovered : retry succeeds
+    Active3 --> Active2 : retry fails
+    Active3 --> Stopped : cause unrecoverable, no attempt spent
+
+    Active2 --> Recovered : retry succeeds
+    Active2 --> Active1 : retry fails
+
+    Active1 --> Recovered : retry succeeds
+    Active1 --> Exhausted : retry fails, budget spent
+
+    Recovered --> [*]
+    Stopped --> [*]
+    Exhausted --> [*]
+```
+
+`Stopped` (spent 0 attempts) and `Exhausted` (spent all 3) are both terminal
+but mean different things - the dashboard's Batch Results view reports them
+separately (`attempts_wasted_on_unrecoverable_causes` vs
+`stopped_early_count`) so a "0 recovered" outcome doesn't get read as one
+undifferentiated failure mode.
+
+## The deterministic/LLM boundary, and why
+
+Stages 2, 3, 5, and 6 are pure Python: a lookup table, a scoring function,
+a data-assembly function. None of them can be improved by a model call -
+the inputs and outputs are fully specified (a Razorpay error object has a
+finite, documented set of `reason` values; NPCI's compliance rules are
+exact numbers, not judgment calls) and a model would only add latency,
+cost, and a new failure mode for something a dict lookup already does
+correctly and auditably. This is the explicit "AI Judgment" answer: using
+AI *only* where it's actually needed.
+
+Stage 7 is the one place an LLM adds real value - turning
+`reasoning_technical` (a dense string like `cause=insufficient_funds
+(confidence=1.0, matched_on=reason:insufficient_funds);
+recoverability=0.7; action=retry; chose 72h (score=0.7)`) into plain
+sentences for two different audiences (compliance officer, customer), and
+generating Hinglish notification copy - a genuinely open-ended language
+task, not a decision. Called *after* `pipeline/allocator.py` has already
+decided; `pipeline/explain.py::generate_explanation` takes a finished
+`RecoveryDecision` and never returns anything the allocator reads back.
+
+Kept off the critical path deliberately: every LLM call is wrapped in
+`try/except`, and any failure (auth, rate limit, malformed JSON, empty/
+truncated response) falls back to a deterministic template
+(`pipeline/decision.py::_template_reasoning_plain` and
+`pipeline/explain.py`'s notification templates) - confirmed live during
+this build when the configured model was pulled from OpenRouter's free
+tier mid-session and a second model returned a truncated response; both
+degraded cleanly with zero pipeline impact (`docs/build-log.md`).
+
+## Compliance invariants and where they're enforced
+
+Three invariants (PRD Sec 2), proven in `pipeline/compliance.py` and
+`tests/test_compliance.py` *before* any allocator logic was written
+(build order step 2):
+
+| Invariant | Enforced in | Checked |
+|---|---|---|
+| Never more than 3 retry attempts per mandate | `attempts_within_cap` | `pipeline/allocator.py` (early-return before scoring), `eval/harness.py` (asserted per simulated attempt), dashboard's live compliance panel |
+| Never schedule inside a peak window (10:00-13:00, 17:00-21:30 IST) | `is_peak_window`, `shift_out_of_peak` | Candidate generation only ever returns compliant times; re-asserted with a runtime `assert` in `allocate()`; re-checked in `eval/harness.py`; re-checked live in the dashboard (`dashboard/src/lib/compliance.js`, a JS port of the same logic) |
+| At most one successful debit per token per billing cycle | Structural - `eval/harness.py`'s simulation loop stops immediately on the first recorded success | Not independently re-derivable from a single-failure-event batch; stated honestly as "enforced by construction" rather than faked as a live data check in the dashboard - see `dashboard/src/lib/compliance.js` |
+
+`tests/test_compliance.py` covers every minute-level boundary of both peak
+windows and both cap edges (3 ok, 4 violates) before either the allocator
+or the baseline existed.
+
+## Data provenance (PRD Sec 5.0)
+
+Two tiers, and the pipeline cannot tell the difference between them because
+the schema contract is identical:
+
+- **Integration tier (real, small):** `scripts/capture_fixtures.py` ran
+  live against Razorpay's TEST-mode API. Customer and order creation
+  succeeded genuinely; UPI AutoPay mandate/charge creation is gated behind
+  a Razorpay Support activation this account doesn't have (confirmed via 4
+  independent probes plus an external source - `data/fixtures/README.md`
+  has the full finding). The one genuinely live-captured error payload
+  (`data/fixtures/unknown.json`) and the real customer/order responses
+  (`data/fixtures/_capture_attempts.json`) are real evidence of a genuine
+  integration attempt, not fabricated.
+- **Batch tier (replayed, large):** the other 6 fixtures are sourced
+  verbatim from Razorpay's own published error-code documentation
+  (`code`/`description`/`source`/`step`/`reason` fields, real values), with
+  the three mandate/AFA-layer causes explicitly marked provisional since
+  Razorpay doesn't publish a dedicated error `reason` for them.
+  `eval/batch_generator.py` synthesizes 60 events by resampling these exact
+  fixture payloads, so `classify.py` sees the identical schema it would see
+  from a real capture.
+
+## Outcome model isolation (PRD Sec 5.1)
+
+`eval/outcome_model.py` defines the "true" success probability the
+simulation draws from - frozen, seeded, documented with its own parameters
+before any allocator scoring logic was tuned against it.
+`pipeline/allocator.py` never imports it, which would make the evaluation
+circular (the allocator would effectively be told the answer). This isn't
+just a convention: `tests/test_outcome_model_isolation.py` parses every
+file under `pipeline/` with Python's `ast` module and fails the build if
+any import statement references `outcome_model`.
+
+## Known limitations
+
+See `docs/RESULTS.md` Section 7 for the full, evidenced list (simulation
+study, modelled failure mix, narrow-effect funding-window inference, small
+N, provisional fixtures, scheduler-enforced rather than NPCI-enforced
+compliance).
