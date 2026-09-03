@@ -21,6 +21,20 @@ def test_reproducible_given_the_same_seed() -> None:
     assert [e.error.reason for e in a] == [e.error.reason for e in b]
 
 
+def test_failure_times_are_anchored_not_wall_clock() -> None:
+    # Regression: failure_time must not depend on datetime.now() - otherwise
+    # the exact time-of-day (and therefore peak-window classification, and
+    # therefore final results) silently varies by when the script is run,
+    # even with a fixed seed. Two calls, real time elapsed between them,
+    # must produce byte-identical failure_time values.
+    import time
+
+    a = generate_batch(10, seed=11)
+    time.sleep(1.1)
+    b = generate_batch(10, seed=11)
+    assert [e.failure_time for e in a] == [e.failure_time for e in b]
+
+
 def test_amounts_are_positive_and_within_declared_range() -> None:
     events = generate_batch(50, seed=2)
     assert all(10_000 <= e.amount <= 500_000 for e in events)

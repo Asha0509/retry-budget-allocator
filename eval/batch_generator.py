@@ -39,6 +39,14 @@ _MIN_AMOUNT_PAISE = 10_000  # RS 100
 _MAX_AMOUNT_PAISE = 500_000  # RS 5,000
 _DATE_SPREAD_DAYS = 30
 
+# A fixed reference point, NOT datetime.now(). Failure times are anchored to
+# this so the batch is fully reproducible given a seed - anchoring to the
+# real wall clock would make each event's exact time-of-day (and therefore
+# whether a candidate lands in a peak window, and therefore the final
+# results) depend on when the script happens to be run, silently breaking
+# the "seeded for reproducibility" guarantee this module and its tests claim.
+_BATCH_ANCHOR_TIME = datetime(2026, 9, 1, 12, 0, tzinfo=IST)
+
 # For insufficient_funds events only: what fraction have a usable debit
 # history for Stage 4 (funding_window.py) to work with, and how many prior
 # successful debits a customer with history has. A per-customer hidden
@@ -87,12 +95,11 @@ def generate_batch(n: int, seed: int = 42) -> list[FailedPaymentEvent]:
     fixture_errors = _load_fixture_errors()
     causes = list(CAUSE_MIX.keys())
     weights = list(CAUSE_MIX.values())
-    now = datetime.now(IST)
 
     events = []
     for i in range(n):
         cause = rng.choices(causes, weights=weights, k=1)[0]
-        failure_time = now - timedelta(days=rng.uniform(0, _DATE_SPREAD_DAYS), hours=rng.uniform(0, 24))
+        failure_time = _BATCH_ANCHOR_TIME - timedelta(days=rng.uniform(0, _DATE_SPREAD_DAYS), hours=rng.uniform(0, 24))
         prior_debit_dates = _synthesize_prior_debit_dates(rng, failure_time) if cause == FailureCause.INSUFFICIENT_FUNDS else []
         raw_event = {
             "payment_id": f"pay_SYNTH{i:05d}",
