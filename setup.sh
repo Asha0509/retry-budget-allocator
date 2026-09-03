@@ -62,8 +62,8 @@ cat > .env.example <<'EOF'
 # Razorpay TEST MODE credentials.
 # Free: sign up at dashboard.razorpay.com, stay in Test Mode,
 # Settings > API Keys > Generate Test Key. No KYC needed for test mode.
-RAZORPAY_KEY_ID= rzp_test_TXQq9WHi33rQ13
-RAZORPAY_KEY_SECRET= w2SoxKRXselFBZkAduyVGwoH
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
 
 # LLM used ONLY for plain-language explanations (PRD Sec 4, Stage 7).
 # Never used for retry/stop decisions.
@@ -73,7 +73,7 @@ RAZORPAY_KEY_SECRET= w2SoxKRXselFBZkAduyVGwoH
 # critical path). Get a key at openrouter.ai/keys
 EXPLANATION_MODEL=moonshotai/kimi-k2.6:free
 LLM_BASE_URL=https://openrouter.ai/api/v1
-LLM_API_KEY
+LLM_API_KEY=sk-or-v1-xxxxxxxx
 #
 # Fallback if the above rate-limits mid-build - swap this one line, no code change:
 # EXPLANATION_MODEL=z-ai/glm-4.7-flash:free
