@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from datetime import datetime
 from enum import Enum
 from typing import TypeVar
 
@@ -42,6 +43,19 @@ class RazorpayError(BaseModel):
     source: str | None = None
     step: str | None = None
     reason: str | None = None
+
+
+class FundingWindowEstimate(BaseModel):
+    """Stage 4 output shape (PRD Sec 4). Shared so the Stage-5 allocator can be
+    built against it before Stage 4's real estimator exists (Sec 7 build order
+    puts the allocator at step 4, funding-window inference at step 9) - the
+    allocator consumes this shape from day one, fed by a fallback-only stub
+    until step 9 swaps in the real probabilistic estimate behind it.
+    """
+
+    likely_window: tuple[datetime, datetime] | None
+    confidence: float
+    used_fallback: bool
 
 
 class StageTrace(BaseModel):
