@@ -17,12 +17,6 @@ export const ACTION_LABELS = {
   stop: 'Stop trying',
 }
 
-export const ACTION_COLORS = {
-  retry: 'bg-blue-100 text-blue-800 border-blue-200',
-  notify: 'bg-amber-100 text-amber-800 border-amber-200',
-  stop: 'bg-rose-100 text-rose-800 border-rose-200',
-}
-
 export function formatMoney(paise) {
   const rupees = paise / 100
   return `₹${rupees.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`

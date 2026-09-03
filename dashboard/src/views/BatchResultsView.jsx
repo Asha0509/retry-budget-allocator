@@ -134,13 +134,21 @@ export default function BatchResultsView({ run, sensitivity }) {
         </table>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Stop-decision precision</h3>
           <p className="mt-2 text-sm text-slate-600">
             Of payments the allocator stopped/notified instead of retrying,{' '}
             <strong>{((run.stop_decision_precision.allocator.precision ?? 0) * 100).toFixed(0)}%</strong> were genuinely unrecoverable
             under the frozen outcome model ({run.stop_decision_precision.allocator.n_stopped_early} stopped early).
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Confidence-fallback rate</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Of {run.confidence_fallback_rate.n_ran} `insufficient_funds` payments where funding-window inference (Stage 4) ran,{' '}
+            <strong>{((run.confidence_fallback_rate.fallback_rate ?? 0) * 100).toFixed(0)}%</strong> had too little reliable history and
+            fell back to documented safe spacing instead of a real estimate.
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-4">
