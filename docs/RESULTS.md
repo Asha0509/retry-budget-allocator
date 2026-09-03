@@ -1,8 +1,8 @@
 # Results
 
-Run `run_20260904T013557` - 60 synthesized failed payments, seed 42. Reproduce
+Run `run_20260904T015709` - 60 synthesized failed payments, seed 42. Reproduce
 with `python -m eval.harness && python -m eval.sensitivity`. Raw output:
-`eval/results/run_20260904T013557.json`, `eval/results/sensitivity.json`.
+`eval/results/run_20260904T015709.json`, `eval/results/sensitivity.json`.
 
 ## 1. The outcome model, stated before any number (PRD Sec 5.1)
 
@@ -128,6 +128,14 @@ reasons, not a bug:
    batch), not per-customer, and was frozen (Sec 5.1) before this stage was
    built. Even a perfectly-inferred per-customer window doesn't change the
    probability the simulation draws from.
+
+**Confidence-fallback rate** (PRD Sec 5.2 secondary metric): of the 36
+`insufficient_funds` payments where Stage 4 actually ran, **31% (11 of 36)**
+had thin or inconsistent debit history and fell back to the documented safe
+spacing anyway - the same schedule the allocator was already using before
+Stage 4 existed. That's part of why the effect is small: for roughly a
+third of the cases this stage runs on, it produces exactly the fallback
+behavior it was built to improve on.
 
 Fixing this properly means either letting the allocator schedule at
 arbitrary inferred times (not just 3 fixed offsets) or extending the
