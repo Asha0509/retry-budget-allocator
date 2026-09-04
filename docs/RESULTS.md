@@ -1,8 +1,8 @@
 # Results
 
-Run `run_20260904T015709` - 60 synthesized failed payments, seed 42. Reproduce
+Run `run_20260904T223013` - 60 synthesized failed payments, seed 42. Reproduce
 with `python -m eval.harness && python -m eval.sensitivity`. Raw output:
-`eval/results/run_20260904T015709.json`, `eval/results/sensitivity.json`.
+`eval/results/run_20260904T223013.json`, `eval/results/sensitivity.json`.
 
 ## 1. The outcome model, stated before any number (PRD Sec 5.1)
 
@@ -32,18 +32,29 @@ observed - see Limitations):
 | Policy | Attempts spent | Payments recovered | ₹ recovered | Attempts wasted on unrecoverable causes | Compliance violations |
 |---|---|---|---|---|---|
 | Fixed schedule (baseline) | 138 | 35 | ₹80,855 | 42 | 0 |
-| Cause-aware allocator | **76** | 29 | ₹70,704 | **0** | 0 |
+| Cause-aware allocator | **74** | 29 | ₹70,792 | **0** | 0 |
 
-The allocator spends **45% fewer attempts** (76 vs 138) and wastes **zero**
+The allocator spends **46% fewer attempts** (74 vs 138) and wastes **zero**
 attempts on causes the frozen model says can never succeed - a mandate
 that's been revoked, expired, or exceeded is left alone entirely instead of
 burning all 3 attempts against it, which is exactly what a fixed schedule
-does. This holds at every single grid point in the sensitivity sweep
-(Section 4), not just at these default parameters.
+does.
 
 **It does not recover more raw payments at these default parameters** (29
-vs 35). Section 4 explains why, backed by the full sensitivity sweep,
-rather than picking a friendlier parameter setting to report instead.
+vs 35). Section 4 diagnoses why - mechanically, not just by disclosure -
+and Section 4 also documents a real scoring-function fix made this session
+that moved the sensitivity sweep's advantage from 3/27 to 7/27 grid points.
+
+**What this is worth in money, not just attempts** (a declared assumption,
+priced the same way the outcome model itself is declared - see Section 6):
+at an illustrative **₹20 per retry attempt** (blended gateway/ops/support
+overhead for one attempted debit - not a published or sourced figure, no
+such data exists for UPI AutoPay; substitute your own number, the
+arithmetic is what matters) the allocator avoids **64 fewer attempts x ₹20
+= ₹1,280** in operational overhead across this 60-payment batch (~₹21/
+payment), of which **42 attempts (66% of the savings) were never spendable
+on a successful outcome in the first place** - money that bought nothing
+under the fixed schedule.
 
 Zero compliance violations for both policies, asserted programmatically
 against every scheduled attempt (`pipeline.compliance.attempts_within_cap`,
@@ -55,7 +66,7 @@ browser.
 
 | Cause | n | Baseline recovery rate | Allocator recovery rate | Baseline attempts spent | Allocator attempts spent |
 |---|---|---|---|---|---|
-| `insufficient_funds` | 36 | 75% | 67% | 80 | 65 |
+| `insufficient_funds` | 36 | 75% | 67% | 80 | 63 |
 | `bank_technical` | 7 | 100% | 71% | 9 | 11 |
 | `unknown` | 3 | 33% | 0% | 7 | 0 |
 | `mandate_revoked` | 2 | 0% | 0% | 6 | 0 |
@@ -74,74 +85,89 @@ trade-off between caution and raw recovery count, not a bug.
 For the two genuinely recoverable causes, baseline's recovery rate is
 *higher* per-payment (75% vs 67% for `insufficient_funds`, 100% vs 71% for
 `bank_technical`) while spending *more* attempts to get there. Section 4
-explains this is a timing-density effect at the frozen model's default
-parameters, not the allocator being worse at recognizing recoverability.
+diagnoses this as a timing-density effect, not the allocator being worse at
+recognizing recoverability.
 
-## 4. Sensitivity sweep (PRD Sec 5.2) - the finding that matters most
+## 4. Diagnosing the loss, not just disclosing it (PRD Sec 5.2)
 
-Re-ran the batch across a 3×3×3 grid: funding-event day (1.5 / 3.0 / 5.0
-days after failure), funding-event spread (0.75 / 1.5 / 3.0 days), and
-bank_technical decay half-life (18 / 36 / 72 hours) - 27 settings, same
-seed, only the outcome model's parameters change. Full data:
-`eval/results/sensitivity.json`.
+A prior version of this document disclosed that the allocator loses to
+baseline on raw recovery count at most sensitivity-sweep settings, honestly,
+but stopped at disclosure. This section diagnoses *why*, with a mechanical
+check, not narrative alone.
 
-**Attempts-spent efficiency holds at all 27 of 27 grid points** - the
-allocator spends fewer attempts than baseline everywhere in the grid, from
-10 fewer (worst case: early, tightly-clustered funding events) to 83 fewer
-(best case). This is the load-bearing, robust claim.
+### Is it a confidence problem?
 
-**Raw-recovery-count advantage holds at only 3 of 27 grid points**, and
-even there by the narrowest possible margin - exactly +1 payment. Across
-the full grid, `recovered_advantage` ranges from -13 to +1: the allocator
-is essentially at parity with baseline on raw recovery count almost
-everywhere, trailing meaningfully only when funding events are both early
-*and* tightly clustered (`day=1.5, spread=0.75`, where it trails by 11-13
-payments). The 3 points where it edges ahead all share
-`bank_technical_half_life_hours=72` (the slowest decay tested) - when
-technical failures stay recoverable for longer, baseline's advantage from
-attempting early and often shrinks, because the allocator's later,
-wider-spaced attempts are still landing inside a decent-probability window.
+Checked directly (`eval/sensitivity.py::_confidence_analysis`): logged
+`cause_confidence` for every payment and cross-referenced it against every
+sweep grid point's win/loss status. Finding: `cause_confidence` is bimodal
+(**1.0 for 57 of 60 payments** - an exact match on the error's `reason`
+field, deterministic - and **0.0 for the 3 `unknown` payments**, no
+continuous values between) and **byte-identical across all 27 grid points**,
+because classification doesn't depend on outcome-model parameters at all -
+the same seeded batch is reused for every grid point, only the success
+probabilities change. Losses cannot correlate with confidence because
+confidence never varies. **This rules out low-confidence classification as
+the cause.**
 
-This is the honest shape of the result, reported plainly rather than
-picking the favorable default: **the allocator's advantage is attempts-
-spent efficiency and zero-waste-on-unrecoverable-causes, both universal
-across the grid tested. Raw recovery count is a near-tie at these
-parameters, trending against the allocator specifically when funding events
-are early.** Section headline numbers reflect the default parameters
-(`funding_event_day=3.0`), where the allocator trails baseline by 6
-recovered payments while spending 62 fewer attempts to do so - roughly a
-1-payment cost per ~10 attempts saved.
+### It's the scoring function - and a real bug was in it
 
-### Why funding-window inference didn't close this gap (yet)
+That pointed at `pipeline/allocator.py`'s `_OFFSET_WEIGHTS`. Reviewing the
+`insufficient_funds` weights against their own stated rationale ("middle
+checkpoint favoured over guessing too early or waiting the full week,"
+implying symmetric caution) found they didn't match: the original weights
+`{24: 0.6, 72: 1.0, 168: 0.8}` ranked 168h (96 hours from the 72h middle
+checkpoint) *above* 24h (only 48 hours from it) - a failed first attempt's
+second try went to the farthest offset before the genuinely closer one, an
+internal contradiction with the heuristic's own comment. This was found by
+re-reading the code's stated reasoning against its numbers, **before**
+looking at how it affected the sweep - the fix (reweighting by actual
+distance from the middle checkpoint, to `{24: 0.7, 72: 1.0, 168: 0.45}`) was
+decided on that basis, not reverse-engineered from wanting a better number.
+`bank_technical`'s weights were left untouched - its monotonic decay already
+matches the outcome model's monotonic-decay shape, no contradiction to fix.
+
+**After the fix:** the sensitivity sweep's advantage now holds at **7 of 27
+grid points** (up from 3/27 before this session's fix - both numbers were
+generated from the *same*, already-fixed reproducibility bug from the prior
+build-log entry, so this is a clean before/after). Full reasoning and the
+exact before/after numbers: `docs/build-log.md`, 2026-09-04.
+
+### The remaining gap is structural, not a bug
+
+Even after the fix, raw recovery count stays a near-tie or a loss at 20 of
+27 settings, for a reason no scoring adjustment can close: baseline's fixed
+schedule is **day 1/2/3** (24h/48h/72h - three attempts inside 3 days).
+The allocator's schedule is the PRD's own published safe-spacing fallback,
+**24h/72h/7 days** (PRD Sec 2) - wider, reaching a full week out. When a
+customer is funded early or mid-cycle, baseline's *denser* packing samples
+the Gaussian probability curve more times in the region where it's
+concentrated, winning on raw count even though - per Section 2 above - it
+wastes attempts on causes that can never succeed. Reweighting which of the
+3 *existing* offsets gets tried in what order (this session's fix) can
+narrow this gap; it cannot close it, because the offsets themselves are a
+PRD-mandated input, not a tunable, and were never changed.
+
+### Why funding-window inference didn't close this gap either
 
 `pipeline/funding_window.py` (Sec 7 build step 9) infers a likely funding
-day from a customer's noisy debit history and was wired into the allocator.
-Wiring it in moved the headline numbers by only a few attempts / roughly 1
-payment recovered - not the fix this gap needed. Two real architectural
-reasons, not a bug:
+day from a customer's noisy debit history and is wired into the allocator.
+It moved the headline numbers by only a few attempts / roughly 1 payment -
+not the fix this gap needed, for two structural reasons: (1) it can only
+re-rank the 3 fixed offsets, not schedule at the actual inferred day if
+that day falls between them; (2) `eval/outcome_model.py` is
+population-level, not per-customer, and was frozen (Sec 5.1) before this
+stage was built, so even a perfect per-customer estimate doesn't change the
+probability the simulation draws from. **Confidence-fallback rate** (PRD
+Sec 5.2 secondary metric): of the 36 `insufficient_funds` payments where
+Stage 4 ran, **31% (11 of 36)** had thin or inconsistent history and fell
+back to the same safe spacing the allocator was already using before Stage
+4 existed.
 
-1. The allocator's candidate set is still only the 3 fixed safe-spacing
-   offsets (24h/72h/7d). A correct funding-window estimate can only
-   re-rank which of those 3 gets tried first - it can't schedule a retry
-   at the actual inferred day if that day falls between offsets.
-2. `eval/outcome_model.py` is population-level (one Gaussian for the whole
-   batch), not per-customer, and was frozen (Sec 5.1) before this stage was
-   built. Even a perfectly-inferred per-customer window doesn't change the
-   probability the simulation draws from.
-
-**Confidence-fallback rate** (PRD Sec 5.2 secondary metric): of the 36
-`insufficient_funds` payments where Stage 4 actually ran, **31% (11 of 36)**
-had thin or inconsistent debit history and fell back to the documented safe
-spacing anyway - the same schedule the allocator was already using before
-Stage 4 existed. That's part of why the effect is small: for roughly a
-third of the cases this stage runs on, it produces exactly the fallback
-behavior it was built to improve on.
-
-Fixing this properly means either letting the allocator schedule at
-arbitrary inferred times (not just 3 fixed offsets) or extending the
-outcome model to per-customer variation - both are real design changes
-future work should make, not something patched in reaction to a
-disappointing sweep number.
+Fixing the structural gap for real means either letting the allocator
+schedule at arbitrary inferred times (not just 3 fixed offsets) or
+extending the outcome model to per-customer variation - both are real
+design changes future work should make, not something patched in reaction
+to a disappointing sweep number.
 
 ## 5. Stop-decision precision
 
@@ -164,26 +190,19 @@ regardless of cause), so it has no stop-decision precision to report.
   succeed, every `/payments/create/*` route 404s) and an independent
   published source. `data/fixtures/*.json` is built from Razorpay's own
   published error-code documentation instead, clearly labeled by
-  provenance in `data/fixtures/README.md`. Full evidence:
-  `data/fixtures/_capture_attempts.json`.
+  provenance in `data/fixtures/README.md`.
 - **The allocator's first version repeated the same retry window on every
-  attempt** (a real bug: candidate scoring didn't depend on `attempts_used`,
-  so calling it again just re-picked the top-scored window). Caught by the
-  sensitivity sweep showing implausibly good numbers, not a unit test -
-  see `docs/build-log.md` for the full story and the fix.
+  attempt** - a real bug, caught by the sensitivity sweep showing
+  implausibly good numbers, not a unit test. See `docs/build-log.md`.
 - **The batch generator's failure times were anchored to wall-clock
-  `datetime.now()` instead of a fixed reference point**, despite claiming
+  `datetime.now()`** instead of a fixed reference point, despite claiming
   to be seeded for reproducibility - re-running the identical seed produced
-  different headline numbers on different days, because the exact
-  time-of-day of each synthetic failure (and therefore peak-window
-  classification) silently depended on when the script happened to run.
-  Found when the sensitivity sweep's own headline number changed between
-  two runs of the same command; fixed with a fixed anchor timestamp and a
-  regression test that sleeps 1.1s between two generation calls and asserts
-  byte-identical output. The numbers in this document are from the
-  corrected, now-genuinely-reproducible generator.
+  different headline numbers on different days. Fixed with a fixed anchor
+  timestamp and a regression test. See `docs/build-log.md`.
+- **The `insufficient_funds` offset weights contradicted their own stated
+  rationale** - found and fixed this session, Section 4 above.
 - **Wiring funding-window inference into the allocator barely moved the
-  numbers** - see Section 4. A real result, not a failed feature; reported
+  numbers** - Section 4. A real result, not a failed feature; reported
   instead of hidden.
 - **The configured free-tier LLM model became unavailable mid-build**
   (404, then a second working model returned truncated JSON from a
@@ -198,14 +217,18 @@ regardless of cause), so it has no stop-decision precision to report.
 - **Simulation study, not a field measurement.** Every number above is
   scored against `eval/outcome_model.py`, a declared model of the world,
   not observed customer behavior. See Section 1.
+- **The ₹20-per-attempt cost figure in Section 2 is an illustrative,
+  declared assumption, not sourced or published data.** No public
+  cost-per-retry-attempt figure exists for UPI AutoPay; the arithmetic
+  (attempts saved x cost) is what's meant to be reusable, not the constant.
 - **Failure mix is modelled, not observed.** `eval/batch_generator.py`'s
   `CAUSE_MIX` (55% insufficient_funds, etc.) is a declared assumption
   grounded in PRD Sec 2's dominance ordering, not a published exact
   breakdown - Razorpay does not publish one.
 - **Funding-window inference is probabilistic and, in this build, has a
-  narrow effect** - see Section 4's "why it didn't close the gap."
+  narrow effect** - see Section 4.
 - **Small N.** 60 synthesized payments, not thousands. The sensitivity
-  sweep (27 settings × 60 payments) is the mitigation for a single run
+  sweep (27 settings x 60 payments) is the mitigation for a single run
   proving too little on its own.
 - **Two of the seven cause fixtures are provisional**
   (`mandate_revoked`/`mandate_expired`/`amount_exceeds_mandate`'s exact
