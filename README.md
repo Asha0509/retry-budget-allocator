@@ -8,10 +8,12 @@
 ![Live Simulator, landing state](docs/images/live-simulator.png)
 ![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
 
-**[docs/video/live-simulator-demo.webm](docs/video/live-simulator-demo.webm)**
-— silent screen capture (1:11, no narration) driving the Live Simulator,
-Story, Decision Trace, and Batch Results tabs against the actual running
-app. Draft footage, not the final pitch video.
+**[docs/video/dashboard-walkthrough.webm](docs/video/dashboard-walkthrough.webm)**
+— silent screen capture (3:56, no narration) of every tab and option: all
+four Live Simulator personas plus the custom form in both cause-dropdown
+and raw-JSON modes, two payments each on Story and Decision Trace, and a
+full scroll through Batch Results. Raw walkthrough footage for a pitch
+script to be recorded over, not the final pitch video itself.
 
 ## The problem
 
