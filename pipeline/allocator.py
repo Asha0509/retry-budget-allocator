@@ -42,14 +42,25 @@ _SAFE_SPACING_HOURS: tuple[int, ...] = (24, 72, 168)
 
 # Cause-specific preference over the safe-spacing offsets, absent any real
 # funding signal (used only while funding_estimate.used_fallback is True):
-# bank_technical resolves fast, so sooner scores higher; insufficient_funds
-# has no known funding date yet, so the middle (72h) checkpoint is favoured
-# over guessing too early or waiting the full week. A declared heuristic,
-# not a probability - the real probability model lives in eval/outcome_model.py
-# and this module never imports it.
+# a declared heuristic, not a probability - the real probability model lives
+# in eval/outcome_model.py and this module never imports it.
+#
+# bank_technical resolves fast and keeps decaying, so sooner strictly scores
+# higher - a monotonic falloff matches a monotonic decay.
+#
+# insufficient_funds has no known funding date, so 72h (the PRD Sec 2
+# "safe-spacing" middle checkpoint - a reasonable few-days guess, not a peek
+# at any specific outcome-model parameter) is the no-information default.
+# Revised 2026-09-04 (see docs/build-log.md): the original weights ranked
+# 168h above 24h, meaning a failed 72h attempt's SECOND try went to the
+# offset FARTHEST from the middle checkpoint (96h away) before ever trying
+# the offset genuinely closer to it (24h, only 48h away) - an internal
+# contradiction with this comment's own "middle checkpoint favoured"
+# rationale, not something derived from the sensitivity sweep's results.
+# Reweighted by actual distance from the 72h checkpoint instead.
 _OFFSET_WEIGHTS: dict[FailureCause, dict[int, float]] = {
     FailureCause.BANK_TECHNICAL: {24: 1.0, 72: 0.5, 168: 0.25},
-    FailureCause.INSUFFICIENT_FUNDS: {24: 0.6, 72: 1.0, 168: 0.8},
+    FailureCause.INSUFFICIENT_FUNDS: {24: 0.7, 72: 1.0, 168: 0.45},
 }
 _DEFAULT_OFFSET_WEIGHTS: dict[int, float] = {24: 0.8, 72: 1.0, 168: 0.6}
 
