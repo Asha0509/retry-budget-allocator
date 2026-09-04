@@ -13,8 +13,17 @@ export async function runSimulation(body) {
     body: JSON.stringify(body),
   })
   if (!res.ok) {
-    const detail = await res.json().catch(() => ({}))
-    throw new Error(detail.detail ?? `POST /api/simulate: HTTP ${res.status}`)
+    const body = await res.json().catch(() => ({}))
+    // FastAPI's own validation errors (HTTP 422) put an array of
+    // {loc, msg} objects in `detail`, not a string - our own HTTPException
+    // calls (400/404) put a plain string there. Handle both cleanly.
+    let message = `POST /api/simulate: HTTP ${res.status}`
+    if (typeof body.detail === 'string') {
+      message = body.detail
+    } else if (Array.isArray(body.detail)) {
+      message = body.detail.map((e) => `${(e.loc ?? []).join('.')}: ${e.msg}`).join('; ')
+    }
+    throw new Error(message)
   }
   return res.json()
 }
