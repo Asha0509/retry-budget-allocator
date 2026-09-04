@@ -8,6 +8,11 @@
 ![Live Simulator, landing state](docs/images/live-simulator.png)
 ![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
 
+**[docs/video/live-simulator-demo.webm](docs/video/live-simulator-demo.webm)**
+— silent screen capture (1:11, no narration) driving the Live Simulator,
+Story, Decision Trace, and Batch Results tabs against the actual running
+app. Draft footage, not the final pitch video.
+
 ## The problem
 
 When a UPI AutoPay recurring payment fails, Razorpay's controlled flow hands
@@ -71,7 +76,6 @@ against a declared outcome model — not a field measurement of anything.
 - [docs/architecture.md](docs/architecture.md) — pipeline design and data flow
 - [docs/prd.md](docs/prd.md) — full specification and verified sources
 - [docs/build-log.md](docs/build-log.md) — what broke during the build and how it was fixed
-- [docs/pitch-script.md](docs/pitch-script.md) — 5-minute pitch video beat sheet
 
 ## Repo layout
 
