@@ -32,16 +32,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 114,
-        "payments_recovered": 19,
-        "amount_recovered_paise": 3868056,
+        "attempts_spent": 105,
+        "payments_recovered": 16,
+        "amount_recovered_paise": 3228766,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 10,
-      "recovered_advantage": -13,
-      "amount_advantage_paise": -3763988,
+      "attempts_saved": 19,
+      "recovered_advantage": -16,
+      "amount_advantage_paise": -4403278,
       "allocator_advantage_holds": false
     },
     {
@@ -57,16 +57,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 110,
-        "payments_recovered": 21,
-        "amount_recovered_paise": 4675130,
+        "attempts_spent": 101,
+        "payments_recovered": 18,
+        "amount_recovered_paise": 4035840,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 11,
-      "recovered_advantage": -13,
-      "amount_advantage_paise": -3288016,
+      "attempts_saved": 20,
+      "recovered_advantage": -16,
+      "amount_advantage_paise": -3927306,
       "allocator_advantage_holds": false
     },
     {
@@ -82,16 +82,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 107,
-        "payments_recovered": 23,
-        "amount_recovered_paise": 5093287,
+        "attempts_spent": 98,
+        "payments_recovered": 20,
+        "amount_recovered_paise": 4453997,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 13,
-      "recovered_advantage": -11,
-      "amount_advantage_paise": -2869859,
+      "attempts_saved": 22,
+      "recovered_advantage": -14,
+      "amount_advantage_paise": -3509149,
       "allocator_advantage_holds": false
     },
     {
@@ -107,16 +107,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 97,
-        "payments_recovered": 27,
-        "amount_recovered_paise": 5569096,
+        "attempts_spent": 87,
+        "payments_recovered": 25,
+        "amount_recovered_paise": 5840763,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 24,
-      "recovered_advantage": -10,
-      "amount_advantage_paise": -3063217,
+      "attempts_saved": 34,
+      "recovered_advantage": -12,
+      "amount_advantage_paise": -2791550,
       "allocator_advantage_holds": false
     },
     {
@@ -132,16 +132,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 93,
-        "payments_recovered": 29,
-        "amount_recovered_paise": 6376170,
+        "attempts_spent": 83,
+        "payments_recovered": 27,
+        "amount_recovered_paise": 6647837,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 25,
-      "recovered_advantage": -10,
-      "amount_advantage_paise": -2587245,
+      "attempts_saved": 35,
+      "recovered_advantage": -12,
+      "amount_advantage_paise": -2315578,
       "allocator_advantage_holds": false
     },
     {
@@ -157,16 +157,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 90,
-        "payments_recovered": 31,
-        "amount_recovered_paise": 6794327,
+        "attempts_spent": 80,
+        "payments_recovered": 29,
+        "amount_recovered_paise": 7065994,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 27,
-      "recovered_advantage": -8,
-      "amount_advantage_paise": -2169088,
+      "attempts_saved": 37,
+      "recovered_advantage": -10,
+      "amount_advantage_paise": -1897421,
       "allocator_advantage_holds": false
     },
     {
@@ -182,16 +182,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 80,
-        "payments_recovered": 31,
-        "amount_recovered_paise": 6598029,
+        "attempts_spent": 76,
+        "payments_recovered": 29,
+        "amount_recovered_paise": 6651057,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 40,
-      "recovered_advantage": -7,
-      "amount_advantage_paise": -2339454,
+      "attempts_saved": 44,
+      "recovered_advantage": -9,
+      "amount_advantage_paise": -2286426,
       "allocator_advantage_holds": false
     },
     {
@@ -207,16 +207,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 76,
-        "payments_recovered": 33,
-        "amount_recovered_paise": 7405103,
+        "attempts_spent": 72,
+        "payments_recovered": 31,
+        "amount_recovered_paise": 7458131,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 41,
-      "recovered_advantage": -7,
-      "amount_advantage_paise": -1863482,
+      "attempts_saved": 45,
+      "recovered_advantage": -9,
+      "amount_advantage_paise": -1810454,
       "allocator_advantage_holds": false
     },
     {
@@ -232,16 +232,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 73,
-        "payments_recovered": 35,
-        "amount_recovered_paise": 7823260,
+        "attempts_spent": 69,
+        "payments_recovered": 33,
+        "amount_recovered_paise": 7876288,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 43,
-      "recovered_advantage": -5,
-      "amount_advantage_paise": -1445325,
+      "attempts_saved": 47,
+      "recovered_advantage": -7,
+      "amount_advantage_paise": -1392297,
       "allocator_advantage_holds": false
     },
     {
@@ -259,14 +259,14 @@
       "allocator": {
         "attempts_spent": 80,
         "payments_recovered": 25,
-        "amount_recovered_paise": 5634127,
+        "amount_recovered_paise": 5735068,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
       "attempts_saved": 80,
       "recovered_advantage": -1,
-      "amount_advantage_paise": -762070,
+      "amount_advantage_paise": -661129,
       "allocator_advantage_holds": false
     },
     {
@@ -284,14 +284,14 @@
       "allocator": {
         "attempts_spent": 76,
         "payments_recovered": 27,
-        "amount_recovered_paise": 6441201,
+        "amount_recovered_paise": 6542142,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
       "attempts_saved": 81,
       "recovered_advantage": -1,
-      "amount_advantage_paise": -286098,
+      "amount_advantage_paise": -185157,
       "allocator_advantage_holds": false
     },
     {
@@ -309,14 +309,14 @@
       "allocator": {
         "attempts_spent": 73,
         "payments_recovered": 29,
-        "amount_recovered_paise": 6859358,
+        "amount_recovered_paise": 6960299,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
       "attempts_saved": 83,
       "recovered_advantage": 1,
-      "amount_advantage_paise": 132059,
+      "amount_advantage_paise": 233000,
       "allocator_advantage_holds": true
     },
     {
@@ -332,16 +332,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 80,
+        "attempts_spent": 78,
         "payments_recovered": 27,
-        "amount_recovered_paise": 6263316,
+        "amount_recovered_paise": 6272084,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 61,
+      "attempts_saved": 63,
       "recovered_advantage": -6,
-      "amount_advantage_paise": -1491039,
+      "amount_advantage_paise": -1482271,
       "allocator_advantage_holds": false
     },
     {
@@ -357,16 +357,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 76,
+        "attempts_spent": 74,
         "payments_recovered": 29,
-        "amount_recovered_paise": 7070390,
+        "amount_recovered_paise": 7079158,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 62,
+      "attempts_saved": 64,
       "recovered_advantage": -6,
-      "amount_advantage_paise": -1015067,
+      "amount_advantage_paise": -1006299,
       "allocator_advantage_holds": false
     },
     {
@@ -382,16 +382,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 73,
+        "attempts_spent": 71,
         "payments_recovered": 31,
-        "amount_recovered_paise": 7488547,
+        "amount_recovered_paise": 7497315,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 64,
+      "attempts_saved": 66,
       "recovered_advantage": -4,
-      "amount_advantage_paise": -596910,
+      "amount_advantage_paise": -588142,
       "allocator_advantage_holds": false
     },
     {
@@ -407,16 +407,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 78,
-        "payments_recovered": 29,
-        "amount_recovered_paise": 6518157,
+        "attempts_spent": 76,
+        "payments_recovered": 28,
+        "amount_recovered_paise": 6495162,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 45,
-      "recovered_advantage": -8,
-      "amount_advantage_paise": -2372177,
+      "attempts_saved": 47,
+      "recovered_advantage": -9,
+      "amount_advantage_paise": -2395172,
       "allocator_advantage_holds": false
     },
     {
@@ -432,16 +432,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 74,
-        "payments_recovered": 31,
-        "amount_recovered_paise": 7325231,
+        "attempts_spent": 72,
+        "payments_recovered": 30,
+        "amount_recovered_paise": 7302236,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 46,
-      "recovered_advantage": -8,
-      "amount_advantage_paise": -1896205,
+      "attempts_saved": 48,
+      "recovered_advantage": -9,
+      "amount_advantage_paise": -1919200,
       "allocator_advantage_holds": false
     },
     {
@@ -457,16 +457,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 71,
-        "payments_recovered": 33,
-        "amount_recovered_paise": 7743388,
+        "attempts_spent": 69,
+        "payments_recovered": 32,
+        "amount_recovered_paise": 7720393,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 48,
-      "recovered_advantage": -6,
-      "amount_advantage_paise": -1478048,
+      "attempts_saved": 50,
+      "recovered_advantage": -7,
+      "amount_advantage_paise": -1501043,
       "allocator_advantage_holds": false
     },
     {
@@ -482,17 +482,17 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 119,
-        "payments_recovered": 5,
-        "amount_recovered_paise": 723083,
+        "attempts_spent": 118,
+        "payments_recovered": 6,
+        "amount_recovered_paise": 1014220,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 50,
-      "recovered_advantage": -1,
-      "amount_advantage_paise": -585814,
-      "allocator_advantage_holds": false
+      "attempts_saved": 51,
+      "recovered_advantage": 0,
+      "amount_advantage_paise": -294677,
+      "allocator_advantage_holds": true
     },
     {
       "funding_event_day": 5.0,
@@ -507,17 +507,17 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 115,
-        "payments_recovered": 7,
-        "amount_recovered_paise": 1530157,
+        "attempts_spent": 114,
+        "payments_recovered": 8,
+        "amount_recovered_paise": 1821294,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 51,
-      "recovered_advantage": -1,
-      "amount_advantage_paise": -109842,
-      "allocator_advantage_holds": false
+      "attempts_saved": 52,
+      "recovered_advantage": 0,
+      "amount_advantage_paise": 181295,
+      "allocator_advantage_holds": true
     },
     {
       "funding_event_day": 5.0,
@@ -532,16 +532,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 112,
-        "payments_recovered": 9,
-        "amount_recovered_paise": 1948314,
+        "attempts_spent": 111,
+        "payments_recovered": 10,
+        "amount_recovered_paise": 2239451,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 53,
-      "recovered_advantage": 1,
-      "amount_advantage_paise": 308315,
+      "attempts_saved": 54,
+      "recovered_advantage": 2,
+      "amount_advantage_paise": 599452,
       "allocator_advantage_holds": true
     },
     {
@@ -557,17 +557,17 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 101,
-        "payments_recovered": 16,
-        "amount_recovered_paise": 3115677,
+        "attempts_spent": 104,
+        "payments_recovered": 17,
+        "amount_recovered_paise": 3857532,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 64,
-      "recovered_advantage": -1,
-      "amount_advantage_paise": -993607,
-      "allocator_advantage_holds": false
+      "attempts_saved": 61,
+      "recovered_advantage": 0,
+      "amount_advantage_paise": -251752,
+      "allocator_advantage_holds": true
     },
     {
       "funding_event_day": 5.0,
@@ -582,17 +582,17 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 97,
-        "payments_recovered": 18,
-        "amount_recovered_paise": 3922751,
+        "attempts_spent": 100,
+        "payments_recovered": 19,
+        "amount_recovered_paise": 4664606,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 65,
-      "recovered_advantage": -1,
-      "amount_advantage_paise": -517635,
-      "allocator_advantage_holds": false
+      "attempts_saved": 62,
+      "recovered_advantage": 0,
+      "amount_advantage_paise": 224220,
+      "allocator_advantage_holds": true
     },
     {
       "funding_event_day": 5.0,
@@ -607,16 +607,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 94,
-        "payments_recovered": 20,
-        "amount_recovered_paise": 4340908,
+        "attempts_spent": 97,
+        "payments_recovered": 21,
+        "amount_recovered_paise": 5082763,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 67,
-      "recovered_advantage": 1,
-      "amount_advantage_paise": -99478,
+      "attempts_saved": 64,
+      "recovered_advantage": 2,
+      "amount_advantage_paise": 642377,
       "allocator_advantage_holds": true
     },
     {
@@ -632,16 +632,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 80,
-        "payments_recovered": 27,
-        "amount_recovered_paise": 6145308,
+        "attempts_spent": 82,
+        "payments_recovered": 29,
+        "amount_recovered_paise": 6361624,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 61,
-      "recovered_advantage": -6,
-      "amount_advantage_paise": -1609047,
+      "attempts_saved": 59,
+      "recovered_advantage": -4,
+      "amount_advantage_paise": -1392731,
       "allocator_advantage_holds": false
     },
     {
@@ -657,16 +657,16 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 76,
-        "payments_recovered": 29,
-        "amount_recovered_paise": 6952382,
+        "attempts_spent": 78,
+        "payments_recovered": 31,
+        "amount_recovered_paise": 7168698,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 62,
-      "recovered_advantage": -6,
-      "amount_advantage_paise": -1133075,
+      "attempts_saved": 60,
+      "recovered_advantage": -4,
+      "amount_advantage_paise": -916759,
       "allocator_advantage_holds": false
     },
     {
@@ -682,18 +682,29 @@
         "stopped_early_count": 0
       },
       "allocator": {
-        "attempts_spent": 73,
-        "payments_recovered": 31,
-        "amount_recovered_paise": 7370539,
+        "attempts_spent": 75,
+        "payments_recovered": 33,
+        "amount_recovered_paise": 7586855,
         "attempts_wasted_on_unrecoverable_causes": 0,
         "compliance_violations": 0,
         "stopped_early_count": 17
       },
-      "attempts_saved": 64,
-      "recovered_advantage": -4,
-      "amount_advantage_paise": -714918,
+      "attempts_saved": 62,
+      "recovered_advantage": -2,
+      "amount_advantage_paise": -498602,
       "allocator_advantage_holds": false
     }
   ],
-  "advantage_holds_at_n_of_total": "3/27"
+  "advantage_holds_at_n_of_total": "7/27",
+  "confidence_analysis": {
+    "cause_confidence_distribution": {
+      "1.0": 57,
+      "0.0": 3
+    },
+    "n_unique_confidence_values": 2,
+    "identical_at_every_grid_point": true,
+    "n_losing_grid_points": 20,
+    "n_winning_grid_points": 7,
+    "conclusion": "cause_confidence has no continuous variance (bimodal: 1.0 for every exact-reason-match classification, 0.0 for the unrecognized case) and is byte-identical across all 27 grid points, since classification doesn't depend on outcome-model parameters. Losses cannot correlate with confidence because confidence never changes - this rules out low-confidence classification as the cause and points at the allocator's scoring/offset structure instead."
+  }
 }
