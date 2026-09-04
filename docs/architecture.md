@@ -167,6 +167,60 @@ just a convention: `tests/test_outcome_model_isolation.py` parses every
 file under `pipeline/` with Python's `ast` module and fails the build if
 any import statement references `outcome_model`.
 
+## Design trade-offs - considered and rejected
+
+Three specific decisions, framed as what else was on the table and why it
+lost, not just the choice made.
+
+**Funding-confidence threshold = 0.6 (`FUNDING_CONFIDENCE_THRESHOLD` in
+`.env`).** `pipeline/funding_window.py` blends a customer's observed debit
+history with a generic salary-credit prior; confidence rises with more,
+more-consistent observations. A lower threshold (e.g. 0.3) would let
+thinner history clear the bar and produce a real window estimate more
+often - more "coverage," but weaker estimates get treated as trustworthy,
+which is exactly the overclaiming PRD Sec 8 warns is "the most likely way
+to be picked apart in a demo." A higher threshold (e.g. 0.85) would almost
+never clear given the batch generator's synthetic history (3-5 noisy
+observations per customer, see `_synthesize_prior_debit_dates`), making
+Stage 4 functionally always-fallback and pointless to have built. 0.6 was
+chosen as the midpoint that lets consistent 3+ observation histories clear
+it (see `docs/RESULTS.md` Section 4 - 31% fallback rate in practice) while
+still rejecting thin or scattered ones. Not derived from any real
+delinquency data - there isn't any in this project - a declared choice,
+adjustable via `.env` without a code change.
+
+**Retry offsets fixed at 24h / 72h / 168h.** This is not a tunable - PRD
+Sec 2 cites this exact spacing as published industry practice ("recover
+15-20% of failed payments"), so it's treated as a hard input, not a design
+choice this codebase made. The alternative considered was baseline's own
+denser day-1/2/3 (24h/48h/72h) packing, which the sensitivity sweep
+(`docs/RESULTS.md` Section 4) shows genuinely outperforms the wider
+schedule when a customer's funding event lands early - the wider schedule
+is deliberately kept anyway because it's the one PRD Sec 2 documents, not
+because it wins on every metric. This is exactly the case CLAUDE.md
+anticipates: "if the allocator only wins under one parameter setting, that
+is the finding, report it."
+
+**Scoring function: `recoverability x a declared offset preference`, not a
+probability.** The allocator's `_OFFSET_WEIGHTS` (`pipeline/allocator.py`)
+rank the 3 fixed offsets by a hand-authored preference, not by calling any
+probability model - because the only probability model that exists
+(`eval/outcome_model.py`) must stay isolated from the allocator (Sec 5.1);
+letting the allocator score against real P(success) would make the
+evaluation circular. The rejected alternative was building a second,
+allocator-visible probability estimate (a "public" model distinct from the
+frozen "true" one) - rejected because maintaining two probability models
+that are supposed to approximate the same real-world quantity, one hidden
+from evaluation and one visible to the decision code, is a correctness trap
+waiting to happen (they drift, and nothing catches it). The declared
+heuristic's *shape* still has to be internally consistent, though - a real
+bug found in this same session (see `docs/build-log.md`, 2026-09-04): the
+`insufficient_funds` weights originally ranked the offset farthest from the
+declared "middle guess" above the one closer to it, contradicting the
+heuristic's own stated rationale. Fixed by reweighting on actual distance
+from the middle checkpoint, not by giving the allocator a peek at the real
+model.
+
 ## Known limitations
 
 See `docs/RESULTS.md` Section 7 for the full, evidenced list (simulation
