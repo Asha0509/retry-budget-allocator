@@ -3,7 +3,7 @@
 **Razorpay AI Buildathon 2026 — Track 3: AI Revenue Recovery**
 
 [![CI](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml)
-98% test coverage (264 tests, `pytest --cov=pipeline`) — enforced in CI on every push, not just claimed here.
+98% test coverage on `pipeline/` (279 tests total across `pipeline/`, `eval/`, and `api/`, `pytest --cov=pipeline`) — enforced in CI on every push, not just claimed here.
 
 ## The problem
 
@@ -62,6 +62,7 @@ outcome model, not a field measurement.
 - [docs/architecture.md](docs/architecture.md) — pipeline design and data flow
 - [docs/prd.md](docs/prd.md) — full specification and verified sources
 - [docs/build-log.md](docs/build-log.md) — what broke during the build and how it was fixed
+- [docs/pitch-script.md](docs/pitch-script.md) — 5-minute pitch video beat sheet
 
 ## Setup
 
