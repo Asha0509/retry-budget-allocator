@@ -22,7 +22,7 @@ function fundingNarrative(payment) {
     : `Based on this account's past payment history, we estimate it's usually funded around this time of the month - so we aim the retry near then (confidence ${match[1]}).`
 }
 
-export default function StoryView({ payment }) {
+export default function StoryView({ payment, isLive = false }) {
   if (!payment) return null
   const decision = payment.allocator_decisions?.[0]
   const explanation = payment.explanation
@@ -53,16 +53,26 @@ export default function StoryView({ payment }) {
             )}
           </Step>
         )}
-        <Step n={funding ? 6 : 5}>
-          Outcome: {outcome.recovered ? (
-            <span className="font-medium text-emerald-700">Payment recovered - {formatMoney(outcome.amount_recovered)} collected.</span>
-          ) : outcome.stopped_early ? (
-            <span className="font-medium text-slate-600">Stopped without spending an attempt - this could not have been fixed by retrying.</span>
-          ) : (
-            <span className="font-medium text-rose-600">Not recovered within the 3-attempt budget.</span>
-          )}
-          {' '}({outcome.attempts_spent} of 3 attempts used)
-        </Step>
+        {outcome ? (
+          <Step n={funding ? 6 : 5}>
+            Outcome: {outcome.recovered ? (
+              <span className="font-medium text-emerald-700">Payment recovered - {formatMoney(outcome.amount_recovered)} collected.</span
+              >
+            ) : outcome.stopped_early ? (
+              <span className="font-medium text-slate-600">Stopped without spending an attempt - this could not have been fixed by retrying.</span>
+            ) : (
+              <span className="font-medium text-rose-600">Not recovered within the 3-attempt budget.</span>
+            )}
+            {' '}({outcome.attempts_spent} of 3 attempts used)
+          </Step>
+        ) : (
+          <Step n={funding ? 6 : 5}>
+            <span className="text-slate-500">
+              No outcome to show here - a live decision only classifies and decides, it doesn't simulate whether a debit actually
+              succeeds (that stays exclusively in the fixed Batch Results study, PRD Sec 5.1).
+            </span>
+          </Step>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -77,10 +87,11 @@ export default function StoryView({ payment }) {
           </div>
         )}
         <div className="rounded-lg border border-slate-200 bg-white p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">This is a simulation</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{isLive ? 'This just ran, live' : 'This is a simulation'}</h3>
           <p className="mt-2 text-sm text-slate-500">
-            This payment was generated to match Razorpay's real error-object schema, not a live transaction. See the Batch Results tab
-            for the outcome model and honesty notes.
+            {isLive
+              ? "This decision was computed just now by the real pipeline running on this machine - not a canned demo. It never touches the real Razorpay API (see Live Simulator tab)."
+              : "This payment was generated to match Razorpay's real error-object schema, not a live transaction. See the Batch Results tab for the outcome model and honesty notes."}
           </p>
         </div>
       </div>

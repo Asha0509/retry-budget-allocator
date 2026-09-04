@@ -131,11 +131,23 @@ export default function DecisionTraceView({ payment }) {
         </div>
       ))}
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
-        Final: {payment.allocator.recovered ? `Recovered ${formatMoney(payment.allocator.amount_recovered)}` : 'Not recovered'} using{' '}
-        {payment.allocator.attempts_spent} of 3 attempts. Compliance violations this payment:{' '}
-        <strong>{payment.allocator.compliance_violations.length}</strong>.
-      </div>
+      {payment.allocator ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          Final: {payment.allocator.recovered ? `Recovered ${formatMoney(payment.allocator.amount_recovered)}` : 'Not recovered'} using{' '}
+          {payment.allocator.attempts_spent} of 3 attempts. Compliance violations this payment:{' '}
+          <strong>{payment.allocator.compliance_violations.length}</strong>.
+        </div>
+      ) : (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          Compare: baseline (fixed day-1/2/3 schedule) would choose <strong>{actionLabel(payment.baseline_decision?.action)}</strong> for
+          this payment
+          {payment.baseline_decision?.action !== payment.allocator_decisions?.[0]?.action
+            ? ' - a genuine disagreement with the allocator above.'
+            : payment.decisions_differ
+              ? ', the same action as the allocator but at a different time.'
+              : ', same as the allocator.'}
+        </div>
+      )}
     </div>
   )
 }
