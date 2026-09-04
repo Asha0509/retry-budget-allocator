@@ -2,6 +2,9 @@
 
 **Razorpay AI Buildathon 2026 — Track 3: AI Revenue Recovery**
 
+[![CI](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml)
+98% test coverage (264 tests, `pytest --cov=pipeline`) — enforced in CI on every push, not just claimed here.
+
 ## The problem
 
 When a UPI AutoPay recurring payment fails, Razorpay's controlled flow returns
