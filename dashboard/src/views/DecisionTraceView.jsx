@@ -71,6 +71,11 @@ export default function DecisionTraceView({ payment }) {
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-slate-600">
+        This is the real, executed pipeline for this payment - the actual Razorpay-shaped error object, then every stage the code ran
+        (or explicitly skipped, with why), the exact candidate times it scored and why each was picked or rejected, all in the order the
+        code produced them. Nothing on this tab is hand-written.
+      </p>
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-lg border border-slate-200 bg-white p-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Raw Razorpay error object</h3>

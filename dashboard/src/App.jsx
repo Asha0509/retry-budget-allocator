@@ -36,10 +36,14 @@ export default function App() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold text-slate-900">Retry Budget Allocator</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Simulation study over {run.n} synthesized failed payments (seed {run.seed}) - a scarce, regulated recovery budget spent by
-          cause, not by a fixed schedule.
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Razorpay AI Buildathon - Track 3: AI Revenue Recovery</p>
+        <h1 className="mt-1 text-2xl font-semibold text-slate-900">Retry Budget Allocator</h1>
+        <p className="mt-1 text-sm text-slate-600">
+          When a UPI AutoPay payment fails, Razorpay hands the merchant exactly 3 retry attempts and no auto-retry - most businesses
+          spend that budget on a fixed schedule that ignores why the payment failed. This decides how to spend it deliberately instead.
+        </p>
+        <p className="mt-2 text-xs text-slate-400">
+          Simulation study over {run.n} synthesized failed payments (seed {run.seed}).
         </p>
       </header>
 

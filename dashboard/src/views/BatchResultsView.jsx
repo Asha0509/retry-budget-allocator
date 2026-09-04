@@ -86,8 +86,18 @@ function SensitivityChart({ sensitivity }) {
 export default function BatchResultsView({ run, sensitivity }) {
   const { baseline, allocator } = run.results_table
 
+  const attemptsSavedPct = Math.round((1 - allocator.attempts_spent / baseline.attempts_spent) * 100)
+  const recoveredDelta = allocator.payments_recovered - baseline.payments_recovered
+
   return (
     <div className="space-y-6">
+      <p className="text-sm text-slate-700">
+        The finding: spending the same 3-attempt budget by cause instead of on a fixed schedule uses{' '}
+        <strong>{attemptsSavedPct}% fewer retry attempts</strong> and wastes <strong>zero</strong> of them on payments that could never
+        have succeeded (baseline wastes {baseline.attempts_wasted_on_unrecoverable_causes}) - the honest caveat is it does{' '}
+        {recoveredDelta >= 0 ? 'also recover more payments' : `not recover more raw payments at these settings (${Math.abs(recoveredDelta)} fewer)`},
+        and the sensitivity sweep below shows exactly when and why.
+      </p>
       <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
         Simulation study, not a live-payments measurement: test-mode outcomes are authored by a frozen, declared success model
         (eval/outcome_model.py), never seen by the allocator. This measures whether the allocator spends a scarce budget well under a
