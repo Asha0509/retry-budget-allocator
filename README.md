@@ -5,6 +5,9 @@
 [![CI](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml)
 98% test coverage on `pipeline/` (279 tests total across `pipeline/`, `eval/`, and `api/`, `pytest --cov=pipeline`) — enforced in CI on every push.
 
+![Live Simulator, landing state](docs/images/live-simulator.png)
+![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
+
 ## The problem
 
 When a UPI AutoPay recurring payment fails, Razorpay's controlled flow hands
@@ -69,6 +72,19 @@ against a declared outcome model — not a field measurement of anything.
 - [docs/prd.md](docs/prd.md) — full specification and verified sources
 - [docs/build-log.md](docs/build-log.md) — what broke during the build and how it was fixed
 - [docs/pitch-script.md](docs/pitch-script.md) — 5-minute pitch video beat sheet
+
+## Repo layout
+
+    pipeline/   the 7-stage decision engine (Sec 4) - classify, priors,
+                funding window, allocate, decision, explain
+    eval/       frozen outcome model, baseline, batch harness, sensitivity
+                sweep (Sec 5) - never imported by pipeline/
+    api/        FastAPI backend for the dashboard's Live Simulator tab
+    dashboard/  React + Tailwind UI - Live Simulator, Story, Decision
+                Trace, Batch Results
+    data/       fixtures (Sec 5.0 provenance) and saved run artifacts
+    docs/       results, architecture, build log, PRD, pitch script
+    tests/      one test file per pipeline/eval/api module
 
 ## Setup
 
