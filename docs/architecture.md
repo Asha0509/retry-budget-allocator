@@ -167,6 +167,40 @@ just a convention: `tests/test_outcome_model_isolation.py` parses every
 file under `pipeline/` with Python's `ast` module and fails the build if
 any import statement references `outcome_model`.
 
+## The live simulator (PRD Sec 6.2's opt-in "live mode")
+
+Every other view in the dashboard reads a pre-computed JSON file. The Live
+Simulator tab is the one exception, and it exists specifically so a viewer
+can trigger genuine computation instead of trusting a static screenshot -
+PRD Sec 6.2 requires exactly this: "a live mode exists but is opt-in, for
+showing the real integration when the network cooperates."
+
+**Architecture:** `api/main.py` is a small FastAPI process (`uvicorn
+api.main:app --port 8000`) that exposes `POST /api/simulate` over HTTP so
+the browser can call it. It does not reimplement any decision logic - it
+calls the exact same functions the batch harness calls:
+`pipeline.ingest.run_ingestion`, `pipeline.run.run_pipeline` (Stages 2-6),
+`pipeline.explain.run_explanation` (Stage 7, real LLM call with its
+existing disk-cache-free live fallback), and `eval.baseline.baseline_decide`
+for the comparison shown alongside. `api/personas.py` holds four named
+demo scenarios, each built from a real fixture in `data/fixtures/` - not
+invented payloads.
+
+**What it deliberately does NOT do:** call `eval/outcome_model.py`. A live
+run produces a `RecoveryDecision` - a classification and a choice - never a
+simulated recovered/not-recovered result. Simulating an outcome would mean
+importing the frozen outcome model into a live-facing path, which is
+exactly the circularity Sec 5.1 isolates the allocator from. The dashboard's
+Story/Decision Trace views were built to always show a simulated outcome
+(`payment.allocator.recovered`, etc.); reusing them for live results meant
+teaching them to render an honest "no outcome to show - a live decision
+doesn't simulate whether a debit succeeds" state instead of fabricating
+one, rather than bypassing that check.
+
+**Never touches the real Razorpay API.** The only external call anywhere in
+this path is the same Stage 7 LLM call every other part of the pipeline
+already makes, subject to the same try/except fallback.
+
 ## Design trade-offs - considered and rejected
 
 Three specific decisions, framed as what else was on the table and why it
