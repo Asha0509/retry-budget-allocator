@@ -28,7 +28,6 @@ from pydantic import BaseModel, Field
 
 from api.personas import PERSONAS, get_persona, load_fixture_error
 from eval.baseline import baseline_decide
-from pipeline.classify import classify_cause
 from pipeline.compliance import IST
 from pipeline.explain import run_explanation
 from pipeline.ingest import run_ingestion
@@ -144,7 +143,7 @@ def simulate(req: SimulateRequest) -> SimulateResponse:
     explanation, explain_trace = run_explanation(decision)
     stage_traces = [ingest_trace, *stage_traces, explain_trace]
 
-    cause = classify_cause(event.error).cause
+    cause = decision.cause
     baseline = baseline_decide(cause, event.failure_time, event.attempts_used)
     decisions_differ = decision.action != baseline.action or decision.scheduled_at != baseline.scheduled_at
 
