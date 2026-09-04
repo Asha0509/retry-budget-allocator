@@ -72,12 +72,21 @@ outcome model, not a field measurement.
 
 ## Dashboard
 
-Three views (Story, Decision Trace, Batch Results) over a saved run
-artifact - reads static files only, no live API calls (PRD Sec 6.2).
+Four views: a **Live Simulator** (opt-in live mode, PRD Sec 6.2 - calls the
+real pipeline through a small local API, never the real Razorpay API), plus
+Story, Decision Trace, and Batch Results, which read a saved run artifact -
+static files only, no live calls (the batch study stays fixed and
+pre-computed either way).
 
+    # terminal 1 - backend for the Live Simulator tab
+    source .venv/bin/activate
+    uvicorn api.main:app --reload --port 8000
+
+    # terminal 2 - dashboard
     cd dashboard
     npm install
     npm run dev
 
-See [dashboard/README.md](dashboard/README.md) for how to refresh the data
-after a new batch run.
+The other three tabs work fine without the backend running - only Live
+Simulator needs it. See [dashboard/README.md](dashboard/README.md) for how
+to refresh the batch data after a new run.
