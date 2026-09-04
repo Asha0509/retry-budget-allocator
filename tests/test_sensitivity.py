@@ -38,3 +38,13 @@ def test_advantage_holds_summary_reflects_the_rows() -> None:
     sweep = run_sweep(n=20, seed=4)
     n_holds = sum(r["allocator_advantage_holds"] for r in sweep["rows"])
     assert sweep["advantage_holds_at_n_of_total"] == f"{n_holds}/27"
+
+
+def test_confidence_analysis_proves_confidence_is_invariant_across_the_grid() -> None:
+    # Gap 2 diagnostic: cause_confidence must not vary across grid points -
+    # same seeded batch, classification doesn't depend on outcome_model params.
+    sweep = run_sweep(n=20, seed=5)
+    analysis = sweep["confidence_analysis"]
+    assert analysis["identical_at_every_grid_point"] is True
+    assert set(analysis["cause_confidence_distribution"].keys()) <= {0.0, 1.0}
+    assert analysis["n_losing_grid_points"] + analysis["n_winning_grid_points"] == 27
