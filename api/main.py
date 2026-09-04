@@ -24,7 +24,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api.personas import PERSONAS, get_persona, load_fixture_error
 from eval.baseline import baseline_decide
@@ -51,12 +51,12 @@ app.add_middleware(
 
 class SimulateRequest(BaseModel):
     persona: str | None = None
-    amount: int | None = None
-    prior_debit_day_of_month: int | None = None
-    n_prior_debits: int = 0
+    amount: int | None = Field(default=None, gt=0, description="paise - a failed debit can't be for zero or negative money")
+    prior_debit_day_of_month: int | None = Field(default=None, ge=1, le=28)
+    n_prior_debits: int = Field(default=0, ge=0, le=24)
     cause: str | None = None  # a FailureCause value - looks up the matching real fixture
     raw_error: dict | None = None  # user-pasted raw JSON, takes precedence over `cause`
-    attempts_used: int = 0
+    attempts_used: int = Field(default=0, ge=0, le=3)
 
 
 class SimulateResponse(BaseModel):

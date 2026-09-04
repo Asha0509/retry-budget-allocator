@@ -114,6 +114,26 @@ def test_simulate_invalid_cause_value_returns_400(client) -> None:
     assert resp.status_code == 400
 
 
+def test_simulate_rejects_nonpositive_amount(client) -> None:
+    # A failed debit can't be for zero or negative money - a skeptical
+    # reviewer trying to break the form should get a clean 422, not a
+    # decision computed over nonsense.
+    resp = client.post("/api/simulate", json={"cause": "insufficient_funds", "amount": -500})
+    assert resp.status_code == 422
+    resp = client.post("/api/simulate", json={"cause": "insufficient_funds", "amount": 0})
+    assert resp.status_code == 422
+
+
+def test_simulate_rejects_malformed_raw_error_type(client) -> None:
+    resp = client.post("/api/simulate", json={"raw_error": "not a dict"})
+    assert resp.status_code == 422
+
+
+def test_simulate_rejects_out_of_range_attempts_used(client) -> None:
+    resp = client.post("/api/simulate", json={"cause": "bank_technical", "attempts_used": 4})
+    assert resp.status_code == 422
+
+
 def test_degraded_explanation_is_visible_in_the_response(client, monkeypatch: pytest.MonkeyPatch) -> None:
     def _failing_explanation(decision):
         result = ExplanationResult(
