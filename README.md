@@ -8,12 +8,14 @@
 ![Live Simulator, landing state](docs/images/live-simulator.png)
 ![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
 
-**[docs/video/dashboard-walkthrough.webm](docs/video/dashboard-walkthrough.webm)**
-— silent screen capture (3:56, no narration) of every tab and option: all
-four Live Simulator personas plus the custom form in both cause-dropdown
-and raw-JSON modes, two payments each on Story and Decision Trace, and a
-full scroll through Batch Results. Raw walkthrough footage for a pitch
-script to be recorded over, not the final pitch video itself.
+**[docs/video/dashboard-walkthrough.mp4](docs/video/dashboard-walkthrough.mp4)**
+— narrated screen capture (5:10) of every tab and option: all four Live
+Simulator personas plus the custom form in both cause-dropdown and
+raw-JSON modes, two payments each on Story and Decision Trace, and a full
+scroll through Batch Results. Voiceover explains the architecture, the
+workflow, and the reasoning behind each decision, timed to what's on
+screen. Machine-narrated walkthrough footage, not the final human-recorded
+pitch video.
 
 ## The problem
 
