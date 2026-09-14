@@ -10,18 +10,26 @@ live test API; the batch replays that exact schema at volume."
   recurring mandate) both succeed against the live API — see
   `_capture_attempts.json` for the actual `customer_id`/`order_id`
   responses.
-- Every `/payments/create/*` route (`create/upi`, `create/recurring`,
-  `create/json`) returns `400 BAD_REQUEST_ERROR - "The requested URL was not
-  found on the server."` for this account, and does so consistently across
-  every variant tried (UPI collect, UPI intent, recurring-token charge).
-  That's still a useful capture: it's the confirmed shape of Razorpay's
-  structured error object (`code`/`description`/`source`/`step`/`reason`/
-  `metadata`), taken directly from a live response.
+- The one documented S2S creation route for UPI collect,
+  `POST /payments/create/upi`, returns `400 BAD_REQUEST_ERROR - "The
+  requested URL was not found on the server."` — a 404-shaped rejection,
+  and the actual evidence for gating below.
+- Two other paths were also tried (`POST /payments`, `POST
+  /payments/create/ajax`) and both returned `401 - "Authentication
+  failed"`, a different status and a different error shape. **That is not
+  further evidence of gating** — a 401 means the route exists and is
+  reachable, it's just rejecting server-side Basic Auth, which is normal
+  Razorpay behavior for routes that aren't meant to be called this way
+  (they expect a checkout.js-generated payment + signature, not a raw
+  server POST). An earlier version of this doc collapsed all three results
+  into "a consistent 400... across every plausible route," which
+  overstated what was actually captured — corrected against the raw
+  `_capture_attempts.json` records rather than the prior summary of them.
 
-**Finding:** headless S2S creation of a UPI AutoPay mandate/charge is gated
-off for this test account. Ruled out a wrong-endpoint guess first — the
-same 404 shape shows up across every plausible route — and it lines up
-with an independent published statement that UPI recurring via
+**Finding:** headless S2S creation of a UPI AutoPay mandate/charge via the
+one documented collect route is gated off for this test account, evidenced
+by exactly one 404-shaped rejection, not three. That single result still
+lines up with an independent published statement that UPI recurring via
 Collect/Intent "is an on-demand feature that requires requesting activation
 from the Razorpay Support team." Requesting that activation and waiting on
 it was out of scope for this build window (PRD Sec 5.0 anticipates exactly

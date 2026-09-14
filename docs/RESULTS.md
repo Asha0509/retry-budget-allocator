@@ -191,11 +191,15 @@ it.
 
 - Live Razorpay S2S UPI AutoPay integration (Sec 5.0 integration tier) is
   gated behind a Razorpay Support activation this test account doesn't
-  have - confirmed via 4 independent live probes (customer/order creation
-  succeed, every `/payments/create/*` route 404s) and an independent
-  published source. `data/fixtures/*.json` comes from Razorpay's own
-  published error-code documentation instead, labeled by provenance in
-  `data/fixtures/README.md`.
+  have - confirmed via 4 live probes (customer/order creation succeed, the
+  one documented UPI-collect creation route 404s) and an independent
+  published source. Two other, non-canonical payment routes were also
+  tried and returned 401s, which is normal auth-rejection behavior on
+  routes not meant for server-side calls, not further gating evidence -
+  see `data/fixtures/README.md` for the precise breakdown, corrected there
+  against the raw captured records rather than an earlier summary of them.
+  `data/fixtures/*.json` comes from Razorpay's own published error-code
+  documentation instead, labeled by provenance in `data/fixtures/README.md`.
 - The allocator's first version repeated the same retry window on every
   attempt - caught by the sensitivity sweep showing implausibly good
   numbers, not by a unit test. See `docs/build-log.md`.
