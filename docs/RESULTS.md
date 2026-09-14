@@ -47,7 +47,7 @@ through why mechanically, plus a scoring-function fix made this session
 that moved the sensitivity sweep's advantage from 3/27 to 7/27 grid points.
 
 There's also a rupee figure worth putting on this, priced the same way the
-outcome model itself is declared rather than sourced (Section 6 has the
+outcome model itself is declared rather than sourced (Section 8 has the
 caveat in full): at an illustrative ₹20 per retry attempt (blended
 gateway/ops/support overhead for one attempted debit - nobody publishes a
 real figure for this, so substitute your own number if you have one; the
@@ -173,7 +173,57 @@ outcome model to per-customer variation. Both are legitimate future work,
 not something to patch in reaction to a sweep number that didn't move
 enough.
 
-## 5. Stop-decision precision
+## 5. The breakeven: what cost per attempt makes this worth it
+
+Section 2's headline leaves a real question unresolved: 46% fewer attempts
+against 17% fewer payments recovered. Fewer attempts and fewer recoveries
+are both true, and neither number by itself tells a merchant whether to
+use this. `eval/economics.py` answers a narrower, more useful question
+instead: **above what cost per retry attempt does the allocator's attempt
+savings outweigh its lower recovery?**
+
+Net value is recovered money minus money spent attempting
+(`amount_recovered - attempts_spent * cost_per_attempt`), computed for
+both policies from the same real batch numbers this whole document uses
+(`run_20260904T223013`, `eval/results/economics.json`). The cost side is
+never one buried number - three components are declared separately,
+because none of them is authoritative and a reader should be able to
+swap in their own:
+
+| Component | Illustrative value | Why |
+|---|---|---|
+| Gateway/processing overhead | ₹20 / attempt | Same figure Section 2 already uses for its simpler one-sided calculation - kept consistent rather than inventing a second number. |
+| Mandatory pre-debit notification (PRD Sec 2 requires one ≥24h before every attempt) | ₹0.50 / attempt | A transactional SMS/push in India typically runs a few paise to roughly a rupee - a round middle, not a quote. |
+| Expected cost of customer annoyance leading to mandate revocation | 1% probability × ₹2,000 lifetime value = ₹20 / attempt | The least certain component by far - both the probability and the lifetime-value figure are guesses. A merchant with real mandate-churn data should replace both, not just the product. |
+| **Total (default)** | **₹40.50 / attempt** | |
+
+**Breakeven: ₹157.23 per attempt.** Above that cost, the allocator wins on
+net value; below it, baseline wins, because the extra ₹10,063 baseline
+recovers in this batch outweighs a low per-attempt cost more than the
+allocator's 64 fewer attempts save. At the illustrative default of ₹40.50,
+**baseline currently wins on net value** - stated plainly, not tuned away.
+This is the honest form of the question: not "does the allocator win," but
+"at what cost per attempt would it."
+
+| Cost per attempt | Baseline net value | Allocator net value | Allocator wins on money |
+|---|---|---|---|
+| ₹5 | ₹80,165 | ₹70,422 | No |
+| ₹20 (default gateway cost alone) | ₹78,095 | ₹69,312 | No |
+| ₹40.50 (default, all 3 components) | ₹75,266 | ₹67,795 | No |
+| ₹100 | ₹67,055 | ₹63,392 | No |
+| ₹150 | ₹60,155 | ₹59,692 | No |
+| **₹157.23 (breakeven)** | **₹59,157** | **₹59,157** | **Crosses here** |
+| ₹200 | ₹53,255 | ₹55,992 | Yes |
+| ₹300 | ₹39,455 | ₹48,592 | Yes |
+| ₹500 | ₹11,855 | ₹33,792 | Yes |
+
+A reader can answer "should I use this?" from this table alone: estimate
+your own blended cost per attempt (the annoyance-cost component is the one
+most worth replacing with real data), find where it falls, read off the
+winner. Reproduce with `python -m eval.economics`, or call
+`eval.economics.run_economics()` with your own `AttemptCostAssumptions`.
+
+## 6. Stop-decision precision
 
 Of the payments the allocator stopped or notified instead of retrying (17
 of 60), 82% were genuinely unrecoverable under the frozen model. The other
@@ -187,7 +237,7 @@ Baseline never stops early by design (it's the naive comparator, retrying
 regardless of cause), so there's no stop-decision precision to report for
 it.
 
-## 6. What did not work
+## 7. What did not work
 
 - Live Razorpay S2S UPI AutoPay integration (Sec 5.0 integration tier) is
   gated behind a Razorpay Support activation this test account doesn't
@@ -221,15 +271,18 @@ it.
   committed since the first scaffold commit. Found and fixed mid-build;
   see `docs/build-log.md`.
 
-## 7. Limitations
+## 8. Limitations
 
 - **Simulation study, not a field measurement.** Every number above is
   scored against `eval/outcome_model.py`, a declared model of the world,
   not observed customer behavior. See Section 1.
-- **The ₹20-per-attempt figure in Section 2 is a declared illustration,
-  not sourced data.** No public cost-per-retry-attempt figure exists for
-  UPI AutoPay; the arithmetic (attempts saved times cost) is what's meant
-  to be reused, not the constant itself.
+- **The ₹20-per-attempt figure in Section 2, and all three cost
+  components in Section 5's breakeven, are declared illustrations, not
+  sourced data.** No public cost-per-retry-attempt figure exists for UPI
+  AutoPay, and the customer-annoyance-to-revocation probability and
+  lifetime-value figures in Section 5 are the least certain numbers in
+  this entire document - the arithmetic (net value, breakeven) is what's
+  meant to be reused, not any of the constants themselves.
 - **Failure mix is modelled, not observed.** `eval/batch_generator.py`'s
   `CAUSE_MIX` (55% insufficient_funds, etc.) is grounded in PRD Sec 2's
   dominance ordering, not a published exact breakdown - Razorpay doesn't

@@ -64,6 +64,14 @@ it's structural. Baseline's dense 3-day schedule out-samples the
 allocator's wider, PRD-mandated 24h/72h/7d schedule whenever a customer's
 funding event lands early.
 
+That leaves a real question unresolved by either number alone: priced in
+rupees per retry attempt (gateway cost, mandatory pre-debit notification,
+and the risk-weighted cost of a customer revoking the mandate out of
+annoyance — `docs/RESULTS.md` Section 5), the allocator only wins on net
+money above **₹157.23 per attempt** — below that, baseline's extra
+recovered revenue outweighs its higher attempt spend. That's the actual
+decision rule, not a verdict either way.
+
 **[docs/RESULTS.md](docs/RESULTS.md)** has the full numbers: the outcome
 model (stated before any result, as it should be), the per-cause breakdown,
 the sensitivity sweep, and what didn't work. Read it as a simulation study

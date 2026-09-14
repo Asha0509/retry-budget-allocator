@@ -1,0 +1,68 @@
+{
+  "assumptions": {
+    "gateway_cost_rupees": 20.0,
+    "notification_cost_rupees": 0.5,
+    "annoyance_revocation_probability_per_attempt": 0.01,
+    "customer_lifetime_value_rupees": 2000.0,
+    "expected_annoyance_cost_rupees": 20.0,
+    "total_rupees": 40.5
+  },
+  "breakeven_cost_per_attempt_rupees": 157.23,
+  "breakeven_note": "above this cost per attempt, the allocator wins on net money despite recovering fewer payments (attempt savings outweigh lost recovery); below it, baseline wins on net money (recovering more payments outweighs its higher attempt spend).",
+  "sweep": [
+    {
+      "cost_per_attempt_rupees": 5.0,
+      "baseline_net_value_rupees": 80164.57,
+      "allocator_net_value_rupees": 70421.58,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 20.0,
+      "baseline_net_value_rupees": 78094.57,
+      "allocator_net_value_rupees": 69311.58,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 50.0,
+      "baseline_net_value_rupees": 73954.57,
+      "allocator_net_value_rupees": 67091.58,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 100.0,
+      "baseline_net_value_rupees": 67054.57,
+      "allocator_net_value_rupees": 63391.58,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 150.0,
+      "baseline_net_value_rupees": 60154.57,
+      "allocator_net_value_rupees": 59691.58,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 157.23,
+      "baseline_net_value_rupees": 59156.83,
+      "allocator_net_value_rupees": 59156.56,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 200.0,
+      "baseline_net_value_rupees": 53254.57,
+      "allocator_net_value_rupees": 55991.58,
+      "allocator_wins_on_money": true
+    },
+    {
+      "cost_per_attempt_rupees": 300.0,
+      "baseline_net_value_rupees": 39454.57,
+      "allocator_net_value_rupees": 48591.58,
+      "allocator_wins_on_money": true
+    },
+    {
+      "cost_per_attempt_rupees": 500.0,
+      "baseline_net_value_rupees": 11854.57,
+      "allocator_net_value_rupees": 33791.58,
+      "allocator_wins_on_money": true
+    }
+  ]
+}
