@@ -1,52 +1,73 @@
 # Retry Budget Allocator
 
-**Razorpay AI Buildathon 2026 — Track 3: AI Revenue Recovery**
-
-[![CI](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml)
-98% test coverage on `pipeline/` (279 tests total across `pipeline/`, `eval/`, and `api/`, `pytest --cov=pipeline`) — enforced in CI on every push.
+A fixed retry schedule treats a failed UPI AutoPay payment as a scheduling
+problem — retry on day 1, day 2, day 3, and hope. It isn't one. NPCI caps a
+merchant at exactly 3 retry attempts per mandate, never inside a peak
+window, one successful debit per billing cycle. That budget doesn't renew
+and it doesn't scale with how many payments fail. Three non-renewable
+attempts, spent without knowing in advance which failures can even be
+recovered, is a constrained allocation problem — and a fixed schedule that
+ignores *why* a payment failed is the wrong tool for it.
 
 ![Live Simulator, landing state](docs/images/live-simulator.png)
 ![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
 
 **[docs/video/Pitch_Razorpay_Buildathon.mp4](docs/video/Pitch_Razorpay_Buildathon.mp4)**
-(2:57) — the pitch video: problem, architecture, a live demo through the
-dashboard, and the honest results.
+(2:57) — problem, architecture, a live demo through the dashboard, and the
+honest results.
 
-## The problem
+Three compliance invariants — never more than 3 attempts, never inside a
+peak window, never more than one successful debit per cycle — are asserted
+structurally in `pipeline/compliance.py`, checked in tests, and re-run live
+against the batch in the dashboard's own browser code. That's a falsifiable
+claim: "compliant" here means an assertion that fails loudly if violated,
+not a label.
 
-When a UPI AutoPay recurring payment fails, Razorpay's controlled flow hands
-retry responsibility back to the merchant. Its own S2S documentation says as
-much: no automatic retry is attempted, and the merchant has to retry
-manually.
+[![CI](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml)
+98% test coverage on `pipeline/`, enforced in CI on every push — a weaker
+signal than the invariants above, since it measures whether lines
+executed, not whether the logic is correct, but it's there too.
 
-That leaves the merchant with a hard budget of three NPCI-permitted retry
-attempts, restricted to non-peak windows, with only one successful debit
-allowed per billing cycle.
+## Why a fixed schedule gets this wrong
 
-Most merchants spend that budget on a fixed schedule that ignores *why* the
-payment failed. An expired or revoked mandate consumes attempts it can never
-convert. An insufficient-balance failure — the dominant cause, behind
-roughly 20 million AutoPay revocations a month — burns through all three
-attempts within days, often before the customer's account is funded again.
+Razorpay's own S2S documentation is explicit: when a controlled UPI
+AutoPay payment fails, there's no automatic retry — the merchant decides
+what happens next. Most merchants decide once, with a schedule, not a
+policy: retry on a fixed cadence regardless of cause.
 
-It's a constrained allocation problem, not a scheduling one: a small,
-regulated, non-renewable budget of interventions, spent without knowing in
-advance which failures are even recoverable.
+That's wrong in two specific, checkable ways:
+
+- **It spends attempts a cause can never convert.** An expired or revoked
+  mandate has nothing to retry against — no amount of well-timed retrying
+  fixes it. A fixed schedule burns all 3 attempts on it anyway, because it
+  never asked why the payment failed in the first place.
+- **It ignores timing that actually matters.** An insufficient-balance
+  failure — the dominant cause, behind roughly 20 million AutoPay
+  revocations a month — is recoverable, but only once the account is
+  funded. Retrying blind, before that happens, wastes the attempt.
+
+Neither failure is a scheduling bug. They're both the direct cost of
+treating a small, regulated, non-renewable intervention budget as a
+calendar problem instead of an allocation one.
 
 ## What this builds
 
-A decision layer that classifies the failure cause, chooses between
-notifying, retrying at a specific compliant time, or stopping early, and
-records why each decision was made.
+A decision layer that classifies the failure cause, then chooses between
+notifying the customer, retrying at a specific compliant time, or stopping
+early — and records why each decision was made, not just what it was.
 
 - **Deterministic where it should be** — cause classification is a lookup
-  over the real Razorpay error object, not a model call.
+  over the real Razorpay error object, not a model call. The failure
+  taxonomy is small and fully known; a model here would add latency and a
+  new failure mode for no benefit.
 - **AI where it earns its place** — an LLM writes the plain-language
   reasoning and customer notification copy, and has no say in whether a
-  retry happens.
-- **Compliance proven, not claimed** — invariants (max 3 attempts, no
-  peak-window scheduling, one debit per cycle) are asserted in tests and
-  re-run live against the batch.
+  retry happens. An API outage degrades the explanation text, never the
+  decision.
+- **Every scored candidate kept, not just the winner** — the allocator
+  returns all candidate retry windows with their scores and rejection
+  reasons, so the reasoning behind a decision is inspectable, not just its
+  conclusion.
 
 ## Results
 
@@ -69,13 +90,79 @@ rupees per retry attempt (gateway cost, mandatory pre-debit notification,
 and the risk-weighted cost of a customer revoking the mandate out of
 annoyance — `docs/RESULTS.md` Section 5), the allocator only wins on net
 money above **₹157.23 per attempt** — below that, baseline's extra
-recovered revenue outweighs its higher attempt spend. That's the actual
-decision rule, not a verdict either way.
+recovered revenue outweighs its higher attempt spend. At the illustrative
+default cost (₹40.50/attempt), baseline currently wins on net value. That's
+the actual decision rule this hands a reader, not a verdict either way.
 
 **[docs/RESULTS.md](docs/RESULTS.md)** has the full numbers: the outcome
 model (stated before any result, as it should be), the per-cause breakdown,
-the sensitivity sweep, and what didn't work. Read it as a simulation study
-against a declared outcome model — not a field measurement of anything.
+the sensitivity sweep, the breakeven, and what didn't work.
+
+## What's real and what's simulated
+
+Stated plainly, because the two are easy to blur and shouldn't be:
+
+- **Real:** the pipeline itself runs live in the dashboard's Live
+  Simulator tab — every stage executes against whatever payment you build
+  or pick, through a small local FastAPI backend, with real per-stage
+  timing. The compliance checks are real assertions, not display copy.
+  Contact with Razorpay's live test API is real too: customer and order
+  creation succeed against it, and the one documented S2S UPI-collect
+  creation route (`/payments/create/upi`) returns a real, captured 404 —
+  evidence that headless mandate creation is gated behind a Razorpay
+  Support activation this account doesn't have. See
+  `data/fixtures/README.md` for the precise breakdown of what was tested
+  and what each result actually shows (an earlier version of that doc
+  overstated it; corrected against the raw captured records).
+- **Simulated:** whether a scheduled retry actually succeeds is never
+  observed — it's drawn from `eval/outcome_model.py`, a model this project
+  authored and froze before any allocator logic was tuned, specifically so
+  the comparison against it isn't circular. Every headline number (46%
+  fewer attempts, 29 vs 35 recovered, the ₹157.23 breakeven) is a
+  simulation study against that declared model, not a field measurement.
+  The 7 cause fixtures used to build realistic error payloads are a mix of
+  Razorpay's own published error-code documentation and, for 3 causes
+  Razorpay doesn't document a dedicated error reason for, an inferred
+  best-guess from token-lifecycle behavior — labeled by provenance in
+  `data/fixtures/README.md`.
+
+## Known gaps
+
+Specific enough to act on, not hedged into meaninglessness:
+
+- **The outcome model is authored, not observed.** No real success/failure
+  data backs any number in this repo. Closing this needs real outcome
+  data from actual retry attempts, which needs the Razorpay Support
+  activation above — a real, likely-slow prerequisite, not a code fix.
+- **The headline batch is one seed.** 29 vs 35, 74 vs 138, and the ₹157.23
+  breakeven all come from `seed=42`. The sensitivity sweep varies the
+  outcome model's *parameters* across 27 settings, but never re-draws the
+  batch itself from a different seed — so the headline hasn't been checked
+  for how much it'd move on a different random draw of the same 60
+  payments.
+- **The classifier's lookup table doesn't cover the real error-code
+  space.** `pipeline/classify.py` matches roughly a dozen documented
+  `reason` strings; anything else falls to `unknown` and gets a
+  conservative notify, never a blind retry — safe, but real recoverable
+  causes outside the table read as unclassifiable and get treated more
+  cautiously than they need to be.
+- **A money-path input-validation audit found and fixed one real bug**
+  (`docs/build-log.md`, 2026-09-14): `attempts_used` indexed a ranked
+  candidate list with no bounds check, so a negative value silently picked
+  the worst-scored window instead of erroring. That instance is fixed and
+  tested now, but the audit that found it was manual and one pass, not an
+  automated or exhaustive sweep of every function on the money path —
+  other unvalidated inputs may still exist unaudited.
+- **The funding-window inference (Stage 4) has a narrow ceiling by
+  design.** Even at high confidence, it can only re-rank the 3 fixed
+  24h/72h/7d offsets — it can't schedule at the actually-inferred day if
+  that falls between them. `docs/RESULTS.md` Section 4 has the full
+  diagnosis.
+- **The cost-per-attempt breakeven rests on two genuinely guessed
+  numbers.** The customer-annoyance-to-mandate-revocation probability and
+  the customer-lifetime-value figure in `eval/economics.py` are the least
+  certain inputs in this repo — swap them for real numbers before trusting
+  the ₹157.23 figure for an actual decision.
 
 ## Docs
 
@@ -89,12 +176,13 @@ against a declared outcome model — not a field measurement of anything.
     pipeline/   the 7-stage decision engine (Sec 4) - classify, priors,
                 funding window, allocate, decision, explain
     eval/       frozen outcome model, baseline, batch harness, sensitivity
-                sweep (Sec 5) - never imported by pipeline/
+                sweep, cost-per-attempt breakeven (Sec 5) - never imported
+                by pipeline/
     api/        FastAPI backend for the dashboard's Live Simulator tab
     dashboard/  React + Tailwind UI - Live Simulator, Story, Decision
                 Trace, Batch Results
     data/       fixtures (Sec 5.0 provenance) and saved run artifacts
-    docs/       results, architecture, build log, PRD, pitch script
+    docs/       results, architecture, build log, PRD
     tests/      one test file per pipeline/eval/api module
 
 ## Setup
@@ -106,11 +194,11 @@ against a declared outcome model — not a field measurement of anything.
 
 ## Dashboard
 
-Four tabs. A Live Simulator (PRD Sec 6.2's opt-in live mode — calls the real
-pipeline through a small local API, never the real Razorpay API), plus
-Story, Decision Trace, and Batch Results, which read from a saved run
-artifact: static files only, no live calls. The batch study itself stays
-fixed and pre-computed either way.
+Four tabs. A Live Simulator (opt-in live mode — calls the real pipeline
+through a small local API, never the real Razorpay API), plus Story,
+Decision Trace, and Batch Results, which read from a saved run artifact:
+static files only, no live calls. The batch study itself stays fixed and
+pre-computed either way.
 
     # terminal 1 - backend for the Live Simulator tab
     source .venv/bin/activate
@@ -124,3 +212,31 @@ fixed and pre-computed either way.
 The other three tabs work fine without the backend running; only Live
 Simulator needs it. See [dashboard/README.md](dashboard/README.md) for how
 to refresh the batch data after a new run.
+
+## Authorship
+
+This codebase was built by an AI coding assistant working from written
+specifications, directed and reviewed by a human throughout rather than
+run autonomously — every non-trivial design decision (the compliance
+invariants, the outcome-model isolation rule, when to flag a gap instead
+of silently building around it) was specified or checked before being
+built, not generated and accepted unread.
+
+The files where a subtle bug would be a money bug —
+`pipeline/allocator.py`, `pipeline/compliance.py`, `pipeline/priors.py`,
+`pipeline/classify.py`, `eval/baseline.py`, `eval/economics.py`, and the
+Pydantic validation in `pipeline/ingest.py` — got the heaviest scrutiny of
+anything in the repo, including a dedicated adversarial-input audit that
+found and fixed a real fail-open bug in this pass (`docs/build-log.md`,
+2026-09-14: negative `attempts_used` silently picked the worst-scored
+retry window instead of erroring). That review is real and repeatable —
+the regression tests it produced are in `tests/`, not just the fix.
+
+`CLAUDE.md`, kept in the repo rather than deleted once the build finished,
+is the actual record of what the assistant was and wasn't permitted to
+decide on its own: hard constraints that could not be silently reinterpreted,
+claims that were checked against Sec 2's sources and banned once found
+false or overstated, and the standing instruction to flag a conflict or a
+gap explicitly rather than build the disallowed thing quietly. It's a
+record of judgment calls made during the build, not a boilerplate config
+file.
