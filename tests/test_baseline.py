@@ -50,6 +50,15 @@ def test_never_schedules_in_a_peak_window() -> None:
         assert rejected[0].rejected_reason == "peak_window"
 
 
+@pytest.mark.parametrize("bad_attempts_used", [-1, -5, MAX_RETRY_ATTEMPTS + 1, MAX_RETRY_ATTEMPTS + 5])
+def test_out_of_range_attempts_used_fails_loud_not_open(bad_attempts_used: int) -> None:
+    # Same bug class as pipeline.allocator.allocate() (docs/build-log.md):
+    # attempts_used indexes _DAY_OFFSETS_HOURS directly, so a negative value
+    # would silently wrap around to the wrong offset instead of erroring.
+    with pytest.raises(ValueError, match="outside the compliant range"):
+        baseline_decide(FailureCause.INSUFFICIENT_FUNDS, _dt("08:00"), attempts_used=bad_attempts_used)
+
+
 def test_requires_timezone_aware_failure_time() -> None:
     naive = datetime(2026, 9, 3, 8, 0)  # noqa: DTZ001 - deliberately naive, testing rejection
     with pytest.raises(ValueError, match="timezone-aware"):

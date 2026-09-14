@@ -10,8 +10,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from pipeline.compliance import MAX_RETRY_ATTEMPTS
 from pipeline.models import RazorpayError, StageTrace, run_stage
 
 
@@ -22,10 +23,15 @@ class FailedPaymentEvent(BaseModel):
     payment_id: str
     token_id: str
     customer_id: str
-    amount: int  # smallest currency unit (paise), matches Razorpay convention
+    amount: int = Field(gt=0)  # smallest currency unit (paise), matches Razorpay convention
     currency: str = "INR"
     error: RazorpayError
-    attempts_used: int
+    # attempts_used indexes directly into ranked candidate lists downstream
+    # (pipeline.allocator.allocate, eval.baseline.baseline_decide) - bounding
+    # it here, at the actual ingestion boundary, is what makes this
+    # docstring's "fails loudly at the boundary" claim true for this field
+    # rather than aspirational.
+    attempts_used: int = Field(ge=0, le=MAX_RETRY_ATTEMPTS)
     failure_time: datetime
     billing_cycle_successes: int = 0
     prior_debit_dates: list[datetime] = []  # Stage 4 input (PRD Sec 4) - customer's past successful debits

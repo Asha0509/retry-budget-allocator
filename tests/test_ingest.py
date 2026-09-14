@@ -31,6 +31,32 @@ def test_ingest_rejects_malformed_event() -> None:
         ingest(bad)
 
 
+@pytest.mark.parametrize("bad_amount", [0, -1, -50000])
+def test_ingest_rejects_non_positive_amount(bad_amount: int) -> None:
+    # Absent/malformed money data must fail at Stage 1, not flow downstream
+    # into amount_recovered arithmetic as a silently negative or zero figure.
+    bad = dict(_VALID_RAW, amount=bad_amount)
+    with pytest.raises(ValidationError):
+        ingest(bad)
+
+
+@pytest.mark.parametrize("bad_attempts_used", [-1, -5, 4, 100])
+def test_ingest_rejects_out_of_range_attempts_used(bad_attempts_used: int) -> None:
+    # Regression test (docs/build-log.md): this field used to have no bound
+    # at the ingestion boundary at all, despite this module's own docstring
+    # claiming malformed events fail loudly here.
+    bad = dict(_VALID_RAW, attempts_used=bad_attempts_used)
+    with pytest.raises(ValidationError):
+        ingest(bad)
+
+
+def test_ingest_accepts_attempts_used_at_cap_boundary() -> None:
+    # 3 is valid at ingestion (budget fully spent, not an invalid value) -
+    # the allocator decides "stop" for it, ingestion shouldn't reject it.
+    event = ingest(dict(_VALID_RAW, attempts_used=3))
+    assert event.attempts_used == 3
+
+
 def test_run_ingestion_returns_stage_trace() -> None:
     event, trace = run_ingestion(_VALID_RAW)
     assert event.payment_id == "pay_TEST001"

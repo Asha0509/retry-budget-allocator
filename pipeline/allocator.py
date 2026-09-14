@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from pipeline.compliance import (
     IST,
     MAX_RETRY_ATTEMPTS,
+    attempts_within_cap,
     is_peak_window,
     shift_out_of_peak,
 )
@@ -135,6 +136,15 @@ def allocate(
     """Stage 5: decide notify / retry-at-T / stop (PRD Sec 4)."""
     if failure_time.tzinfo is None:
         raise ValueError("allocate requires a timezone-aware failure_time")
+    if not attempts_within_cap(attempts_used):
+        # Fail loud, not open: attempts_used indexes directly into a ranked
+        # candidate list below (attempts_used=-1 would silently wrap around
+        # to the LAST, worst-scored candidate instead of erroring - a
+        # malformed input must never read as a valid decision on a money
+        # path). Caught here because allocate() is called directly by
+        # eval/harness.py and api/main.py, not only through ingest.py's own
+        # Field constraint on FailedPaymentEvent.attempts_used.
+        raise ValueError(f"attempts_used={attempts_used} is outside the compliant range 0-{MAX_RETRY_ATTEMPTS}")
 
     prior = get_prior(cause)
     attempts_remaining = max(MAX_RETRY_ATTEMPTS - attempts_used, 0)

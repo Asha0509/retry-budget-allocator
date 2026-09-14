@@ -17,6 +17,7 @@ from pipeline.allocator import AllocatorDecision, CandidateWindow
 from pipeline.compliance import (
     IST,
     MAX_RETRY_ATTEMPTS,
+    attempts_within_cap,
     is_peak_window,
     shift_out_of_peak,
 )
@@ -29,6 +30,11 @@ def baseline_decide(cause: FailureCause, failure_time: datetime, attempts_used: 
     """Fixed-schedule policy: always retry on the next of day 1/2/3, cause-agnostic."""
     if failure_time.tzinfo is None:
         raise ValueError("baseline_decide requires a timezone-aware failure_time")
+    if not attempts_within_cap(attempts_used):
+        # Same fail-loud guard as pipeline.allocator.allocate(): attempts_used
+        # indexes _DAY_OFFSETS_HOURS directly below, so a negative value would
+        # silently wrap around to the wrong offset instead of erroring.
+        raise ValueError(f"attempts_used={attempts_used} is outside the compliant range 0-{MAX_RETRY_ATTEMPTS}")
 
     attempts_remaining = max(MAX_RETRY_ATTEMPTS - attempts_used, 0)
     if attempts_remaining <= 0:

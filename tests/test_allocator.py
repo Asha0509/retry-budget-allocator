@@ -31,6 +31,17 @@ def test_afa_required_notifies_never_retries() -> None:
     assert decision.candidates == []
 
 
+def test_unknown_cause_notifies_never_spends_an_attempt_blind() -> None:
+    # The actual money-path answer to "what happens on an error code the
+    # classifier has never seen": FailureCause.UNKNOWN never reaches here as
+    # a retry. tests/test_classify.py covers that an unrecognized reason
+    # classifies to UNKNOWN; this is the downstream assertion that UNKNOWN
+    # then costs zero attempts rather than being spent on a blind guess.
+    decision = allocate(FailureCause.UNKNOWN, _dt("08:00"), attempts_used=0)
+    assert decision.action == "notify"
+    assert decision.candidates == []
+
+
 def test_insufficient_funds_with_budget_retries_and_returns_all_candidates() -> None:
     decision = allocate(FailureCause.INSUFFICIENT_FUNDS, _dt("08:00"), attempts_used=0)
     assert decision.action == "retry"
@@ -121,12 +132,22 @@ def test_attempt_order_follows_descending_score() -> None:
     assert scores == sorted(scores, reverse=True)
 
 
-def test_never_exceeds_attempt_cap_across_causes() -> None:
+def test_exhausted_budget_at_cap_boundary_stops_across_causes() -> None:
     for cause in FailureCause:
-        for attempts_used in range(MAX_RETRY_ATTEMPTS + 3):
-            decision = allocate(cause, _dt("08:00"), attempts_used=attempts_used)
-            if attempts_used >= MAX_RETRY_ATTEMPTS:
-                assert decision.action == "stop"
+        decision = allocate(cause, _dt("08:00"), attempts_used=MAX_RETRY_ATTEMPTS)
+        assert decision.action == "stop"
+
+
+@pytest.mark.parametrize("bad_attempts_used", [-1, -5, MAX_RETRY_ATTEMPTS + 1, MAX_RETRY_ATTEMPTS + 5])
+def test_out_of_range_attempts_used_fails_loud_not_open(bad_attempts_used: int) -> None:
+    # Regression test for a real bug (docs/build-log.md): attempts_used used
+    # to index directly into a ranked candidate list with no bounds check.
+    # A negative value silently wrapped around to the LAST (worst-scored)
+    # candidate via Python's negative indexing instead of erroring - a
+    # malformed/adversarial input must never read as a valid decision on a
+    # money path.
+    with pytest.raises(ValueError, match="outside the compliant range"):
+        allocate(FailureCause.INSUFFICIENT_FUNDS, _dt("08:00"), attempts_used=bad_attempts_used)
 
 
 def test_allocate_requires_timezone_aware_failure_time() -> None:
