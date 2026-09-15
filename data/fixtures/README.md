@@ -36,6 +36,20 @@ it was out of scope for this build window (PRD Sec 5.0 anticipates exactly
 this risk and says not to let it block the eval harness). Full evidence in
 `_capture_attempts.json`.
 
+**Re-verified 2026-09-15 with fresh credentials and a fourth, previously
+untried route** (`scripts/live_mandate_probe.py`, using the official SDK's
+`createRecurring`, which posts to `POST /payments/create/recurring` - never
+tried in the earlier probes above). Customer and order-with-token creation
+still succeed live. The authorization call still returns the identical
+`"The requested URL was not found on the server."`, tried with both
+`success@razorpay` and `failure@razorpay` (Razorpay's own documented
+test-mode VPAs) - same result either way. Full raw responses in
+`_live_mandate_probe.json`. Four distinct creation-style routes now tried
+across two sessions, all gated the same way - see `docs/build-log.md`,
+2026-09-15, for the cross-check against `pipeline/classify.py` and why the
+next step here is confirming activation status with Razorpay Support
+directly, not another endpoint guess.
+
 ## What's documentation-sourced (`insufficient_funds.json`, `bank_technical.json`, `afa_required.json`)
 
 Taken verbatim from Razorpay's own published error-code docs

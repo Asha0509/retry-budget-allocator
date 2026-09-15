@@ -1,0 +1,55 @@
+{
+  "customer": {
+    "id": "cust_TcCTjM0Q3ivxED",
+    "entity": "customer",
+    "name": "Retry Budget B3 Probe",
+    "email": "retrybudget.b3@example.com",
+    "contact": "9000090003",
+    "gstin": null,
+    "notes": [],
+    "shipping_address": [],
+    "created_at": 1789450781
+  },
+  "mandate_registration_success_vpa": {
+    "order": {
+      "amount": 100,
+      "amount_due": 100,
+      "amount_paid": 0,
+      "attempts": 0,
+      "created_at": 1789450783,
+      "currency": "INR",
+      "entity": "order",
+      "id": "order_TcCTkpVEqitMRf",
+      "notes": [],
+      "offer_id": null,
+      "receipt": null,
+      "status": "created"
+    },
+    "authorization": null,
+    "authorization_error": {
+      "exception_type": "BadRequestError",
+      "message": "The requested URL was not found on the server."
+    }
+  },
+  "mandate_registration_failure_vpa": {
+    "order": {
+      "amount": 100,
+      "amount_due": 100,
+      "amount_paid": 0,
+      "attempts": 0,
+      "created_at": 1789450786,
+      "currency": "INR",
+      "entity": "order",
+      "id": "order_TcCToTcXUQFw21",
+      "notes": [],
+      "offer_id": null,
+      "receipt": null,
+      "status": "created"
+    },
+    "authorization": null,
+    "authorization_error": {
+      "exception_type": "BadRequestError",
+      "message": "The requested URL was not found on the server."
+    }
+  }
+}
