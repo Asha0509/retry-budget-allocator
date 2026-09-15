@@ -250,6 +250,38 @@ most worth replacing with real data), find where it falls, read off the
 winner. Reproduce with `python -m eval.economics`, or call
 `eval.economics.run_economics()` with your own `AttemptCostAssumptions`.
 
+### The breakeven surface, not a single defended number
+
+The table above still picks one number for the two least-certain inputs
+(1% revocation probability, ₹2,000 lifetime value) to get one blended
+cost. Neither of those two is defensible as *the* number - nobody has
+real mandate-churn data backing either. `compute_breakeven_surface()`
+instead varies both across a grid and shows the region where each policy
+wins, holding gateway (₹20) and notification (₹0.50) fixed since those
+two are comparatively less contentious (real market rates exist for
+both):
+
+| Revocation risk per attempt ↓ / Customer lifetime value → | ₹500 | ₹1,000 | ₹2,000 | ₹5,000 | ₹10,000 |
+|---|---|---|---|---|---|
+| 0% | Baseline | Baseline | Baseline | Baseline | Baseline |
+| 0.5% | Baseline | Baseline | Baseline | Baseline | Baseline |
+| 1% | Baseline | Baseline | Baseline | Baseline | Baseline |
+| 2% | Baseline | Baseline | Baseline | Baseline | **Allocator** |
+| 5% | Baseline | Baseline | Baseline | **Allocator** | **Allocator** |
+| 10% | Baseline | Baseline | **Allocator** | **Allocator** | **Allocator** |
+
+The allocator only wins on money in the high-risk, high-value corner: 6 of
+30 cells (20%), all requiring both a revocation risk of at least 2% per
+attempt *and* a customer worth at least ₹2,000 in future recurring
+revenue. Read this as a shape to check yourself against, not a verdict -
+if your merchant's real numbers land in that corner (aggressive retrying
+genuinely costing you customers, and those customers being valuable),
+the allocator's caution is worth real money. If they don't, it mostly
+isn't, at least not on this axis alone (the attempts-saved and
+zero-waste-on-unrecoverable-causes benefits from Section 2 hold
+regardless of where you land on this grid). Full 30-cell grid:
+`eval/results/economics.json`'s `surface` key.
+
 ## 7. Stop-decision precision
 
 Of the payments the allocator stopped or notified instead of retrying (17

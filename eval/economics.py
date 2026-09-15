@@ -118,6 +118,51 @@ def sweep_cost_per_attempt(
 # before computing it, so the table isn't retrofitted to flatter one figure.
 _DEFAULT_SWEEP_RUPEES: tuple[float, ...] = (5.0, 20.0, 50.0, 100.0, 150.0, 200.0, 300.0, 500.0)
 
+# Part C3: a 2D breakeven surface across the two genuinely-uncertain inputs,
+# rather than one defended point for either. Gateway/notification costs are
+# held fixed at their own illustrative defaults below (comparatively less
+# contentious - real market rates exist for both); these two are the ones
+# nobody should trust a single number for.
+_PROBABILITY_GRID: tuple[float, ...] = (0.0, 0.005, 0.01, 0.02, 0.05, 0.10)
+_LIFETIME_VALUE_GRID: tuple[float, ...] = (500.0, 1000.0, 2000.0, 5000.0, 10000.0)
+
+
+def compute_breakeven_surface(
+    baseline_aggregate: dict,
+    allocator_aggregate: dict,
+    gateway_cost_rupees: float = 20.0,
+    notification_cost_rupees: float = 0.50,
+    probability_grid: tuple[float, ...] = _PROBABILITY_GRID,
+    lifetime_value_grid: tuple[float, ...] = _LIFETIME_VALUE_GRID,
+) -> list[dict]:
+    """2D breakeven surface (Part C3) across the mandate-revocation
+    probability per attempt and the customer-lifetime-value figure - the
+    two least-certain inputs to this whole analysis. One row per grid
+    cell, each independently computed from the same real batch aggregates
+    everything else in this module uses - not a single defended point for
+    either parameter, a shape the reader inspects and substitutes their
+    own numbers into.
+    """
+    rows = []
+    for p in probability_grid:
+        for ltv in lifetime_value_grid:
+            expected_annoyance_cost = p * ltv
+            total_cost = gateway_cost_rupees + notification_cost_rupees + expected_annoyance_cost
+            baseline_net = net_value_rupees(baseline_aggregate, total_cost)
+            allocator_net = net_value_rupees(allocator_aggregate, total_cost)
+            rows.append(
+                {
+                    "annoyance_revocation_probability_per_attempt": p,
+                    "customer_lifetime_value_rupees": ltv,
+                    "expected_annoyance_cost_rupees": round(expected_annoyance_cost, 2),
+                    "total_cost_per_attempt_rupees": round(total_cost, 2),
+                    "baseline_net_value_rupees": round(baseline_net, 2),
+                    "allocator_net_value_rupees": round(allocator_net, 2),
+                    "allocator_wins_on_money": allocator_net > baseline_net,
+                }
+            )
+    return rows
+
 
 def run_economics(results_table: dict, assumptions: AttemptCostAssumptions = DEFAULT_ASSUMPTIONS) -> dict:
     """Compute the breakeven and sweep table for one already-computed results_table
@@ -148,7 +193,17 @@ def run_economics(results_table: dict, assumptions: AttemptCostAssumptions = DEF
             else "baseline and allocator spent the same number of attempts in this batch - no crossover exists."
         ),
         "sweep": sweep,
+        "surface": compute_breakeven_surface(baseline, allocator),
+        "surface_note": (
+            "one row per (revocation-probability, lifetime-value) grid cell - "
+            "not a single defended number for either parameter. gateway_cost_rupees "
+            "(20.0) and notification_cost_rupees (0.50) are held fixed at the "
+            "illustrative defaults above for every cell."
+        ),
     }
+    result["surface_fraction_allocator_wins"] = round(
+        sum(row["allocator_wins_on_money"] for row in result["surface"]) / len(result["surface"]), 4
+    )
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     (RESULTS_DIR / "economics.json").write_text(json.dumps(result, indent=2))

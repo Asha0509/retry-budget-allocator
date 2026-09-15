@@ -8,6 +8,7 @@ import eval.economics as economics_module
 from eval.economics import (
     AttemptCostAssumptions,
     compute_breakeven,
+    compute_breakeven_surface,
     net_value_rupees,
     run_economics,
     sweep_cost_per_attempt,
@@ -89,3 +90,38 @@ def test_sweep_includes_the_computed_breakeven_point() -> None:
     result = run_economics(results_table)
     swept_costs = [row["cost_per_attempt_rupees"] for row in result["sweep"]]
     assert result["breakeven_cost_per_attempt_rupees"] in swept_costs
+
+
+def test_breakeven_surface_covers_the_full_grid() -> None:
+    rows = compute_breakeven_surface(_BASELINE, _ALLOCATOR)
+    assert len(rows) == 6 * 5  # probability grid x lifetime-value grid
+
+
+def test_breakeven_surface_never_favors_allocator_at_zero_annoyance_cost() -> None:
+    # At probability 0.0, expected annoyance cost is 0 regardless of lifetime
+    # value - total cost per attempt is just gateway + notification, which
+    # is far below the real ~Rs 157 breakeven, so baseline must win every
+    # such cell.
+    rows = compute_breakeven_surface(_BASELINE, _ALLOCATOR)
+    zero_prob_rows = [r for r in rows if r["annoyance_revocation_probability_per_attempt"] == 0.0]
+    assert len(zero_prob_rows) == 5
+    assert all(not r["allocator_wins_on_money"] for r in zero_prob_rows)
+
+
+def test_breakeven_surface_favors_allocator_only_at_high_risk_high_value() -> None:
+    # Real finding, not asserted blindly: the allocator only wins in the
+    # high-probability/high-lifetime-value corner of the grid - 6 of 30
+    # cells with the default grids. Pins that shape so a future change to
+    # the grids or the cost function can't silently shift it unnoticed.
+    rows = compute_breakeven_surface(_BASELINE, _ALLOCATOR)
+    winning = [r for r in rows if r["allocator_wins_on_money"]]
+    assert len(winning) == 6
+    assert all(r["annoyance_revocation_probability_per_attempt"] >= 0.02 for r in winning)
+    assert all(r["customer_lifetime_value_rupees"] >= 2000.0 for r in winning)
+
+
+def test_run_economics_includes_surface_and_its_win_fraction() -> None:
+    results_table = {"baseline": _BASELINE, "allocator": _ALLOCATOR}
+    result = run_economics(results_table)
+    assert len(result["surface"]) == 30
+    assert result["surface_fraction_allocator_wins"] == pytest.approx(6 / 30)
