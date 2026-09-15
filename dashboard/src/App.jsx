@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import BatchResultsView from './views/BatchResultsView.jsx'
 import DecisionTraceView from './views/DecisionTraceView.jsx'
+import LandingPage from './views/LandingPage.jsx'
 import LiveSimulatorView from './views/LiveSimulatorView.jsx'
 import StoryView from './views/StoryView.jsx'
 import { useRunData } from './lib/useRunData.js'
@@ -16,12 +17,32 @@ export default function App() {
   const { loading, error, run, sensitivity } = useRunData()
   const [tab, setTab] = useState('live')
   const [selectedPaymentId, setSelectedPaymentId] = useState(null)
+  const [page, setPage] = useState(() => (window.location.hash === '#dashboard' ? 'dashboard' : 'landing'))
 
+  useEffect(() => {
+    const onHashChange = () => setPage(window.location.hash === '#dashboard' ? 'dashboard' : 'landing')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  const enterDashboard = () => {
+    window.location.hash = '#dashboard'
+    setPage('dashboard')
+  }
+
+  // Every hook above/below this line must run on every render regardless of
+  // `page` - the early return for the landing page has to come after all of
+  // them, never before, or hook call order changes between renders (React's
+  // Rules of Hooks) the moment someone navigates from landing to dashboard.
   const selectedPayment = useMemo(() => {
     if (!run) return null
     if (selectedPaymentId) return run.payments.find((p) => p.payment_id === selectedPaymentId)
     return run.payments.find((p) => p.explanation?.generated_by === 'llm') ?? run.payments[0]
   }, [run, selectedPaymentId])
+
+  if (page === 'landing') {
+    return <LandingPage run={run} onEnterDashboard={enterDashboard} />
+  }
 
   // The Live Simulator tab needs no batch data at all (it talks to its own
   // FastAPI backend) - only Story/Decision Trace/Batch Results depend on a
