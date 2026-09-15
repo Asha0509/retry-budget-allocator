@@ -106,14 +106,18 @@ Stated plainly, because the two are easy to blur and shouldn't be:
   Simulator tab — every stage executes against whatever payment you build
   or pick, through a small local FastAPI backend, with real per-stage
   timing. The compliance checks are real assertions, not display copy.
-  Contact with Razorpay's live test API is real too: customer and order
-  creation succeed against it, and the one documented S2S UPI-collect
-  creation route (`/payments/create/upi`) returns a real, captured 404 —
-  evidence that headless mandate creation is gated behind a Razorpay
-  Support activation this account doesn't have. See
-  `data/fixtures/README.md` for the precise breakdown of what was tested
-  and what each result actually shows (an earlier version of that doc
-  overstated it; corrected against the raw captured records).
+  Contact with Razorpay's live test API is real and ongoing: customer and
+  order creation succeed against it, and 4 distinct mandate-creation
+  routes tried across two sessions (`/payments/create/upi`, `/payments`,
+  `/payments/create/ajax`, `/payments/create/recurring`) all return a
+  real, captured rejection — evidence that headless mandate creation is
+  gated behind a Razorpay Support activation this account doesn't yet
+  have live, re-confirmed as recently as 2026-09-15 with fresh
+  credentials. `api/razorpay_client.py` is a real, tested, opt-in client
+  for this (`LIVE_RAZORPAY=1`) — not fully validated against production,
+  since nothing has gotten past this gate yet. See
+  `data/fixtures/README.md` for the precise breakdown of every route
+  tried and what each result actually shows.
 - **Simulated:** whether a scheduled retry actually succeeds is never
   observed — it's drawn from `eval/outcome_model.py`, a model this project
   authored and froze before any allocator logic was tuned, specifically so
