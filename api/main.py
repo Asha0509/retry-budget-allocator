@@ -17,12 +17,13 @@ Run: uvicorn api.main:app --reload --port 8000
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -168,3 +169,36 @@ def simulate(req: SimulateRequest) -> SimulateResponse:
         baseline_decision=baseline.model_dump(mode="json"),
         decisions_differ=decisions_differ,
     )
+
+
+_WEBHOOK_LOG_PATH = Path(__file__).resolve().parent.parent / "logs" / "webhooks.jsonl"
+
+
+@app.post("/api/webhooks/razorpay")
+async def razorpay_webhook(request: Request) -> dict:
+    """Minimal webhook receiver (Part B2) - logs the raw payload of mandate
+    and payment events Razorpay sends, verbatim, to logs/webhooks.jsonl
+    (git-ignored in bulk, same convention as the rest of /logs/).
+
+    Deliberately minimal: no signature verification. This exists to observe
+    real event shapes for docs/build-log.md, not to run in production - a
+    real deployment would verify X-Razorpay-Signature against
+    RAZORPAY_WEBHOOK_SECRET before trusting the body at all.
+    """
+    body = await request.body()
+    payload = await request.json()
+    _WEBHOOK_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with _WEBHOOK_LOG_PATH.open("a") as f:
+        f.write(
+            json.dumps(
+                {
+                    "received_at": datetime.now(IST).isoformat(),
+                    "event": payload.get("event"),
+                    "payload": payload,
+                    "raw_body_length": len(body),
+                }
+            )
+            + "\n"
+        )
+    log.info("webhook received: event=%s", payload.get("event"))
+    return {"status": "logged"}

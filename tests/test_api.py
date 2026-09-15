@@ -31,6 +31,24 @@ def client():
     return TestClient(api_main.app)
 
 
+def test_webhook_logs_raw_payload_verbatim(client, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    log_path = tmp_path / "webhooks.jsonl"
+    monkeypatch.setattr(api_main, "_WEBHOOK_LOG_PATH", log_path)
+    payload = {"event": "payment.failed", "payload": {"payment": {"entity": {"id": "pay_test123"}}}}
+
+    resp = client.post("/api/webhooks/razorpay", json=payload)
+
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "logged"}
+    lines = log_path.read_text().strip().splitlines()
+    assert len(lines) == 1
+    import json
+
+    logged = json.loads(lines[0])
+    assert logged["event"] == "payment.failed"
+    assert logged["payload"] == payload
+
+
 def test_list_personas_returns_all_four(client) -> None:
     resp = client.get("/api/personas")
     assert resp.status_code == 200
