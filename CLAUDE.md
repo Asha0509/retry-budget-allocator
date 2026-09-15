@@ -117,6 +117,14 @@ reintroduce them:
   toggle a caller could forget. The batch study and CI must never make a
   real network call - every function that can must refuse loudly if the
   flag isn't set, not silently no-op.
+- Dev servers on this filesystem (`/mnt/c/...`, WSL2 over DrvFs) do not
+  reliably pick up file changes via `--reload`/HMR - confirmed twice
+  (docs/build-log.md, 2026-09-04 and 2026-09-15), not a one-off. A running
+  `npm run dev` or `uvicorn --reload` is not proof it's serving current
+  code. After any edit to `dashboard/src` or `api/`, restart the dev
+  server and verify with a fresh `curl` of the served file (grep for what
+  changed) before trusting a screenshot or a live demo - never assume a
+  long-running process picked up the edit.
 - Errors: no silent failures. Wrap LLM calls and any API interaction in explicit
   try/except with logged, informative messages - there is no external error
   tracker during the demo recording.
