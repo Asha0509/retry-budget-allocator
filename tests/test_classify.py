@@ -19,6 +19,20 @@ REASON_CASES = [
     ("mandate_expired", FailureCause.MANDATE_EXPIRED),
     ("amount_exceeds_mandate", FailureCause.AMOUNT_EXCEEDS_MANDATE),
     ("amount_limit_breached", FailureCause.AMOUNT_EXCEEDS_MANDATE),
+    ("payment_collect_request_expired", FailureCause.BANK_TECHNICAL),
+    ("vpa_resolution_failed", FailureCause.BANK_TECHNICAL),
+    ("reqauth_mandate_not_acknowledged", FailureCause.AFA_REQUIRED),
+]
+
+# Documented Razorpay codes (2026-09-15 audit against
+# razorpay.com/docs/errors/payments/upi/ and .../errors/payments/list/) that
+# are deliberately NOT in the lookup table - see pipeline/classify.py's own
+# comment for why each one specifically falls through to UNKNOWN rather
+# than being forced into an existing bucket.
+DELIBERATELY_UNMAPPED_DOCUMENTED_REASONS = [
+    "invalid_vpa",
+    "payment_cancelled",
+    "funds_blocked_by_mandate",
 ]
 
 
@@ -34,6 +48,18 @@ def test_reason_lookup_covers_every_cause(reason: str, expected_cause: FailureCa
 def test_all_seven_causes_are_reachable() -> None:
     reachable = {cause for _, cause in REASON_CASES} | {FailureCause.UNKNOWN}
     assert reachable == set(FailureCause)
+
+
+@pytest.mark.parametrize("reason", DELIBERATELY_UNMAPPED_DOCUMENTED_REASONS)
+def test_documented_but_deliberately_unmapped_reasons_fall_to_unknown(reason: str) -> None:
+    # These are real Razorpay-documented codes, not typos or garbage input -
+    # confirming they classify to UNKNOWN (not some accidentally-matched
+    # wrong cause via the description-keyword fallback) is the actual
+    # coverage-audit assertion, not just "unrecognized input is safe".
+    error = RazorpayError(code="BAD_REQUEST_ERROR", reason=reason, description="", source="customer", step="processing")
+    result = classify_cause(error)
+    assert result.cause == FailureCause.UNKNOWN
+    assert result.confidence == 0.0
 
 
 def test_reason_match_is_case_and_whitespace_insensitive() -> None:
