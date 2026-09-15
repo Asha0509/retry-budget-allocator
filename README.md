@@ -10,12 +10,10 @@ recovered, is a constrained allocation problem — and a fixed schedule that
 ignores *why* a payment failed is the wrong tool for it.
 
 ![Landing page: thesis, headline result with its caveat, and a plain scorecard](docs/images/landing.png)
-![Live Simulator, one click in](docs/images/live-simulator.png)
-![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
-
-**[docs/video/pitch.mp4](docs/video/pitch.mp4)**
-(2:57) — problem, architecture, a live demo through the dashboard, and the
-honest results.
+![Live Simulator: pick a scenario, run it live, see where the allocator and a fixed schedule disagree](docs/images/live-simulator.png)
+![Full trace: raw error payload, per-stage timings, every candidate window scored](docs/images/full-trace.png)
+![Batch Results: attempts/recovery/rupees for both policies, compliance invariants checked live in the browser](docs/images/batch-results.png)
+![Per-cause breakdown and the 27-point sensitivity sweep, reported honestly including where the allocator loses](docs/images/batch-results-sweep.png)
 
 Three compliance invariants — never more than 3 attempts, never inside a
 peak window, never more than one successful debit per cycle — are asserted
@@ -184,12 +182,78 @@ Specific enough to act on, not hedged into meaninglessness:
   should re-run `eval/economics.py` with their own numbers, not trust
   this grid's edges.
 
-## Docs
+## Docs, evals, and logs — where everything actually is
 
-- [docs/RESULTS.md](docs/RESULTS.md) — results, method, and limitations
-- [docs/architecture.md](docs/architecture.md) — pipeline design and data flow
-- [docs/prd.md](docs/prd.md) — full specification and verified sources
-- [docs/build-log.md](docs/build-log.md) — what broke during the build and how it was fixed
+Every claim in this README traces back to a real file in the repo, not
+narrative. This section is the map: a one-line summary of what each thing
+is, and exactly where to go for the full detail.
+
+**Documentation** (`docs/`)
+
+- **Results and method** — the outcome model declared before any number,
+  the headline, the per-cause breakdown, the multi-seed stability check,
+  the breakeven surface, what didn't work, and every limitation, all in
+  one place. For more detail, see [docs/RESULTS.md](docs/RESULTS.md).
+- **Architecture** — the 7-stage pipeline, data flow, and Mermaid diagrams
+  of how a payment actually moves through the system. For more detail,
+  see [docs/architecture.md](docs/architecture.md).
+- **Full specification** — the original problem brief and every factual
+  claim's source citation (NPCI limits, recoverability rates, retry
+  spacing). For more detail, see [docs/prd.md](docs/prd.md).
+- **Build log** — dated, real entries: every bug found, every live-API
+  result actually observed (expected vs. what happened), not reconstructed
+  from memory afterward. For more detail, see
+  [docs/build-log.md](docs/build-log.md).
+
+**Evaluation code and output** (`eval/`, raw JSON in `eval/results/`)
+
+- **The frozen batch study** — 60 synthesized payments, both policies,
+  every decision, scored against the outcome model below.
+  `eval/harness.py` produced [eval/results/run_20260904T223013.json](eval/results/run_20260904T223013.json).
+- **Sensitivity sweep** — the same batch re-scored across 27 outcome-model
+  parameter settings, so one favorable setting can't hide behind the
+  headline. `eval/sensitivity.py` produced
+  [eval/results/sensitivity.json](eval/results/sensitivity.json).
+- **Multi-seed stability** — the batch itself re-drawn at 10 seeds, not
+  just re-scored. `eval/multiseed.py` produced
+  [eval/results/multiseed.json](eval/results/multiseed.json).
+- **Cost-per-attempt breakeven** — the exact crossover point, a swept
+  table, and the 2D surface across the two least-certain cost inputs.
+  `eval/economics.py` produced
+  [eval/results/economics.json](eval/results/economics.json).
+- **The frozen outcome model itself** — a declared, seeded
+  success-probability model, written and frozen before the allocator's
+  own scoring was tuned, never imported by `pipeline/` (mechanically
+  enforced by `tests/test_outcome_model_isolation.py`). For more detail,
+  see [eval/outcome_model.py](eval/outcome_model.py).
+
+**Raw runtime logs** (`logs/`)
+
+- One real, committed example of structured per-stage execution
+  evidence — stage entered/completed, errors caught, fallback triggered —
+  is what the build log's narrative entries are actually mined from, not
+  written from memory. For more detail, see
+  [logs/sample_run.jsonl](logs/sample_run.jsonl). Every full batch run
+  writes its own timestamped `logs/<run_id>.jsonl` locally; the rest are
+  git-ignored in bulk (regenerable, not narrative evidence) except this
+  one committed sample.
+
+**Fixture and live-API provenance** (`data/fixtures/`)
+
+- Which of the 7 cause fixtures are Razorpay-documented, which are
+  provisional (inferred, not independently published), and the complete
+  log of every live mandate-registration attempt against the real test
+  API, including the routes tried and the exact rejection each one
+  returned. For more detail, see
+  [data/fixtures/README.md](data/fixtures/README.md).
+
+**Constraints that governed the build**
+
+- What was and wasn't up for reinterpretation while building this: hard
+  compliance invariants, banned overstated claims (checked against
+  `docs/prd.md` Section 2's sources), and the standing instruction to flag
+  a gap rather than quietly build around it. For more detail, see
+  [CLAUDE.md](CLAUDE.md).
 
 ## Repo layout
 
