@@ -255,21 +255,113 @@ is, and exactly where to go for the full detail.
   a gap rather than quietly build around it. For more detail, see
   [CLAUDE.md](CLAUDE.md).
 
-## Repo layout
+## File structure
 
-    pipeline/   the 7-stage decision engine (Sec 4) - classify, priors,
-                funding window, allocate, decision, explain
-    eval/       frozen outcome model, baseline, batch harness, sensitivity
-                sweep, multi-seed check, cost-per-attempt breakeven surface
-                (Sec 5) - never imported by pipeline/
-    api/        FastAPI backend for the dashboard's Live Simulator tab,
-                plus the opt-in live Razorpay client and webhook receiver
-    dashboard/  React + Tailwind UI - a landing page, then Live Simulator,
-                Story, Decision Trace, Batch Results
-    data/       fixtures (Sec 5.0 provenance) and saved run artifacts
-    docs/       results, architecture, build log, PRD
-    tests/      one test file per pipeline/eval/api module
-    scripts/    one-off live-API probes, not imported by anything else
+Every tracked file, one line each. Folders first, in the order they matter
+most to a reader; `tests/` mirrors `pipeline/`/`eval/`/`api/` one file at a
+time so it's grouped at the end rather than repeated inline. `__init__.py`
+in `pipeline/`, `eval/`, and `api/` are empty package markers, left out
+below since there's nothing to say about them individually.
+
+    CLAUDE.md                  engineering constraints that governed the build
+    LICENSE                    MIT
+    README.md                  this file
+    requirements.txt           Python dependencies
+    pyproject.toml             pytest + ruff config
+    setup.sh                   one-time bootstrap (venv, deps, .env template)
+    .env.example                credential template - copy to .env, fill in keys
+    .gitignore
+    .github/workflows/ci.yml   GitHub Actions - pytest + ruff on every push
+
+    pipeline/                  the 7-stage decision engine (Sec 4)
+    ├── models.py               shared schemas - FailureCause, RazorpayError, StageTrace
+    ├── ingest.py                Stage 1 - validates a raw event into FailedPaymentEvent
+    ├── classify.py              Stage 2 - deterministic cause lookup, never a model call
+    ├── priors.py                Stage 3 - recoverability score + action shape per cause
+    ├── funding_window.py        Stage 4 - confidence-gated funding-window inference
+    ├── allocator.py             Stage 5 - notify/retry-at-T/stop, every candidate scored
+    ├── decision.py               Stage 6 - assembles every prior stage into one record
+    ├── explain.py                Stage 7 - the one LLM call in this codebase
+    ├── compliance.py            the 3 hard invariants (attempt cap, peak windows, 1/cycle)
+    └── run.py                   orchestrates Stages 2-6 for one ingested event
+
+    eval/                       frozen outcome model, baseline, batch analysis (Sec 5)
+    │                           - never imported by pipeline/, enforced by
+    │                           tests/test_outcome_model_isolation.py
+    ├── outcome_model.py         frozen, seeded success-probability model
+    ├── baseline.py               fixed day-1/2/3 schedule comparator
+    ├── batch_generator.py        synthesizes the 60-payment batch from a fixed anchor time
+    ├── harness.py                 runs both policies over the batch, writes run_*.json
+    ├── sensitivity.py            27-point outcome-model parameter sweep
+    ├── multiseed.py               re-draws the batch at 10 seeds, checks headline stability
+    ├── economics.py               cost-per-attempt breakeven point, sweep, and 2D surface
+    └── results/                  committed JSON output from the 5 modules above
+        ├── run_20260904T223013.json   the frozen batch run - both policies, every decision
+        ├── sensitivity.json           the 27-setting sweep result
+        ├── multiseed.json             the 10-seed stability result
+        └── economics.json             the breakeven point, sweep, and surface
+
+    api/                        FastAPI backend
+    ├── main.py                  POST /api/simulate (live pipeline), /api/webhooks/razorpay
+    ├── personas.py                4 named live-simulator scenarios
+    └── razorpay_client.py        opt-in (LIVE_RAZORPAY=1) real Razorpay test-API client
+
+    dashboard/                  React + Tailwind UI
+    ├── index.html
+    ├── package.json / package-lock.json
+    ├── vite.config.js
+    ├── .oxlintrc.json             lint config (npm run lint)
+    ├── .gitignore                 dashboard-local ignores (node_modules, dist)
+    ├── README.md                 how to run the dashboard and refresh its data
+    ├── public/
+    │   ├── favicon.svg
+    │   └── data/                  static copies of eval/results/*.json the dashboard reads
+    └── src/
+        ├── main.jsx                React entry point
+        ├── App.jsx                 landing/dashboard routing, tab state
+        ├── index.css                Tailwind import, fonts, the accent-color token
+        ├── lib/
+        │   ├── useRunData.js       fetches the saved run + sensitivity JSON
+        │   ├── format.js            plain-language labels, money/date formatting
+        │   ├── compliance.js        client-side JS port of the 3 compliance checks
+        │   └── simulate.js          calls the live /api/simulate endpoint
+        └── views/
+            ├── LandingPage.jsx           thesis, headline result, scorecard, one CTA
+            ├── LiveSimulatorView.jsx      live pipeline runs, persona picker, custom input
+            ├── StoryView.jsx               plain-language narrative for one payment
+            ├── DecisionTraceView.jsx      full technical trace for one payment
+            └── BatchResultsView.jsx        stat cards, compliance panel, sensitivity chart
+
+    data/
+    ├── fixtures/                 the 7 cause fixtures + provenance (Sec 5.0)
+    │   ├── README.md              which fixtures are documented/provisional/live, full probe log
+    │   ├── insufficient_funds.json, bank_technical.json, afa_required.json
+    │   │                          Razorpay-documented, verbatim from published error-code docs
+    │   ├── mandate_revoked.json, mandate_expired.json, amount_exceeds_mandate.json
+    │   │                          provisional - inferred from token-lifecycle docs, not published
+    │   ├── unknown.json            what an unclassifiable error object looks like
+    │   ├── _capture_attempts.json  raw evidence from the first live-API capture (2026-09-03)
+    │   └── _live_mandate_probe.json raw evidence from the 2026-09-15 re-verification
+    └── runs/run_20260904T223013.json   the dashboard's read-only data source (Sec 6.2)
+
+    docs/
+    ├── prd.md                     full specification, every claim's source citation
+    ├── architecture.md            pipeline design, data flow, Mermaid diagrams
+    ├── RESULTS.md                 the full results write-up, method, limitations
+    ├── build-log.md               dated, real entries - every bug found and how it was fixed
+    └── images/                    the 5 screenshots used in this README
+
+    tests/                      327 tests, one file per module above plus:
+    ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ generated cases)
+    ├── test_outcome_model_isolation.py   AST check - pipeline/ never imports eval.outcome_model
+    ├── test_fixtures.py           every captured fixture classifies as its filename claims
+    └── (one test_<module>.py for every pipeline/, eval/, and api/ module above)
+
+    scripts/                    one-off live-API probes, never imported by anything else
+    ├── capture_fixtures.py       first live-API capture (customer/order/payment routes)
+    └── live_mandate_probe.py     2026-09-15 re-verification with fresh credentials
+
+    logs/sample_run.jsonl       one committed example of real per-stage execution evidence
 
 ## Setup
 
