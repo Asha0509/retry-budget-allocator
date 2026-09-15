@@ -166,12 +166,10 @@ the method.
 EOF
 
 echo "==> Writing README"
-# The README is the first thing a judge opens on a public repo. Problem Taste is
-# graded from what is visible here, not from docs/prd.md.
+# The README is the first thing a reader opens on a public repo - it should
+# carry the problem statement, not just setup instructions.
 cat > README.md <<'EOF'
 # Retry Budget Allocator
-
-**Razorpay AI Buildathon 2026 — Track 3: AI Revenue Recovery**
 
 ## The problem
 

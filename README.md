@@ -12,7 +12,7 @@ ignores *why* a payment failed is the wrong tool for it.
 ![Live Simulator, landing state](docs/images/live-simulator.png)
 ![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
 
-**[docs/video/Pitch_Razorpay_Buildathon.mp4](docs/video/Pitch_Razorpay_Buildathon.mp4)**
+**[docs/video/pitch.mp4](docs/video/pitch.mp4)**
 (2:57) — problem, architecture, a live demo through the dashboard, and the
 honest results.
 

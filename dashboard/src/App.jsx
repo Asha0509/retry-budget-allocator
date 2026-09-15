@@ -32,7 +32,7 @@ export default function App() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Razorpay AI Buildathon - Track 3: AI Revenue Recovery</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">A constrained allocation problem, not a scheduling one</p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-900">Retry Budget Allocator</h1>
         <p className="mt-1 text-sm text-slate-600">
           When a UPI AutoPay payment fails, Razorpay hands the merchant exactly 3 retry attempts and no auto-retry - most businesses

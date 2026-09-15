@@ -1,11 +1,10 @@
 # Recurring Payment Recovery — Retry Budget Allocator
-Razorpay AI Buildathon 2026 — Track 3: AI Revenue Recovery
 
 Full spec: /docs/prd.md — read the relevant section before implementing anything.
 Cite the PRD section number in commit messages and comments. Use "Sec 4" style,
 plain ASCII, never the section symbol.
 
-Submission requirements (not deployment): public GitHub repo, 5-minute pitch
+Deliverables (not deployment): public GitHub repo, 5-minute pitch
 video, architecture documentation. There is NO live-deployment requirement.
 Do not spend time on hosting, domains, Docker, or cloud deploy targets.
 

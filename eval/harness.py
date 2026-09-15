@@ -1,4 +1,4 @@
-"""Batch runner + eval harness (PRD Sec 5) - produces the submission numbers.
+"""Batch runner + eval harness (PRD Sec 5) - produces the headline numbers.
 
 Runs both the cause-aware allocator and the fixed-schedule baseline over the
 same batch, simulating each scheduled retry's outcome via the frozen,

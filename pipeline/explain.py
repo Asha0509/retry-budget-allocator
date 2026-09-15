@@ -2,7 +2,7 @@
 
 The only place in this codebase an LLM is called. Generates the
 plain-language `reasoning_plain` string and customer-facing notification
-copy (English + Hinglish, per Track 3's listed direction) from an
+copy (English + Hinglish, a deliberate choice for the target market) from an
 ALREADY-DECIDED RecoveryDecision. Never decides whether to retry, when to
 retry, or whether to stop - the decision passed in is final. Kept off the
 critical path: any failure (network, auth, malformed response) falls back to

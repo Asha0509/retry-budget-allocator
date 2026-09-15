@@ -1,5 +1,4 @@
 # PRD — Recurring Payment Recovery: Retry Budget Allocator
-### Razorpay AI Buildathon 2026 — Track 3: AI Revenue Recovery
 ### v1.0 — Verified, build-ready
 
 **Author:** Asha Jyothi Boddu
@@ -8,18 +7,19 @@
 
 ---
 
-## 0. Track 3 requirements, verbatim — the acceptance test
+## 0. The brief I set for this project — the acceptance test
 
-From razorpay.com/buildathon:
+Build an agent that detects revenue at risk from failed recurring payments,
+determines the right intervention, and executes a bounded recovery
+workflow. The bar I'm holding this to: don't just identify the problem -
+show measured money recovered across a batch, with compliant escalation,
+stopping rules, and an audit trail.
 
-> **AI Revenue Recovery** — Find revenue that's slipping away and win it back.
-> Build an agent that detects revenue at risk, determines the right intervention, and executes a bounded recovery workflow: from payment failures and checkout abandonment to overdue receivables.
-> Example directions: Payment degradation → root cause → recovery action, Checkout drop-off recovery, **Failed-subscription recovery**, B2B receivables chaser, **Mandate retry sequencer**, Hinglish voice recovery, Promise-to-pay tracker.
-> **The bar:** Don't just identify the problem. Show **measured money recovered across a batch**, with **compliant escalation**, **stopping rules**, and an **audit trail**.
-
-Evaluated on: Problem Taste, Build Quality, AI Judgment (using AI appropriately, opting for deterministic solutions where AI is unnecessary), Failure Recovery.
-
-Submission: public GitHub repo + 5-minute pitch video + architecture documentation. No deployment requirement.
+Quality bar for the build itself: problem framing grounded in real
+constraints (not an invented pain point), build quality a stranger could
+trust by reading the code, using AI only where it earns its place over a
+deterministic solution, and an honest, dated record of what broke during
+the build and how it was fixed.
 
 ---
 
@@ -106,7 +106,7 @@ RecoveryDecision {
 }
 ```
 
-**Stage 7 — LLM layer (narrow, and only here).** Generate the plain-language `reasoning_plain` string and the customer-facing notification copy (including Hinglish, which Track 3 lists as a direction). The LLM never decides whether to retry. Free-tier model via `.env` (Kimi K2.6/K3 or GLM-4.7-Flash), swappable if rate-limited.
+**Stage 7 — LLM layer (narrow, and only here).** Generate the plain-language `reasoning_plain` string and the customer-facing notification copy (including Hinglish, a deliberate choice for the target market). The LLM never decides whether to retry. Free-tier model via `.env` (Kimi K2.6/K3 or GLM-4.7-Flash), swappable if rate-limited.
 
 ---
 
@@ -125,7 +125,7 @@ Each UPI AutoPay mandate requires a registration authorisation flow before any d
 
 **Say this plainly in the results write-up and the video.** "A few cases run against the live test API; the batch replays that exact schema at volume" is an honest, ordinary engineering decision that a reviewer will recognise as sensible. Claiming 50 live end-to-end mandates when the batch was generated locally would not be.
 
-If the end-to-end registration flow proves quicker than expected, raise the integration-tier count — but do not let it block the eval harness, which is the artifact that produces your submission numbers.
+If the end-to-end registration flow proves quicker than expected, raise the integration-tier count — but do not let it block the eval harness, which is the artifact that produces the headline numbers.
 
 **Baseline:** fixed-schedule, cause-agnostic retry (attempt on day 1, 2, 3). This is a non-arbitrary comparator representing what a merchant building the retry logic themselves would most likely do first.
 
@@ -283,7 +283,7 @@ Optional if time permits: replay mode — a "run batch" control that steps throu
 4. Allocator with budget and window constraints
 5. Outcome model (Sec 5.1) — written and frozen BEFORE the allocator is tuned, kept in a separate module the allocator never imports
 6. Baseline comparator
-7. Batch runner + eval harness → **this produces the submission numbers**
+7. Batch runner + eval harness → **this produces the headline numbers**
 8. Sensitivity sweep (Sec 5.2) across outcome-model parameters
 9. Funding-window inference with confidence fallback
 10. LLM explanation layer
@@ -291,7 +291,7 @@ Optional if time permits: replay mode — a "run batch" control that steps throu
 12. `docs/RESULTS.md` (Sec 6.4), `docs/architecture.md` (Sec 6.3), pitch video, failure-recovery narrative
 13. (Optional, gated on 1–12) Rendered documentation site (Sec 6.5)
 
-**Build log:** keep a running note of what actually breaks. Track 3's evaluation includes Failure Recovery as its own axis; this cannot be reconstructed from memory at the end.
+**Build log:** keep a running note of what actually breaks. Failure Recovery is worth tracking as its own axis of quality; this cannot be reconstructed from memory at the end.
 
 ---
 
@@ -301,7 +301,7 @@ Optional if time permits: replay mode — a "run batch" control that steps throu
 - **Failure mix is modelled, not observed.** Ground it in published rates and say so.
 - **Results are a simulation study, not a field measurement.** Test-mode outcomes are authored, so the honest claim is "the allocator spends a scarce budget well under a stated, published outcome model", never "this recovers X% of real payments". Section 5.1 and 5.2 exist to make this rigorous rather than apologetic.
 - **Compliance is demonstrated by scheduler logic, not live NPCI behaviour.** Test mode does not enforce peak windows; your code does.
-- **Two of Track 3's example directions point here** — expect other submissions in this space. Differentiation is the budget-allocation framing and evaluation honesty, not topic novelty.
+- **Mandate retry logic is a well-known problem shape in payments tooling** — expect other people have built something adjacent. Differentiation is the budget-allocation framing and evaluation honesty, not topic novelty.
 - **Retry timing is not the largest lever** — pre-debit notification quality matters more. This is why `notify` is a first-class intervention, not an afterthought.
 - **Free-tier LLM reliability** — `.env`-driven model swap is the mitigation; the LLM is off the critical path by design, so an outage degrades explanations, not decisions.
 
