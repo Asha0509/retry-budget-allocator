@@ -1,0 +1,71 @@
+{
+  "n": 60,
+  "seeds": [
+    42,
+    1,
+    2,
+    3,
+    7,
+    13,
+    99,
+    137,
+    500,
+    2026
+  ],
+  "rows": [
+    {
+      "seed": 42,
+      "advantage_holds_at": 7,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 1,
+      "advantage_holds_at": 5,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 2,
+      "advantage_holds_at": 7,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 3,
+      "advantage_holds_at": 9,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 7,
+      "advantage_holds_at": 8,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 13,
+      "advantage_holds_at": 1,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 99,
+      "advantage_holds_at": 7,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 137,
+      "advantage_holds_at": 5,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 500,
+      "advantage_holds_at": 8,
+      "total_grid_points": 27
+    },
+    {
+      "seed": 2026,
+      "advantage_holds_at": 9,
+      "total_grid_points": 27
+    }
+  ],
+  "advantage_holds_at_mean": 6.6,
+  "advantage_holds_at_stdev": 2.29,
+  "advantage_holds_at_min": 1,
+  "advantage_holds_at_max": 9
+}

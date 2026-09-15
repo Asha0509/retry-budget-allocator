@@ -72,8 +72,16 @@ def _confidence_analysis(n: int, seed: int, rows: list[dict]) -> dict:
     }
 
 
-def run_sweep(n: int = 60, seed: int = 42) -> dict:
-    """Run the batch across the parameter grid and report the allocator's advantage at each point."""
+def run_sweep(n: int = 60, seed: int = 42, write_output: bool = True) -> dict:
+    """Run the batch across the parameter grid and report the allocator's advantage at each point.
+
+    write_output=False skips writing eval/results/sensitivity.json - used
+    by eval.multiseed.run_multiseed_sweep(), which calls this once per seed
+    and must not let each call clobber the single canonical (seed=42)
+    committed sensitivity.json with whatever seed ran last. Found as a real
+    bug (docs/build-log.md, 2026-09-15): the first version of
+    run_multiseed_sweep() did exactly that.
+    """
     rows = []
     for params in _grid():
         summary, _ = compute_batch_results(n, seed, params, include_details=False)
@@ -116,8 +124,9 @@ def run_sweep(n: int = 60, seed: int = 42) -> dict:
         "confidence_analysis": _confidence_analysis(n, seed, rows),
     }
 
-    harness_module.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (harness_module.RESULTS_DIR / "sensitivity.json").write_text(json.dumps(sweep, indent=2, default=str))
+    if write_output:
+        harness_module.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        (harness_module.RESULTS_DIR / "sensitivity.json").write_text(json.dumps(sweep, indent=2, default=str))
     log.info("sensitivity sweep complete: advantage holds at %d/%d grid points", n_holds, n_rows)
     return sweep
 

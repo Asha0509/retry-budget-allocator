@@ -3,7 +3,7 @@ import { formatMoney } from '../lib/format.js'
 // Snapshot of `pytest --collect-only -q` (2026-09-15) - not wired live,
 // since that would need new backend infrastructure just for one landing
 // page number. Update this if the suite grows meaningfully.
-const TEST_COUNT = 327
+const TEST_COUNT = 338
 
 const COMPLIANCE_INVARIANTS = [
   'Never more than 3 retry attempts per mandate',

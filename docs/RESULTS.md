@@ -200,6 +200,32 @@ attempts across all 10 seeds against baseline's 137-153, so that half of
 the headline is the stable one. Full per-seed data:
 `eval/results/multiseed.json`. Reproduce with `python -m eval.multiseed`.
 
+**A second, less comfortable check: is the sensitivity sweep's own
+headline stable?** Section 4's "advantage holds at 7 of 27 grid points"
+also comes from one seed. `eval/multiseed.py::run_multiseed_sweep()` runs
+the *full* 27-point sweep at each of the same 10 seeds - 270 batch
+computations - and reports how the holds-count itself moves.
+
+| | Advantage holds at (of 27) |
+|---|---|
+| seed 42 (the headline) | 7 |
+| Mean across all 10 seeds | 6.6 |
+| Min / Max across all 10 seeds | 1 / 9 |
+
+This is more variance than the raw-recovery check above, and it's the
+honest thing to report rather than the flattering half. 7/27 is close to
+the 10-seed mean (6.6) - not cherry-picked - but the range is real:
+seed 13's batch draw holds at only 1 of 27 settings, seeds 3 and 2026 hold
+at 9. The direction of the finding doesn't change (the allocator's raw-
+recovery advantage is real but narrow and settings-dependent under every
+seed tried, never close to universal), but the exact count - "7 of 27" -
+should be read as roughly representative of a range from 1 to 9, not as a
+precise, seed-independent number. Full per-seed data:
+`eval/results/multiseed_sweep.json`. Reproduce with
+`python -c "from eval.multiseed import run_multiseed_sweep; run_multiseed_sweep()"`
+(takes over a minute - 270 batch computations, not run by the default test
+suite at this size).
+
 ## 6. The breakeven: what cost per attempt makes this worth it
 
 Section 2's headline leaves a real question unresolved: 46% fewer attempts

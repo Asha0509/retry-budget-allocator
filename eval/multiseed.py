@@ -17,6 +17,7 @@ import statistics
 from pathlib import Path
 
 from eval.harness import compute_batch_results
+from eval.sensitivity import run_sweep
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 
@@ -65,6 +66,41 @@ def run_multiseed(n: int = 60, seeds: tuple[int, ...] = DEFAULT_SEEDS) -> dict:
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     (RESULTS_DIR / "multiseed.json").write_text(json.dumps(result, indent=2))
+    return result
+
+
+def run_multiseed_sweep(n: int = 60, seeds: tuple[int, ...] = DEFAULT_SEEDS) -> dict:
+    """Is the sensitivity sweep's own headline ("advantage holds at 7/27
+    grid points") stable across seeds, or a property of seed=42's batch?
+
+    A different question from run_multiseed() above: that checks whether
+    the default-parameter 29-vs-35 recovery gap is stable across re-drawn
+    batches. This checks whether the *count of grid points where the
+    allocator's advantage holds* - the sweep's own headline number - is
+    itself stable, by running the full 27-point sweep at each seed rather
+    than a single default-parameter run. 10 seeds x 27 grid points = 270
+    batch computations, so this is slower than run_multiseed() and not
+    meant to run in the default test suite at full size.
+    """
+    rows = []
+    for seed in seeds:
+        sweep = run_sweep(n, seed, write_output=False)
+        n_holds = sum(r["allocator_advantage_holds"] for r in sweep["rows"])
+        rows.append({"seed": seed, "advantage_holds_at": n_holds, "total_grid_points": len(sweep["rows"])})
+
+    holds_counts = [r["advantage_holds_at"] for r in rows]
+    result = {
+        "n": n,
+        "seeds": list(seeds),
+        "rows": rows,
+        "advantage_holds_at_mean": round(statistics.fmean(holds_counts), 2),
+        "advantage_holds_at_stdev": round(statistics.pstdev(holds_counts), 2),
+        "advantage_holds_at_min": min(holds_counts),
+        "advantage_holds_at_max": max(holds_counts),
+    }
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    (RESULTS_DIR / "multiseed_sweep.json").write_text(json.dumps(result, indent=2))
     return result
 
 

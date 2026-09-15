@@ -86,7 +86,10 @@ funding event lands early. That gap isn't a fluke of one seed either:
 re-drawn at 10 different seeds, baseline wins on raw recovery every single
 time, and seed 42's gap is actually smaller than the 10-seed average — the
 headline sits on the *more flattering* side, not a cherry-picked one
-(Section 5).
+(Section 5). The "7 of 27" sweep number moves more than that, though —
+run at each of those same 10 seeds, it ranges from 1/27 to 9/27 (mean
+6.6), so read it as roughly representative of that range, not a
+seed-independent constant (also Section 5).
 
 That leaves a real question unresolved by either number alone: priced in
 rupees per retry attempt (gateway cost, mandatory pre-debit notification,
@@ -164,11 +167,14 @@ Specific enough to act on, not hedged into meaninglessness:
   `attempts_used` indexed a ranked candidate list with no bounds check, so
   a negative value silently picked the worst-scored window instead of
   erroring (`docs/build-log.md`, 2026-09-14). Fixed and tested, and since
-  then supplemented with property-based fuzzing (hypothesis, 1200+
-  generated cases against the classifier) rather than left as a one-pass
-  manual audit — but the fuzzing covers Stage 2 specifically, not every
-  function on the money path, so other unvalidated inputs may still exist
-  elsewhere unaudited.
+  supplemented with property-based fuzzing across every stage that
+  actually spends the budget or admits data — the classifier (1200+
+  generated cases), the allocator (1600+, including the exact bug class
+  above over a wide generated range, not just 4 hand-picked values), and
+  ingestion's two constrained fields (1100+) — rather than left as a
+  one-pass manual audit. Not exhaustive: `pipeline/decision.py`,
+  `pipeline/priors.py`, and `pipeline/funding_window.py` are still
+  covered by hand-written unit tests only, not fuzzing.
 - **The funding-window inference (Stage 4) has a narrow ceiling by
   design.** Even at high confidence, it can only re-rank the 3 fixed
   24h/72h/7d offsets — it can't schedule at the actually-inferred day if
@@ -215,8 +221,10 @@ is, and exactly where to go for the full detail.
   headline. `eval/sensitivity.py` produced
   [eval/results/sensitivity.json](eval/results/sensitivity.json).
 - **Multi-seed stability** — the batch itself re-drawn at 10 seeds, not
-  just re-scored. `eval/multiseed.py` produced
-  [eval/results/multiseed.json](eval/results/multiseed.json).
+  just re-scored (`eval/results/multiseed.json`), plus the full 27-point
+  sweep re-run at each of those same seeds to check whether "7 of 27"
+  itself is stable (it ranges 1-9; `eval/results/multiseed_sweep.json`).
+  Both produced by `eval/multiseed.py`.
 - **Cost-per-attempt breakeven** — the exact crossover point, a swept
   table, and the 2D surface across the two least-certain cost inputs.
   `eval/economics.py` produced
@@ -293,12 +301,13 @@ below since there's nothing to say about them individually.
     ├── batch_generator.py        synthesizes the 60-payment batch from a fixed anchor time
     ├── harness.py                 runs both policies over the batch, writes run_*.json
     ├── sensitivity.py            27-point outcome-model parameter sweep
-    ├── multiseed.py               re-draws the batch at 10 seeds, checks headline stability
+    ├── multiseed.py               re-draws the batch at 10 seeds AND re-sweeps at each
     ├── economics.py               cost-per-attempt breakeven point, sweep, and 2D surface
     └── results/                  committed JSON output from the 5 modules above
         ├── run_20260904T223013.json   the frozen batch run - both policies, every decision
         ├── sensitivity.json           the 27-setting sweep result
-        ├── multiseed.json             the 10-seed stability result
+        ├── multiseed.json             the 10-seed stability result (default parameters)
+        ├── multiseed_sweep.json       the 10-seed stability result (full 27-point sweep)
         └── economics.json             the breakeven point, sweep, and surface
 
     api/                        FastAPI backend
@@ -351,8 +360,10 @@ below since there's nothing to say about them individually.
     ├── build-log.md               dated, real entries - every bug found and how it was fixed
     └── images/                    the 5 screenshots used in this README
 
-    tests/                      327 tests, one file per module above plus:
-    ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ generated cases)
+    tests/                      one file per module above plus:
+    ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ cases)
+    ├── test_allocator_fuzz.py     property-based fuzzing of Stage 5 (1600+ cases)
+    ├── test_ingest_fuzz.py         property-based fuzzing of Stage 1's constrained fields (1100+ cases)
     ├── test_outcome_model_isolation.py   AST check - pipeline/ never imports eval.outcome_model
     ├── test_fixtures.py           every captured fixture classifies as its filename claims
     └── (one test_<module>.py for every pipeline/, eval/, and api/ module above)
