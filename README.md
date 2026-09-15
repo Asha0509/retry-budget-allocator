@@ -9,7 +9,8 @@ attempts, spent without knowing in advance which failures can even be
 recovered, is a constrained allocation problem — and a fixed schedule that
 ignores *why* a payment failed is the wrong tool for it.
 
-![Live Simulator, landing state](docs/images/live-simulator.png)
+![Landing page: thesis, headline result with its caveat, and a plain scorecard](docs/images/landing.png)
+![Live Simulator, one click in](docs/images/live-simulator.png)
 ![Full trace: raw error payload, per-stage timings, allocator/baseline disagreement](docs/images/full-trace.png)
 
 **[docs/video/pitch.mp4](docs/video/pitch.mp4)**
@@ -83,20 +84,28 @@ the naive schedule (29 vs 35) — and rather than just note that and move on,
 `docs/RESULTS.md` Section 4 digs into why: it's not a confidence problem,
 it's structural. Baseline's dense 3-day schedule out-samples the
 allocator's wider, PRD-mandated 24h/72h/7d schedule whenever a customer's
-funding event lands early.
+funding event lands early. That gap isn't a fluke of one seed either:
+re-drawn at 10 different seeds, baseline wins on raw recovery every single
+time, and seed 42's gap is actually smaller than the 10-seed average — the
+headline sits on the *more flattering* side, not a cherry-picked one
+(Section 5).
 
 That leaves a real question unresolved by either number alone: priced in
 rupees per retry attempt (gateway cost, mandatory pre-debit notification,
 and the risk-weighted cost of a customer revoking the mandate out of
-annoyance — `docs/RESULTS.md` Section 5), the allocator only wins on net
+annoyance — `docs/RESULTS.md` Section 6), the allocator only wins on net
 money above **₹157.23 per attempt** — below that, baseline's extra
-recovered revenue outweighs its higher attempt spend. At the illustrative
-default cost (₹40.50/attempt), baseline currently wins on net value. That's
-the actual decision rule this hands a reader, not a verdict either way.
+recovered revenue outweighs its higher attempt spend. Rather than defend
+one guess for the two least-certain inputs (how often does aggressive
+retrying actually cost a mandate, and what's a customer worth), Section 6
+grids both and shows the shape: the allocator only wins on money in the
+high-risk/high-customer-value corner (6 of 30 grid cells). Outside that
+corner, baseline wins on net value too. That's the actual decision rule
+this hands a reader, not a verdict either way.
 
 **[docs/RESULTS.md](docs/RESULTS.md)** has the full numbers: the outcome
 model (stated before any result, as it should be), the per-cause breakdown,
-the sensitivity sweep, the breakeven, and what didn't work.
+the multi-seed stability check, the breakeven surface, and what didn't work.
 
 ## What's real and what's simulated
 
@@ -134,39 +143,46 @@ Stated plainly, because the two are easy to blur and shouldn't be:
 
 Specific enough to act on, not hedged into meaninglessness:
 
-- **The outcome model is authored, not observed.** No real success/failure
-  data backs any number in this repo. Closing this needs real outcome
-  data from actual retry attempts, which needs the Razorpay Support
-  activation above — a real, likely-slow prerequisite, not a code fix.
-- **The headline batch is one seed.** 29 vs 35, 74 vs 138, and the ₹157.23
-  breakeven all come from `seed=42`. The sensitivity sweep varies the
-  outcome model's *parameters* across 27 settings, but never re-draws the
-  batch itself from a different seed — so the headline hasn't been checked
-  for how much it'd move on a different random draw of the same 60
-  payments.
-- **The classifier's lookup table doesn't cover the real error-code
-  space.** `pipeline/classify.py` matches roughly a dozen documented
-  `reason` strings; anything else falls to `unknown` and gets a
-  conservative notify, never a blind retry — safe, but real recoverable
-  causes outside the table read as unclassifiable and get treated more
-  cautiously than they need to be.
-- **A money-path input-validation audit found and fixed one real bug**
-  (`docs/build-log.md`, 2026-09-14): `attempts_used` indexed a ranked
-  candidate list with no bounds check, so a negative value silently picked
-  the worst-scored window instead of erroring. That instance is fixed and
-  tested now, but the audit that found it was manual and one pass, not an
-  automated or exhaustive sweep of every function on the money path —
-  other unvalidated inputs may still exist unaudited.
+- **The outcome model is authored, not observed, and the account needed to
+  fix that isn't activated yet.** No real success/failure data backs any
+  number in this repo. Closing this needs real outcome data from actual
+  retry attempts, which needs the mandate-creation gate below to lift
+  first. 4 distinct creation routes tried live (most recently 2026-09-15,
+  with fresh credentials and an account the user believed already had
+  activation) all still return the same rejection — this is a
+  Razorpay-Support-conversation prerequisite now, not a code problem
+  (`docs/build-log.md`, `data/fixtures/README.md`).
+- **The classifier's lookup table covers what's documented, not what
+  production actually sends.** A 2026-09-15 audit against Razorpay's
+  complete published error-code reference closed the gap between "covers
+  what was tested" and "covers everything documented" (3 more codes
+  mapped, 3 more deliberately left to fall through to `unknown`/notify
+  with reasoning, 5 more explicitly scoped out as mandate-creation or
+  merchant-config errors, not charge-failure causes). It has not, and
+  cannot yet, close the gap between "documented" and "what a real,
+  activated production account would actually send" — that's blocked on
+  the same activation as above.
+- **A money-path input-validation audit found and fixed one real bug.**
+  `attempts_used` indexed a ranked candidate list with no bounds check, so
+  a negative value silently picked the worst-scored window instead of
+  erroring (`docs/build-log.md`, 2026-09-14). Fixed and tested, and since
+  then supplemented with property-based fuzzing (hypothesis, 1200+
+  generated cases against the classifier) rather than left as a one-pass
+  manual audit — but the fuzzing covers Stage 2 specifically, not every
+  function on the money path, so other unvalidated inputs may still exist
+  elsewhere unaudited.
 - **The funding-window inference (Stage 4) has a narrow ceiling by
   design.** Even at high confidence, it can only re-rank the 3 fixed
   24h/72h/7d offsets — it can't schedule at the actually-inferred day if
   that falls between them. `docs/RESULTS.md` Section 4 has the full
   diagnosis.
-- **The cost-per-attempt breakeven rests on two genuinely guessed
-  numbers.** The customer-annoyance-to-mandate-revocation probability and
-  the customer-lifetime-value figure in `eval/economics.py` are the least
-  certain inputs in this repo — swap them for real numbers before trusting
-  the ₹157.23 figure for an actual decision.
+- **The cost-per-attempt breakeven surface rests on illustrative grids,
+  not sourced data.** No public figure exists for either axis (mandate-
+  revocation risk per attempt, customer lifetime value) - the *shape* of
+  where each policy wins is the useful part, not the specific ₹500-10,000
+  and 0-10% ranges chosen for the grid. A merchant with real churn data
+  should re-run `eval/economics.py` with their own numbers, not trust
+  this grid's edges.
 
 ## Docs
 
@@ -180,14 +196,16 @@ Specific enough to act on, not hedged into meaninglessness:
     pipeline/   the 7-stage decision engine (Sec 4) - classify, priors,
                 funding window, allocate, decision, explain
     eval/       frozen outcome model, baseline, batch harness, sensitivity
-                sweep, cost-per-attempt breakeven (Sec 5) - never imported
-                by pipeline/
-    api/        FastAPI backend for the dashboard's Live Simulator tab
-    dashboard/  React + Tailwind UI - Live Simulator, Story, Decision
-                Trace, Batch Results
+                sweep, multi-seed check, cost-per-attempt breakeven surface
+                (Sec 5) - never imported by pipeline/
+    api/        FastAPI backend for the dashboard's Live Simulator tab,
+                plus the opt-in live Razorpay client and webhook receiver
+    dashboard/  React + Tailwind UI - a landing page, then Live Simulator,
+                Story, Decision Trace, Batch Results
     data/       fixtures (Sec 5.0 provenance) and saved run artifacts
     docs/       results, architecture, build log, PRD
     tests/      one test file per pipeline/eval/api module
+    scripts/    one-off live-API probes, not imported by anything else
 
 ## Setup
 
@@ -198,11 +216,14 @@ Specific enough to act on, not hedged into meaninglessness:
 
 ## Dashboard
 
-Four tabs. A Live Simulator (opt-in live mode — calls the real pipeline
-through a small local API, never the real Razorpay API), plus Story,
-Decision Trace, and Batch Results, which read from a saved run artifact:
-static files only, no live calls. The batch study itself stays fixed and
-pre-computed either way.
+A landing page first: the thesis, the headline result with its caveat in
+the same sentence, and a plain scorecard — readable in under 30 seconds
+without touching anything interactive. One button from there into the full
+dashboard's four tabs: a Live Simulator (opt-in live mode — calls the real
+pipeline through a small local API, never the real Razorpay API), plus
+Story, Decision Trace, and Batch Results, which read from a saved run
+artifact: static files only, no live calls. The batch study itself stays
+fixed and pre-computed either way.
 
     # terminal 1 - backend for the Live Simulator tab
     source .venv/bin/activate
@@ -228,13 +249,17 @@ built, not generated and accepted unread.
 
 The files where a subtle bug would be a money bug —
 `pipeline/allocator.py`, `pipeline/compliance.py`, `pipeline/priors.py`,
-`pipeline/classify.py`, `eval/baseline.py`, `eval/economics.py`, and the
-Pydantic validation in `pipeline/ingest.py` — got the heaviest scrutiny of
-anything in the repo, including a dedicated adversarial-input audit that
-found and fixed a real fail-open bug in this pass (`docs/build-log.md`,
-2026-09-14: negative `attempts_used` silently picked the worst-scored
-retry window instead of erroring). That review is real and repeatable —
-the regression tests it produced are in `tests/`, not just the fix.
+`pipeline/classify.py`, `eval/baseline.py`, `eval/economics.py`,
+`api/razorpay_client.py`, and the Pydantic validation in
+`pipeline/ingest.py` — got the heaviest scrutiny of anything in the repo:
+a dedicated adversarial-input audit that found and fixed a real fail-open
+bug (`docs/build-log.md`, 2026-09-14: negative `attempts_used` silently
+picked the worst-scored retry window instead of erroring), later
+supplemented with property-based fuzzing (1200+ generated cases against
+the classifier, not just the hand-picked ones), and a documented-error-code
+audit against Razorpay's own published reference rather than working from
+memory. That review is real and repeatable — the regression tests and
+fuzz properties it produced are in `tests/`, not just the fixes.
 
 `CLAUDE.md`, kept in the repo rather than deleted once the build finished,
 is the actual record of what the assistant was and wasn't permitted to

@@ -109,7 +109,14 @@ reintroduce them:
   rate-limits mid-build. Do not switch to a paid or trial-credit endpoint;
   NVIDIA NIM gives trial credits that expire, not free usage.
 - Secrets: every API key lives in a local `.env`, loaded via `python-dotenv`.
-  `.env` is git-ignored. Never hardcode or commit keys.
+  `.env` is git-ignored. Never hardcode or commit keys. Never print a secret
+  value to a terminal or log, including via shell commands that echo a whole
+  `.env` line - read individual values in Python only.
+- Live external API calls (Razorpay or otherwise): gate behind an explicit
+  opt-in env var (e.g. `LIVE_RAZORPAY=1`, default off), never a code-level
+  toggle a caller could forget. The batch study and CI must never make a
+  real network call - every function that can must refuse loudly if the
+  flag isn't set, not silently no-op.
 - Errors: no silent failures. Wrap LLM calls and any API interaction in explicit
   try/except with logged, informative messages - there is no external error
   tracker during the demo recording.
