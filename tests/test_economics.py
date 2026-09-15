@@ -21,7 +21,7 @@ def _redirect_results_dir(tmp_path, monkeypatch: pytest.MonkeyPatch):
     yield
 
 
-# Real numbers from the committed batch run (eval/results/run_20260904T223013.json),
+# Real numbers from the committed batch run (eval/results/run_20260915T134833.json),
 # not invented - the same figures docs/RESULTS.md reports.
 _BASELINE = {"attempts_spent": 138, "amount_recovered_paise": 8085457}
 _ALLOCATOR = {"attempts_spent": 74, "amount_recovered_paise": 7079158}

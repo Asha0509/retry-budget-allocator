@@ -2,7 +2,7 @@
 
 The headline batch result is an unresolved trade: the allocator spends 46%
 fewer attempts than the fixed-schedule baseline but recovers fewer payments
-(29 vs 35, PRD run_20260904T223013). Neither number alone tells a merchant
+(29 vs 35, PRD run_20260915T134833). Neither number alone tells a merchant
 whether to use this. This module prices both policies' net value at a
 declared cost per retry attempt and finds the exact crossover: the cost
 above which the allocator's attempt savings outweigh its lower recovery.
