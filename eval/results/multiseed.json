@@ -1,0 +1,105 @@
+{
+  "n": 60,
+  "seeds": [
+    42,
+    1,
+    2,
+    3,
+    7,
+    13,
+    99,
+    137,
+    500,
+    2026
+  ],
+  "rows": [
+    {
+      "seed": 42,
+      "baseline_recovered": 35,
+      "allocator_recovered": 29,
+      "baseline_attempts_spent": 138,
+      "allocator_attempts_spent": 74,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 1,
+      "baseline_recovered": 36,
+      "allocator_recovered": 24,
+      "baseline_attempts_spent": 139,
+      "allocator_attempts_spent": 88,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 2,
+      "baseline_recovered": 37,
+      "allocator_recovered": 28,
+      "baseline_attempts_spent": 137,
+      "allocator_attempts_spent": 82,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 3,
+      "baseline_recovered": 34,
+      "allocator_recovered": 29,
+      "baseline_attempts_spent": 143,
+      "allocator_attempts_spent": 88,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 7,
+      "baseline_recovered": 30,
+      "allocator_recovered": 29,
+      "baseline_attempts_spent": 151,
+      "allocator_attempts_spent": 72,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 13,
+      "baseline_recovered": 31,
+      "allocator_recovered": 20,
+      "baseline_attempts_spent": 148,
+      "allocator_attempts_spent": 95,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 99,
+      "baseline_recovered": 35,
+      "allocator_recovered": 22,
+      "baseline_attempts_spent": 141,
+      "allocator_attempts_spent": 89,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 137,
+      "baseline_recovered": 36,
+      "allocator_recovered": 28,
+      "baseline_attempts_spent": 149,
+      "allocator_attempts_spent": 78,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 500,
+      "baseline_recovered": 32,
+      "allocator_recovered": 26,
+      "baseline_attempts_spent": 149,
+      "allocator_attempts_spent": 75,
+      "allocator_wins_on_raw_recovery": false
+    },
+    {
+      "seed": 2026,
+      "baseline_recovered": 31,
+      "allocator_recovered": 23,
+      "baseline_attempts_spent": 153,
+      "allocator_attempts_spent": 75,
+      "allocator_wins_on_raw_recovery": false
+    }
+  ],
+  "baseline_recovered_mean": 33.7,
+  "baseline_recovered_stdev": 2.37,
+  "allocator_recovered_mean": 25.8,
+  "allocator_recovered_stdev": 3.16,
+  "recovery_gap_mean": 7.9,
+  "recovery_gap_stdev": 3.42,
+  "n_seeds_where_allocator_wins_on_raw_recovery": 0,
+  "n_seeds_total": 10
+}

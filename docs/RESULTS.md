@@ -45,9 +45,12 @@ The default parameters don't produce more raw recoveries, though (29 vs
 35), and Section 4 is the diagnosis, not just an acknowledgment - it walks
 through why mechanically, plus a scoring-function fix made this session
 that moved the sensitivity sweep's advantage from 3/27 to 7/27 grid points.
+Section 5 checks whether that 29-vs-35 gap itself is stable across seeds
+or a property of this one draw (it's stable - baseline wins at all 10
+seeds tried).
 
 There's also a rupee figure worth putting on this, priced the same way the
-outcome model itself is declared rather than sourced (Section 8 has the
+outcome model itself is declared rather than sourced (Section 9 has the
 caveat in full): at an illustrative ₹20 per retry attempt (blended
 gateway/ops/support overhead for one attempted debit - nobody publishes a
 real figure for this, so substitute your own number if you have one; the
@@ -173,7 +176,31 @@ outcome model to per-customer variation. Both are legitimate future work,
 not something to patch in reaction to a sweep number that didn't move
 enough.
 
-## 5. The breakeven: what cost per attempt makes this worth it
+## 5. Is the headline stable, or one lucky draw? (multi-seed check)
+
+Every number so far comes from `seed=42`. `eval/multiseed.py` re-draws the
+same 60-payment batch at 10 seeds (42, 1, 2, 3, 7, 13, 99, 137, 500, 2026 -
+chosen before running, not selected after seeing results) against the
+default outcome model, and reports the distribution rather than a single
+number.
+
+| | Baseline recovered | Allocator recovered | Recovery gap (baseline − allocator) |
+|---|---|---|---|
+| seed 42 (the headline) | 35 | 29 | 6 |
+| Mean across all 10 seeds | 33.7 | 25.8 | 7.9 |
+| Std. dev. across all 10 seeds | 2.37 | 3.16 | 3.42 |
+
+**Baseline wins on raw recovery at all 10 of 10 seeds** - this isn't a
+property of one unlucky draw, it's stable. If anything, seed 42's gap (6)
+is smaller than the 10-seed mean (7.9), so the headline number is on the
+*more flattering* side for the allocator relative to the wider sample, not
+a cherry-picked worst case being hidden or a best case being shown.
+Attempts-spent stays favorable throughout too: the allocator spends 72-95
+attempts across all 10 seeds against baseline's 137-153, so that half of
+the headline is the stable one. Full per-seed data:
+`eval/results/multiseed.json`. Reproduce with `python -m eval.multiseed`.
+
+## 6. The breakeven: what cost per attempt makes this worth it
 
 Section 2's headline leaves a real question unresolved: 46% fewer attempts
 against 17% fewer payments recovered. Fewer attempts and fewer recoveries
@@ -223,7 +250,7 @@ most worth replacing with real data), find where it falls, read off the
 winner. Reproduce with `python -m eval.economics`, or call
 `eval.economics.run_economics()` with your own `AttemptCostAssumptions`.
 
-## 6. Stop-decision precision
+## 7. Stop-decision precision
 
 Of the payments the allocator stopped or notified instead of retrying (17
 of 60), 82% were genuinely unrecoverable under the frozen model. The other
@@ -237,7 +264,7 @@ Baseline never stops early by design (it's the naive comparator, retrying
 regardless of cause), so there's no stop-decision precision to report for
 it.
 
-## 7. What did not work
+## 8. What did not work
 
 - Live Razorpay S2S UPI AutoPay integration (Sec 5.0 integration tier) is
   gated behind a Razorpay Support activation this test account doesn't
@@ -271,16 +298,16 @@ it.
   committed since the first scaffold commit. Found and fixed mid-build;
   see `docs/build-log.md`.
 
-## 8. Limitations
+## 9. Limitations
 
 - **Simulation study, not a field measurement.** Every number above is
   scored against `eval/outcome_model.py`, a declared model of the world,
   not observed customer behavior. See Section 1.
 - **The ₹20-per-attempt figure in Section 2, and all three cost
-  components in Section 5's breakeven, are declared illustrations, not
+  components in Section 6's breakeven, are declared illustrations, not
   sourced data.** No public cost-per-retry-attempt figure exists for UPI
   AutoPay, and the customer-annoyance-to-revocation probability and
-  lifetime-value figures in Section 5 are the least certain numbers in
+  lifetime-value figures in Section 6 are the least certain numbers in
   this entire document - the arithmetic (net value, breakeven) is what's
   meant to be reused, not any of the constants themselves.
 - **Failure mix is modelled, not observed.** `eval/batch_generator.py`'s
