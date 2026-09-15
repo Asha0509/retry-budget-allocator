@@ -145,12 +145,16 @@ contract is identical either way:
   against Razorpay's TEST-mode API. Customer and order creation
   succeeded; UPI AutoPay mandate/charge creation is gated behind a
   Razorpay Support activation this account doesn't have, confirmed via 4
-  independent probes plus an external source (`data/fixtures/README.md`
-  has the full finding). What did get captured live - one error payload
-  (`data/fixtures/unknown.json`) and the real customer/order responses
-  (`data/fixtures/_capture_attempts.json`) - is evidence of a genuine
-  integration attempt against the real account, not something written by
-  hand.
+  distinct creation-style routes tried across two sessions plus an
+  external source (`data/fixtures/README.md` has the full finding). What
+  did get captured live - one error payload (`data/fixtures/unknown.json`)
+  and the real customer/order responses (`data/fixtures/
+  _capture_attempts.json`) - is evidence of a genuine integration attempt
+  against the real account, not something written by hand. Re-verified
+  2026-09-15 with fresh credentials and a 4th, previously-untried route
+  (`scripts/live_mandate_probe.py`, `data/fixtures/
+  _live_mandate_probe.json`) - same gate, same rejection. See
+  `docs/build-log.md`, 2026-09-15.
 - **Batch tier (large, replayed):** the other 6 fixtures come verbatim
   from Razorpay's own published error-code documentation
   (`code`/`description`/`source`/`step`/`reason` fields), with the three
@@ -171,6 +175,17 @@ This isn't left as a convention to honor - `tests/test_outcome_model_
 isolation.py` parses every file under `pipeline/` with Python's `ast`
 module and fails the build if any import statement references
 `outcome_model`.
+
+Two more `eval/` modules build further analysis on top of the same
+frozen batch and outcome model, both respecting the same isolation -
+neither touches `pipeline/`, both read `eval.harness`'s already-computed
+output rather than re-running or re-tuning anything: `eval/multiseed.py`
+re-draws the batch at 10 seeds to check whether the headline result is
+stable or one lucky draw, and `eval/economics.py` prices both policies'
+net value at a declared cost per attempt, computing the exact breakeven
+and a 2D surface across the two least-certain cost inputs. Neither
+changes what the allocator does or what the outcome model says - pure
+arithmetic over numbers that already exist.
 
 ## The live simulator (PRD Sec 6.2's opt-in "live mode")
 
@@ -205,6 +220,27 @@ caught this.
 **Never touches the real Razorpay API.** The only external call anywhere
 in this path is the same Stage 7 LLM call every other part of the
 pipeline already makes, with the same try/except fallback.
+
+## The live Razorpay client and webhook receiver (opt-in, separate from the simulator above)
+
+`api/razorpay_client.py` is the one module in this repo that can make a
+real network call to Razorpay - a different thing from the Live Simulator
+above, which never does. Gated behind `LIVE_RAZORPAY=1` (default off,
+documented in `.env.example`): every function refuses immediately with
+`LiveRazorpayDisabled` if the flag isn't set or the key doesn't look like
+a `rzp_test_` key, rather than silently no-opping or silently going live.
+The batch study and CI never set this flag and never touch the network -
+`tests/test_razorpay_client.py` only checks the refusal path, no real
+call happens in the test suite. It wraps 3 calls (`create_customer`,
+`register_mandate`, `charge_token`) using the official `razorpay` SDK,
+built for `scripts/live_mandate_probe.py`'s live re-verification runs
+(`docs/build-log.md`, 2026-09-15) - not wired into the dashboard.
+
+`api/main.py` also exposes `POST /api/webhooks/razorpay`, a minimal
+receiver that logs the raw payload of any mandate/payment event to
+`logs/webhooks.jsonl` (git-ignored, same convention as the rest of
+`/logs/`). Deliberately no signature verification - it exists to observe
+real event shapes, not to run in production.
 
 ## Design trade-offs - considered and rejected
 
@@ -262,7 +298,7 @@ by giving the allocator a peek at the real model.
 
 ## Known limitations
 
-See `docs/RESULTS.md` Section 7 for the full, evidenced list: simulation
+See `docs/RESULTS.md` Section 9 for the full, evidenced list: simulation
 study, modelled failure mix, narrow-effect funding-window inference,
 small N, provisional fixtures, scheduler-enforced rather than
 NPCI-enforced compliance.

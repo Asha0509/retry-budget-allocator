@@ -1,11 +1,12 @@
 # Dashboard
 
-Four tabs. Story, Decision Trace, and Batch Results read only static files
-in `public/data/` — no live API call, ever (PRD Sec 6.2's demo-reliability
-requirement), because the batch study itself is meant to be fixed and
-reproducible. Live Simulator is the one opt-in exception: it calls a small
-local FastAPI backend that runs the real pipeline (never the real Razorpay
-API).
+A landing page first (`src/views/LandingPage.jsx`), then four tabs behind
+one button. Story, Decision Trace, and Batch Results read only static
+files in `public/data/` — no live API call, ever (PRD Sec 6.2's
+demo-reliability requirement), because the batch study itself is meant to
+be fixed and reproducible. Live Simulator is the one opt-in exception: it
+calls a small local FastAPI backend that runs the real pipeline (never the
+real Razorpay API).
 
 ## Run it
 
