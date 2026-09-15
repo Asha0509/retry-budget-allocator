@@ -156,6 +156,37 @@ def test_allocate_requires_timezone_aware_failure_time() -> None:
         allocate(FailureCause.INSUFFICIENT_FUNDS, naive, attempts_used=0)
 
 
+def test_a_prior_success_this_cycle_stops_regardless_of_budget_or_cause() -> None:
+    # Regression test for the dead-scaffolding gap in docs/build-log.md
+    # (2026-09-15): billing_cycle_successes was defined on FailedPaymentEvent
+    # and pipeline.compliance.at_most_one_success_per_cycle() existed but
+    # neither was ever read by any decision logic. A fresh budget and a
+    # normally-retryable cause must not matter once a success already
+    # happened this cycle.
+    decision = allocate(FailureCause.INSUFFICIENT_FUNDS, _dt("08:00"), attempts_used=0, billing_cycle_successes=1)
+    assert decision.action == "stop"
+    assert decision.scheduled_at is None
+    assert decision.candidates == []
+    assert decision.billing_cycle_successes == 1
+
+
+def test_billing_cycle_successes_is_carried_onto_every_decision_shape() -> None:
+    for cause, attempts_used in [
+        (FailureCause.INSUFFICIENT_FUNDS, 0),  # retry
+        (FailureCause.MANDATE_REVOKED, 0),  # stop (structurally unrecoverable)
+        (FailureCause.AFA_REQUIRED, 0),  # notify
+        (FailureCause.INSUFFICIENT_FUNDS, MAX_RETRY_ATTEMPTS),  # stop (budget exhausted)
+    ]:
+        decision = allocate(cause, _dt("08:00"), attempts_used=attempts_used, billing_cycle_successes=0)
+        assert decision.billing_cycle_successes == 0
+
+
+@pytest.mark.parametrize("bad_value", [-1, -5, 2, 5])
+def test_out_of_range_billing_cycle_successes_fails_loud_not_open(bad_value: int) -> None:
+    with pytest.raises(ValueError, match="outside the compliant range"):
+        allocate(FailureCause.INSUFFICIENT_FUNDS, _dt("08:00"), attempts_used=0, billing_cycle_successes=bad_value)
+
+
 def test_run_allocation_returns_stage_trace() -> None:
     decision, trace = run_allocation(FailureCause.INSUFFICIENT_FUNDS, _dt("08:00"), attempts_used=0)
     assert trace.stage == "allocate"

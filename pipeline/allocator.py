@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from pipeline.compliance import (
     IST,
     MAX_RETRY_ATTEMPTS,
+    at_most_one_success_per_cycle,
     attempts_within_cap,
     is_peak_window,
     shift_out_of_peak,
@@ -88,6 +89,7 @@ class AllocatorDecision(BaseModel):
     candidates: list[CandidateWindow]
     attempts_used: int
     attempts_remaining: int
+    billing_cycle_successes: int
     reason: str
 
 
@@ -132,6 +134,7 @@ def allocate(
     failure_time: datetime,
     attempts_used: int,
     funding_estimate: FundingWindowEstimate | None = None,
+    billing_cycle_successes: int = 0,
 ) -> AllocatorDecision:
     """Stage 5: decide notify / retry-at-T / stop (PRD Sec 4)."""
     if failure_time.tzinfo is None:
@@ -145,9 +148,26 @@ def allocate(
         # eval/harness.py and api/main.py, not only through ingest.py's own
         # Field constraint on FailedPaymentEvent.attempts_used.
         raise ValueError(f"attempts_used={attempts_used} is outside the compliant range 0-{MAX_RETRY_ATTEMPTS}")
+    if not at_most_one_success_per_cycle(billing_cycle_successes):
+        raise ValueError(f"billing_cycle_successes={billing_cycle_successes} is outside the compliant range 0-1")
 
     prior = get_prior(cause)
     attempts_remaining = max(MAX_RETRY_ATTEMPTS - attempts_used, 0)
+
+    if billing_cycle_successes >= 1:
+        # A successful debit already happened this cycle (PRD Sec 2: at most
+        # one per token per billing cycle) - a further retry would risk a
+        # second one, so this outranks every other branch including a fresh
+        # budget.
+        return AllocatorDecision(
+            action="stop",
+            scheduled_at=None,
+            candidates=[],
+            attempts_used=attempts_used,
+            attempts_remaining=attempts_remaining,
+            billing_cycle_successes=billing_cycle_successes,
+            reason="a successful debit already occurred this billing cycle - no further attempts permitted",
+        )
 
     if attempts_remaining <= 0:
         return AllocatorDecision(
@@ -156,6 +176,7 @@ def allocate(
             candidates=[],
             attempts_used=attempts_used,
             attempts_remaining=0,
+            billing_cycle_successes=billing_cycle_successes,
             reason=f"retry budget exhausted ({attempts_used}/{MAX_RETRY_ATTEMPTS} attempts used)",
         )
 
@@ -166,6 +187,7 @@ def allocate(
             candidates=[],
             attempts_used=attempts_used,
             attempts_remaining=attempts_remaining,
+            billing_cycle_successes=billing_cycle_successes,
             reason=prior.rationale,
         )
 
@@ -176,6 +198,7 @@ def allocate(
             candidates=[],
             attempts_used=attempts_used,
             attempts_remaining=attempts_remaining,
+            billing_cycle_successes=billing_cycle_successes,
             reason=prior.rationale,
         )
 
@@ -197,6 +220,7 @@ def allocate(
         candidates=candidates,
         attempts_used=attempts_used,
         attempts_remaining=attempts_remaining,
+        billing_cycle_successes=billing_cycle_successes,
         reason=f"chose {best.offset_label} (score={best.score})",
     )
 
@@ -206,12 +230,13 @@ def run_allocation(
     failure_time: datetime,
     attempts_used: int,
     funding_estimate: FundingWindowEstimate | None = None,
+    billing_cycle_successes: int = 0,
 ) -> tuple[AllocatorDecision, StageTrace]:
     """Stage 5 entry point: allocate and produce a StageTrace (PRD Sec 6.1)."""
     input_summary = f"cause={cause.value} attempts_used={attempts_used}"
 
     def _work() -> tuple[AllocatorDecision, str]:
-        decision = allocate(cause, failure_time, attempts_used, funding_estimate)
+        decision = allocate(cause, failure_time, attempts_used, funding_estimate, billing_cycle_successes)
         return decision, f"action={decision.action} scheduled_at={decision.scheduled_at}"
 
     return run_stage("allocate", input_summary, _work)

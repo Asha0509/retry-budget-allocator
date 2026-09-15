@@ -1,8 +1,8 @@
 # Results
 
-Run `run_20260904T223013` - 60 synthesized failed payments, seed 42. Reproduce
+Run `run_20260915T134833` - 60 synthesized failed payments, seed 42. Reproduce
 with `python -m eval.harness && python -m eval.sensitivity`. Raw output:
-`eval/results/run_20260904T223013.json`, `eval/results/sensitivity.json`.
+`eval/results/run_20260915T134833.json`, `eval/results/sensitivity.json`.
 
 ## 1. The outcome model, stated before any number (PRD Sec 5.1)
 
@@ -238,7 +238,7 @@ savings outweigh its lower recovery?**
 Net value is recovered money minus money spent attempting
 (`amount_recovered - attempts_spent * cost_per_attempt`), computed for
 both policies from the same real batch numbers this whole document uses
-(`run_20260904T223013`, `eval/results/economics.json`). The cost side is
+(`run_20260915T134833`, `eval/results/economics.json`). The cost side is
 never one buried number - three components are declared separately,
 because none of them is authoritative and a reader should be able to
 swap in their own:

@@ -31,6 +31,7 @@ export function isPeakWindow(iso) {
 export function runComplianceChecks(payments) {
   const capViolations = []
   const peakViolations = []
+  const successViolations = []
   let totalDecisionsChecked = 0
   let totalScheduledChecked = 0
 
@@ -45,6 +46,13 @@ export function runComplianceChecks(payments) {
         if (isPeakWindow(decision.scheduled_at)) {
           peakViolations.push({ payment_id: payment.payment_id, scheduled_at: decision.scheduled_at })
         }
+      }
+      // pipeline.allocator.allocate() and eval.baseline.baseline_decide()
+      // both refuse to return action="retry" once billing_cycle_successes
+      // >= 1 (docs/build-log.md, 2026-09-15) - this re-checks that live
+      // against the loaded decisions rather than trusting the backend.
+      if (decision.action === 'retry' && decision.billing_cycle_successes >= 1) {
+        successViolations.push({ payment_id: payment.payment_id, billing_cycle_successes: decision.billing_cycle_successes })
       }
     }
   }
@@ -64,14 +72,16 @@ export function runComplianceChecks(payments) {
     },
     oneSuccessPerCycle: {
       label: 'At most one successful debit per token per billing cycle',
-      // Not independently re-derivable from this batch's data (each synthetic
-      // payment represents one failure event, not a multi-cycle history) -
-      // enforced structurally instead: the simulation loop (eval/harness.py
-      // _simulate_one) stops immediately on the first recorded success, so a
-      // second attempt is never even generated. Stated honestly, not faked
-      // as a live data check with nothing to actually vary.
-      enforcedByConstruction: true,
-      passed: true,
+      // A real, computed check now, not an asserted true: every decision in
+      // the loaded batch has billing_cycle_successes=0 (no synthetic event
+      // starts mid-cycle with a prior success), so this always finds zero
+      // violations on batch data today - the same character as the other two
+      // invariants above. The live simulator's "Meera" persona is where a
+      // billing_cycle_successes=1 input actually exists and can be watched
+      // refuse a retry on screen.
+      checked: totalDecisionsChecked,
+      violations: successViolations,
+      passed: successViolations.length === 0,
     },
   }
 }

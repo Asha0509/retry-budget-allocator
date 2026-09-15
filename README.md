@@ -169,9 +169,9 @@ Specific enough to act on, not hedged into meaninglessness:
   erroring (`docs/build-log.md`, 2026-09-14). Fixed and tested, and since
   supplemented with property-based fuzzing across every stage that
   actually spends the budget or admits data — the classifier (1200+
-  generated cases), the allocator (1600+, including the exact bug class
+  generated cases), the allocator (2400+, including the exact bug class
   above over a wide generated range, not just 4 hand-picked values), and
-  ingestion's two constrained fields (1100+) — rather than left as a
+  ingestion's three constrained fields (1400+) — rather than left as a
   one-pass manual audit. Not exhaustive: `pipeline/decision.py`,
   `pipeline/priors.py`, and `pipeline/funding_window.py` are still
   covered by hand-written unit tests only, not fuzzing.
@@ -215,7 +215,7 @@ is, and exactly where to go for the full detail.
 
 - **The frozen batch study** — 60 synthesized payments, both policies,
   every decision, scored against the outcome model below.
-  `eval/harness.py` produced [eval/results/run_20260904T223013.json](eval/results/run_20260904T223013.json).
+  `eval/harness.py` produced [eval/results/run_20260915T134833.json](eval/results/run_20260915T134833.json).
 - **Sensitivity sweep** — the same batch re-scored across 27 outcome-model
   parameter settings, so one favorable setting can't hide behind the
   headline. `eval/sensitivity.py` produced
@@ -304,7 +304,7 @@ below since there's nothing to say about them individually.
     ├── multiseed.py               re-draws the batch at 10 seeds AND re-sweeps at each
     ├── economics.py               cost-per-attempt breakeven point, sweep, and 2D surface
     └── results/                  committed JSON output from the 5 modules above
-        ├── run_20260904T223013.json   the frozen batch run - both policies, every decision
+        ├── run_20260915T134833.json   the frozen batch run - both policies, every decision
         ├── sensitivity.json           the 27-setting sweep result
         ├── multiseed.json             the 10-seed stability result (default parameters)
         ├── multiseed_sweep.json       the 10-seed stability result (full 27-point sweep)
@@ -312,7 +312,7 @@ below since there's nothing to say about them individually.
 
     api/                        FastAPI backend
     ├── main.py                  POST /api/simulate (live pipeline), /api/webhooks/razorpay
-    ├── personas.py                4 named live-simulator scenarios
+    ├── personas.py                5 named live-simulator scenarios
     └── razorpay_client.py        opt-in (LIVE_RAZORPAY=1) real Razorpay test-API client
 
     dashboard/                  React + Tailwind UI
@@ -351,7 +351,7 @@ below since there's nothing to say about them individually.
     │   ├── unknown.json            what an unclassifiable error object looks like
     │   ├── _capture_attempts.json  raw evidence from the first live-API capture (2026-09-03)
     │   └── _live_mandate_probe.json raw evidence from the 2026-09-15 re-verification
-    └── runs/run_20260904T223013.json   the dashboard's read-only data source (Sec 6.2)
+    └── runs/run_20260915T134833.json   the dashboard's read-only data source (Sec 6.2)
 
     docs/
     ├── prd.md                     full specification, every claim's source citation
@@ -362,8 +362,8 @@ below since there's nothing to say about them individually.
 
     tests/                      one file per module above plus:
     ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ cases)
-    ├── test_allocator_fuzz.py     property-based fuzzing of Stage 5 (1600+ cases)
-    ├── test_ingest_fuzz.py         property-based fuzzing of Stage 1's constrained fields (1100+ cases)
+    ├── test_allocator_fuzz.py     property-based fuzzing of Stage 5 (2400+ cases)
+    ├── test_ingest_fuzz.py         property-based fuzzing of Stage 1's constrained fields (1400+ cases)
     ├── test_outcome_model_isolation.py   AST check - pipeline/ never imports eval.outcome_model
     ├── test_fixtures.py           every captured fixture classifies as its filename claims
     └── (one test_<module>.py for every pipeline/, eval/, and api/ module above)

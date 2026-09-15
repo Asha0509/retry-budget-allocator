@@ -43,7 +43,9 @@ def run_pipeline(
     classification, classify_trace = run_classification(event.error)
     prior, priors_trace = run_priors(classification.cause)
     funding_estimate, funding_trace = _run_funding_window_stage(event, classification.cause)
-    allocation, allocate_trace = run_allocation(classification.cause, event.failure_time, event.attempts_used, funding_estimate)
+    allocation, allocate_trace = run_allocation(
+        classification.cause, event.failure_time, event.attempts_used, funding_estimate, event.billing_cycle_successes
+    )
     decision, decision_trace = run_decision(
         event.payment_id, event.token_id, event.amount, event.error, classification, prior, allocation, explain_plain
     )

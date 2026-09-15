@@ -74,3 +74,28 @@ def test_out_of_range_attempts_used_always_fails_loud_never_silent(cause, failur
     # tests/test_allocator.py.
     with pytest.raises(ValueError, match="outside the compliant range"):
         allocate(cause, failure_time, attempts_used)
+
+
+@given(cause=st.sampled_from(list(FailureCause)), failure_time=_failure_times, attempts_used=_valid_attempts_used)
+@settings(max_examples=500)
+def test_a_prior_success_this_cycle_never_retries_regardless_of_cause_or_timing(cause, failure_time, attempts_used) -> None:
+    # Regression property for the dead-scaffolding gap in docs/build-log.md
+    # (2026-09-15): billing_cycle_successes=1 must stop every cause, not just
+    # the structurally-unrecoverable ones, over a wide generated space.
+    decision = allocate(cause, failure_time, attempts_used, billing_cycle_successes=1)
+    assert decision.action == "stop"
+    assert decision.scheduled_at is None
+
+
+@given(
+    cause=st.sampled_from(list(FailureCause)),
+    failure_time=_failure_times,
+    attempts_used=_valid_attempts_used,
+    billing_cycle_successes=st.integers(min_value=-1000, max_value=1000).filter(lambda x: not (0 <= x <= 1)),
+)
+@settings(max_examples=300)
+def test_out_of_range_billing_cycle_successes_always_fails_loud_never_silent(
+    cause, failure_time, attempts_used, billing_cycle_successes
+) -> None:
+    with pytest.raises(ValueError, match="outside the compliant range"):
+        allocate(cause, failure_time, attempts_used, billing_cycle_successes=billing_cycle_successes)

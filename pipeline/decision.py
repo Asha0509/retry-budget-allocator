@@ -30,6 +30,15 @@ _ACTION_PLAIN_TEMPLATES: dict[Action, str] = {
     "stop": "We've stopped trying - this payment cannot succeed without the customer setting up a new mandate.",
 }
 
+# The generic "stop" template above is wrong for this one specific stop
+# reason - a prior success this cycle has nothing to do with the mandate
+# needing to be redone (PRD Sec 2, docs/build-log.md 2026-09-15). Checked
+# ahead of the per-action table in assemble_decision() below.
+_ALREADY_SUCCEEDED_THIS_CYCLE_PLAIN = (
+    "We've stopped trying - a payment already went through successfully this billing cycle, "
+    "so trying again isn't needed and isn't allowed."
+)
+
 
 def _template_reasoning_plain(cause: FailureCause, action: Action) -> str:
     """Deterministic fallback used until Stage 7 (build step 10) generates a real one."""
@@ -50,6 +59,7 @@ class RecoveryDecision(BaseModel):
     window_compliant: bool
     attempts_used: int
     attempts_remaining: int
+    billing_cycle_successes: int
     reasoning_plain: str
     reasoning_technical: str
     raw_error: RazorpayError
@@ -85,7 +95,18 @@ def assemble_decision(
         window_compliant=window_compliant,
         attempts_used=allocation.attempts_used,
         attempts_remaining=allocation.attempts_remaining,
-        reasoning_plain=explain_plain(classification.cause, allocation.action),
+        billing_cycle_successes=allocation.billing_cycle_successes,
+        # Bypasses a custom explain_plain hook for this one case (allocation.
+        # billing_cycle_successes>=1 always means action="stop", by
+        # construction in allocate()/baseline_decide()) - this is a
+        # compliance-audit fact, not a stylistic explanation choice, so it
+        # stays correct the same way the peak-window assert does rather
+        # than being left to a pluggable, potentially-wrong template.
+        reasoning_plain=(
+            _ALREADY_SUCCEEDED_THIS_CYCLE_PLAIN
+            if allocation.billing_cycle_successes >= 1
+            else explain_plain(classification.cause, allocation.action)
+        ),
         reasoning_technical=reasoning_technical,
         raw_error=raw_error,
         candidates=allocation.candidates,

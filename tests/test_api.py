@@ -49,11 +49,11 @@ def test_webhook_logs_raw_payload_verbatim(client, tmp_path, monkeypatch: pytest
     assert logged["payload"] == payload
 
 
-def test_list_personas_returns_all_four(client) -> None:
+def test_list_personas_returns_all_five(client) -> None:
     resp = client.get("/api/personas")
     assert resp.status_code == 200
     keys = {p["key"] for p in resp.json()}
-    assert keys == {"priya", "rahul", "ananya", "karan"}
+    assert keys == {"priya", "rahul", "ananya", "karan", "meera"}
 
 
 def test_simulate_priya_persona_retries(client) -> None:
@@ -84,6 +84,25 @@ def test_simulate_karan_persona_notifies_not_retries_or_stops(client) -> None:
     assert body["allocator_decision"]["action"] == "notify"
     assert body["baseline_decision"]["action"] == "retry"
     assert body["decisions_differ"] is True
+
+
+def test_simulate_meera_persona_stops_despite_budget_and_recoverable_cause(client) -> None:
+    # Live, on-screen demonstration of the third compliance invariant (PRD
+    # Sec 6.1: "run the compliance assertions live on screen") - a cause
+    # that's normally retried (bank_technical) but a success already
+    # happened this cycle, so both policies must refuse to retry.
+    resp = client.post("/api/simulate", json={"persona": "meera"})
+    body = resp.json()
+    assert body["allocator_decision"]["cause"] == "bank_technical"
+    assert body["allocator_decision"]["action"] == "stop"
+    assert body["allocator_decision"]["billing_cycle_successes"] == 1
+    assert body["baseline_decision"]["action"] == "stop"
+    assert body["decisions_differ"] is False
+
+
+def test_simulate_rejects_out_of_range_billing_cycle_successes(client) -> None:
+    resp = client.post("/api/simulate", json={"cause": "bank_technical", "billing_cycle_successes": 2})
+    assert resp.status_code == 422
 
 
 def test_simulate_unknown_persona_returns_404(client) -> None:

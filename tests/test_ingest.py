@@ -57,6 +57,21 @@ def test_ingest_accepts_attempts_used_at_cap_boundary() -> None:
     assert event.attempts_used == 3
 
 
+@pytest.mark.parametrize("bad_value", [-1, -5, 2, 100])
+def test_ingest_rejects_out_of_range_billing_cycle_successes(bad_value: int) -> None:
+    # Same bound-at-the-boundary fix as attempts_used above, applied to the
+    # third compliance invariant once it was actually wired up
+    # (docs/build-log.md, 2026-09-15) - previously unconstrained here.
+    bad = dict(_VALID_RAW, billing_cycle_successes=bad_value)
+    with pytest.raises(ValidationError):
+        ingest(bad)
+
+
+def test_ingest_accepts_billing_cycle_successes_at_1() -> None:
+    event = ingest(dict(_VALID_RAW, billing_cycle_successes=1))
+    assert event.billing_cycle_successes == 1
+
+
 def test_run_ingestion_returns_stage_trace() -> None:
     event, trace = run_ingestion(_VALID_RAW)
     assert event.payment_id == "pay_TEST001"

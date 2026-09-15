@@ -111,10 +111,14 @@ def _simulate_one(
             traces.append(stage_traces)
             action, scheduled_at = decision.action, decision.scheduled_at
         elif policy == "allocator":
-            allocator_result: AllocatorDecision = allocate(cause, event.failure_time, attempts_used, funding_estimate)
+            allocator_result: AllocatorDecision = allocate(
+                cause, event.failure_time, attempts_used, funding_estimate, event.billing_cycle_successes
+            )
             action, scheduled_at = allocator_result.action, allocator_result.scheduled_at
         else:
-            baseline_result: AllocatorDecision = baseline_decide(cause, event.failure_time, attempts_used)
+            baseline_result: AllocatorDecision = baseline_decide(
+                cause, event.failure_time, attempts_used, event.billing_cycle_successes
+            )
             action, scheduled_at = baseline_result.action, baseline_result.scheduled_at
 
         if scheduled_at is not None and is_peak_window(scheduled_at):

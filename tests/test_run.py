@@ -68,3 +68,16 @@ def test_custom_explain_plain_flows_through_the_whole_pipeline() -> None:
     event = ingest(_RAW_INSUFFICIENT_FUNDS)
     decision, _ = run_pipeline(event, explain_plain=lambda cause, action: f"custom {cause.value} {action}")
     assert decision.reasoning_plain == "custom insufficient_funds retry"
+
+
+def test_a_prior_success_this_cycle_stops_end_to_end() -> None:
+    # End-to-end regression for docs/build-log.md (2026-09-15):
+    # FailedPaymentEvent.billing_cycle_successes now actually reaches the
+    # allocator through the full ingest -> allocate -> decision path, not
+    # just the unit-level allocate() call.
+    event = ingest({**_RAW_INSUFFICIENT_FUNDS, "billing_cycle_successes": 1})
+    decision, traces = run_pipeline(event)
+    assert decision.action == "stop"
+    assert decision.billing_cycle_successes == 1
+    allocate_trace = next(t for t in traces if t.stage == "allocate")
+    assert "action=stop" in allocate_trace.output_summary

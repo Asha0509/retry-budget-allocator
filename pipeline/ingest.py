@@ -33,7 +33,12 @@ class FailedPaymentEvent(BaseModel):
     # rather than aspirational.
     attempts_used: int = Field(ge=0, le=MAX_RETRY_ATTEMPTS)
     failure_time: datetime
-    billing_cycle_successes: int = 0
+    # Same "bound it at the boundary" reasoning as attempts_used above (PRD
+    # Sec 2: at most one successful debit per cycle) - pipeline.allocator.
+    # allocate() and eval.baseline.baseline_decide() both re-check this too,
+    # for callers that build an AllocatorDecision without going through
+    # ingest() first (eval/harness.py's include_details=False fast path).
+    billing_cycle_successes: int = Field(default=0, ge=0, le=1)
     prior_debit_dates: list[datetime] = []  # Stage 4 input (PRD Sec 4) - customer's past successful debits
 
 

@@ -24,6 +24,7 @@ class Persona(TypedDict):
     attempts_used: int
     prior_debit_days_ago: list[int]  # for funding-window history, days before "now"
     prior_debit_day_of_month: int | None  # consistent day-of-month across those debits
+    billing_cycle_successes: int  # PRD Sec 2: at most 1 per token per cycle
 
 
 PERSONAS: list[Persona] = [
@@ -36,6 +37,7 @@ PERSONAS: list[Persona] = [
         "attempts_used": 0,
         "prior_debit_days_ago": [30, 60, 90, 120],
         "prior_debit_day_of_month": 5,
+        "billing_cycle_successes": 0,
     },
     {
         "key": "rahul",
@@ -46,6 +48,7 @@ PERSONAS: list[Persona] = [
         "attempts_used": 0,
         "prior_debit_days_ago": [],
         "prior_debit_day_of_month": None,
+        "billing_cycle_successes": 0,
     },
     {
         "key": "ananya",
@@ -56,6 +59,7 @@ PERSONAS: list[Persona] = [
         "attempts_used": 0,
         "prior_debit_days_ago": [],
         "prior_debit_day_of_month": None,
+        "billing_cycle_successes": 0,
     },
     {
         "key": "karan",
@@ -66,6 +70,22 @@ PERSONAS: list[Persona] = [
         "attempts_used": 0,
         "prior_debit_days_ago": [],
         "prior_debit_day_of_month": None,
+        "billing_cycle_successes": 0,
+    },
+    {
+        "key": "meera",
+        "name": "Meera",
+        "description": (
+            "Bank technical error, but a debit already succeeded earlier this billing cycle "
+            "(e.g. the customer paid manually after the failure) - both policies must stop cold "
+            "rather than risk a second successful debit, regardless of remaining budget or cause."
+        ),
+        "cause_fixture": "bank_technical",
+        "amount": 89900,
+        "attempts_used": 0,
+        "prior_debit_days_ago": [],
+        "prior_debit_day_of_month": None,
+        "billing_cycle_successes": 1,
     },
 ]
 

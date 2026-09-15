@@ -94,6 +94,28 @@ def test_fallback_is_deterministic_for_the_same_decision() -> None:
     assert a == b
 
 
+def test_fallback_for_a_prior_success_this_cycle_does_not_blame_the_mandate() -> None:
+    # Regression test for docs/build-log.md (2026-09-15): the generic "stop"
+    # template says "setting up a new mandate", which is actively wrong when
+    # the real reason is a success already happened this cycle.
+    error = RazorpayError(reason="bank_technical_error")
+    classification = classify_cause(error)
+    prior = get_prior(classification.cause)
+    allocation = allocate(
+        classification.cause, datetime(2026, 9, 3, 8, 0, tzinfo=IST), attempts_used=0, billing_cycle_successes=1
+    )
+    decision, _ = run_decision("pay_meera", "token_meera", 50000, error, classification, prior, allocation)
+
+    client = MagicMock()
+    client.chat.completions.create.side_effect = RuntimeError("network down")
+    result = generate_explanation(decision, client)
+
+    assert result.generated_by == "template_fallback"
+    assert "mandate" not in result.reasoning_plain.lower()
+    assert "billing cycle" in result.reasoning_plain.lower()
+    assert "mandate" not in result.notification_copy_en.lower()
+
+
 def test_run_explanation_returns_stage_trace() -> None:
     result, trace = run_explanation(_sample_decision(), client=_mock_client("bad json"))
     assert trace.stage == "explain"

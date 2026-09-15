@@ -55,3 +55,41 @@ def test_custom_explain_plain_is_used_when_provided() -> None:
         "pay_3", "token_3", 100, error, classification, prior, allocation, explain_plain=lambda cause, action: "custom text"
     )
     assert decision.reasoning_plain == "custom text"
+
+
+def test_billing_cycle_successes_carried_from_allocation_onto_the_decision_record() -> None:
+    error = RazorpayError(reason="bank_technical")
+    classification = classify_cause(error)
+    prior = get_prior(classification.cause)
+    allocation = allocate(
+        classification.cause, datetime(2026, 9, 3, 8, 0, tzinfo=IST), attempts_used=0, billing_cycle_successes=1
+    )
+
+    decision, _ = run_decision("pay_4", "token_4", 50000, error, classification, prior, allocation)
+
+    assert decision.billing_cycle_successes == 1
+    assert decision.action == "stop"
+
+
+def test_a_prior_success_this_cycle_gets_an_accurate_plain_sentence_not_the_generic_stop_one() -> None:
+    # Regression test for docs/build-log.md (2026-09-15): the generic "stop"
+    # template says the customer needs a new mandate, which is wrong here -
+    # nothing about the mandate failed, a debit already succeeded.
+    error = RazorpayError(reason="bank_technical_error")
+    classification = classify_cause(error)
+    prior = get_prior(classification.cause)
+    allocation = allocate(
+        classification.cause, datetime(2026, 9, 3, 8, 0, tzinfo=IST), attempts_used=0, billing_cycle_successes=1
+    )
+
+    decision, _ = run_decision("pay_5", "token_5", 50000, error, classification, prior, allocation)
+
+    assert "mandate" not in decision.reasoning_plain.lower()
+    assert "billing cycle" in decision.reasoning_plain.lower()
+
+    # Even a custom explain_plain hook doesn't override this - it's a
+    # compliance fact, not a stylistic choice.
+    decision_custom, _ = run_decision(
+        "pay_6", "token_6", 50000, error, classification, prior, allocation, explain_plain=lambda cause, action: "custom text"
+    )
+    assert decision_custom.reasoning_plain != "custom text"

@@ -55,6 +55,14 @@ _TEMPLATE_NOTIFICATION_HINGLISH: dict[Action, str] = {
     "stop": "Hum aapka payment process nahi kar paaye. Please apna payment method dobara set up karein.",
 }
 
+# Same wrong-for-this-case problem as pipeline.decision's "stop" template -
+# a prior success this cycle isn't a failure needing the customer to redo
+# anything (docs/build-log.md, 2026-09-15).
+_ALREADY_SUCCEEDED_NOTIFICATION_EN = "Good news - this payment already went through successfully this billing cycle. No action needed."
+_ALREADY_SUCCEEDED_NOTIFICATION_HINGLISH = (
+    "Good news - ye payment is billing cycle mein already ho chuka hai. Kuch karne ki zaroorat nahi hai."
+)
+
 
 class ExplanationResult(BaseModel):
     reasoning_plain: str
@@ -95,6 +103,17 @@ def _parse_json_response(content: str) -> dict:
 
 
 def _fallback_explanation(decision: RecoveryDecision) -> ExplanationResult:
+    if decision.billing_cycle_successes >= 1:
+        # decision.reasoning_plain is already correct for this case -
+        # pipeline.decision.assemble_decision() set it directly, bypassing
+        # the generic per-action template for the same reason this function
+        # bypasses it here.
+        return ExplanationResult(
+            reasoning_plain=decision.reasoning_plain,
+            notification_copy_en=_ALREADY_SUCCEEDED_NOTIFICATION_EN,
+            notification_copy_hinglish=_ALREADY_SUCCEEDED_NOTIFICATION_HINGLISH,
+            generated_by="template_fallback",
+        )
     return ExplanationResult(
         reasoning_plain=_template_reasoning_plain(decision.cause, decision.action),
         notification_copy_en=_TEMPLATE_NOTIFICATION_EN[decision.action],

@@ -130,11 +130,22 @@ order step 2):
 |---|---|---|
 | Never more than 3 retry attempts per mandate | `attempts_within_cap` | `pipeline/allocator.py` (early-return before scoring), `eval/harness.py` (asserted per simulated attempt), dashboard's live compliance panel |
 | Never schedule inside a peak window (10:00-13:00, 17:00-21:30 IST) | `is_peak_window`, `shift_out_of_peak` | Candidate generation only ever returns compliant times; re-asserted with a runtime `assert` in `allocate()`; re-checked in `eval/harness.py`; re-checked live in the dashboard (`dashboard/src/lib/compliance.js`, a JS port of the same logic) |
-| At most one successful debit per token per billing cycle | Structural - `eval/harness.py`'s simulation loop stops immediately on the first recorded success | Not independently re-derivable from a single-failure-event batch, so this is stated as "enforced by construction" in the dashboard rather than faked as a live data check - see `dashboard/src/lib/compliance.js` |
+| At most one successful debit per token per billing cycle | `at_most_one_success_per_cycle` | `pipeline/allocator.py` and `eval/baseline.py` both read `billing_cycle_successes` off the incoming event and refuse `retry` (return `stop`) the moment it's >=1, ahead of every other branch including a fresh budget; out-of-range values raise `ValueError` the same way a bad `attempts_used` does; re-checked live in the dashboard against each decision's `billing_cycle_successes` field |
 
 `tests/test_compliance.py` covers every minute-level boundary of both
 peak windows and both cap edges (3 is fine, 4 violates) - written before
 either the allocator or the baseline existed.
+
+Until 2026-09-15 this third invariant was a real gap: `at_most_one_success_per_cycle`
+and `FailedPaymentEvent.billing_cycle_successes` both existed but nothing
+ever called or read them - the batch study's per-payment loop happened to
+never generate a violating case (it stops at the first simulated success),
+which made the gap easy to miss. It's now wired end to end: `billing_cycle_successes`
+flows from ingestion through `AllocatorDecision` into `RecoveryDecision`, and
+the live simulator's "Meera" persona (`api/personas.py`) sets it to 1 on a
+cause that would otherwise retry, specifically so the refusal is visible on
+screen (PRD Sec 6.1) rather than only true by construction. Full story in
+`docs/build-log.md`, 2026-09-15.
 
 ## Data provenance (PRD Sec 5.0)
 
@@ -202,8 +213,12 @@ same functions the batch harness calls: `pipeline.ingest.run_ingestion`,
 `pipeline.run.run_pipeline` (Stages 2-6), `pipeline.explain.
 run_explanation` (Stage 7, a live LLM call with its existing fallback
 behavior), and `eval.baseline.baseline_decide` for the comparison shown
-alongside. `api/personas.py` holds four named demo scenarios, each built
-from an actual fixture in `data/fixtures/` rather than a made-up payload.
+alongside. `api/personas.py` holds five named demo scenarios, each built
+from an actual fixture in `data/fixtures/` rather than a made-up payload -
+including "Meera" (`billing_cycle_successes=1` on an otherwise-retryable
+cause), added specifically to make the third compliance invariant
+watchable live rather than only provable in a test (see "Compliance
+invariants" above).
 
 **What it deliberately skips:** `eval/outcome_model.py`. A live run
 produces a `RecoveryDecision` - a classification and a choice - never a

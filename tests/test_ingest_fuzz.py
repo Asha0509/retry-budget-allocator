@@ -2,10 +2,11 @@
 
 Extends fuzzing coverage beyond Stage 2 (tests/test_classify_fuzz.py) and
 Stage 5 (tests/test_allocator_fuzz.py) to the actual data-entry boundary -
-the two fields with explicit Pydantic constraints (docs/build-log.md,
-2026-09-14: both had none until that pass) get checked over a wide
-generated range here, not just the handful of hand-picked values in
-tests/test_ingest.py.
+every field with an explicit Pydantic constraint (attempts_used and amount
+from 2026-09-14; billing_cycle_successes added 2026-09-15 once it went
+from unconstrained scaffolding to an actually-consumed field) gets checked
+over a wide generated range here, not just the handful of hand-picked
+values in tests/test_ingest.py.
 """
 
 from __future__ import annotations
@@ -58,6 +59,16 @@ def test_every_in_range_value_is_accepted_and_preserved_exactly(amount: int, att
     event = ingest(dict(_VALID_BASE, amount=amount, attempts_used=attempts_used))
     assert event.amount == amount
     assert event.attempts_used == attempts_used
+
+
+@given(billing_cycle_successes=st.integers(min_value=-1000, max_value=1000).filter(lambda x: not (0 <= x <= 1)))
+@settings(max_examples=300)
+def test_out_of_range_billing_cycle_successes_always_rejected(billing_cycle_successes: int) -> None:
+    # Third field to gain a Pydantic constraint (docs/build-log.md,
+    # 2026-09-15) - same fuzzing treatment as the other two once it went
+    # from unconstrained scaffolding to an actually-consumed field.
+    with pytest.raises(ValidationError):
+        ingest(dict(_VALID_BASE, billing_cycle_successes=billing_cycle_successes))
 
 
 @given(payment_id=st.text(min_size=1, max_size=200), token_id=st.text(min_size=1, max_size=200))

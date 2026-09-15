@@ -57,6 +57,7 @@ class SimulateRequest(BaseModel):
     cause: str | None = None  # a FailureCause value - looks up the matching real fixture
     raw_error: dict | None = None  # user-pasted raw JSON, takes precedence over `cause`
     attempts_used: int = Field(default=0, ge=0, le=3)
+    billing_cycle_successes: int = Field(default=0, ge=0, le=1)
 
 
 class SimulateResponse(BaseModel):
@@ -100,6 +101,7 @@ def simulate(req: SimulateRequest) -> SimulateResponse:
         error_dict = load_fixture_error(persona["cause_fixture"])
         amount = persona["amount"]
         attempts_used = persona["attempts_used"]
+        billing_cycle_successes = persona["billing_cycle_successes"]
         if persona["prior_debit_day_of_month"]:
             prior_debit_dates = _build_prior_debit_dates(
                 persona["prior_debit_day_of_month"], len(persona["prior_debit_days_ago"]), failure_time
@@ -120,6 +122,7 @@ def simulate(req: SimulateRequest) -> SimulateResponse:
             raise HTTPException(status_code=400, detail="must provide persona, cause, or raw_error")
         amount = req.amount or 100000
         attempts_used = req.attempts_used
+        billing_cycle_successes = req.billing_cycle_successes
         prior_debit_dates = _build_prior_debit_dates(req.prior_debit_day_of_month, req.n_prior_debits, failure_time)
         payment_id = "pay_LIVE_custom"
 
@@ -131,6 +134,7 @@ def simulate(req: SimulateRequest) -> SimulateResponse:
         "error": error_dict,
         "attempts_used": attempts_used,
         "failure_time": failure_time.isoformat(),
+        "billing_cycle_successes": billing_cycle_successes,
         "prior_debit_dates": [d.isoformat() for d in prior_debit_dates],
     }
 
@@ -145,7 +149,7 @@ def simulate(req: SimulateRequest) -> SimulateResponse:
     stage_traces = [ingest_trace, *stage_traces, explain_trace]
 
     cause = decision.cause
-    baseline = baseline_decide(cause, event.failure_time, event.attempts_used)
+    baseline = baseline_decide(cause, event.failure_time, event.attempts_used, event.billing_cycle_successes)
     decisions_differ = decision.action != baseline.action or decision.scheduled_at != baseline.scheduled_at
 
     log.info(
