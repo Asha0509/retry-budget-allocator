@@ -404,35 +404,3 @@ fixed and pre-computed either way.
 The other three tabs work fine without the backend running; only Live
 Simulator needs it. See [dashboard/README.md](dashboard/README.md) for how
 to refresh the batch data after a new run.
-
-## Authorship
-
-This codebase was built by an AI coding assistant working from written
-specifications, directed and reviewed by a human throughout rather than
-run autonomously — every non-trivial design decision (the compliance
-invariants, the outcome-model isolation rule, when to flag a gap instead
-of silently building around it) was specified or checked before being
-built, not generated and accepted unread.
-
-The files where a subtle bug would be a money bug —
-`pipeline/allocator.py`, `pipeline/compliance.py`, `pipeline/priors.py`,
-`pipeline/classify.py`, `eval/baseline.py`, `eval/economics.py`,
-`api/razorpay_client.py`, and the Pydantic validation in
-`pipeline/ingest.py` — got the heaviest scrutiny of anything in the repo:
-a dedicated adversarial-input audit that found and fixed a real fail-open
-bug (`docs/build-log.md`, 2026-09-14: negative `attempts_used` silently
-picked the worst-scored retry window instead of erroring), later
-supplemented with property-based fuzzing (1200+ generated cases against
-the classifier, not just the hand-picked ones), and a documented-error-code
-audit against Razorpay's own published reference rather than working from
-memory. That review is real and repeatable — the regression tests and
-fuzz properties it produced are in `tests/`, not just the fixes.
-
-`CLAUDE.md`, kept in the repo rather than deleted once the build finished,
-is the actual record of what the assistant was and wasn't permitted to
-decide on its own: hard constraints that could not be silently reinterpreted,
-claims that were checked against Sec 2's sources and banned once found
-false or overstated, and the standing instruction to flag a conflict or a
-gap explicitly rather than build the disallowed thing quietly. It's a
-record of judgment calls made during the build, not a boilerplate config
-file.
