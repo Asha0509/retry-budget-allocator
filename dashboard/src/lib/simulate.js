@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:8000'
+// Set VITE_API_BASE at build time for a deployed backend; defaults to the local dev server.
+export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
 export async function fetchPersonas() {
   const res = await fetch(`${API_BASE}/api/personas`)

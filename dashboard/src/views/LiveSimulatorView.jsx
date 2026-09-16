@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FAILURE_CAUSES, fetchPersonas, runSimulation, toPaymentShape } from '../lib/simulate.js'
+import { API_BASE, FAILURE_CAUSES, fetchPersonas, runSimulation, toPaymentShape } from '../lib/simulate.js'
 import { causeLabel } from '../lib/format.js'
 import StoryView from './StoryView.jsx'
 import DecisionTraceView from './DecisionTraceView.jsx'
@@ -124,7 +124,7 @@ export default function LiveSimulatorView() {
   if (backendError) {
     return (
       <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-        Could not reach the live simulator backend at <code>localhost:8000</code> ({backendError}). Start it with{' '}
+        Could not reach the live simulator backend at <code>{API_BASE}</code> ({backendError}). Start it with{' '}
         <code className="rounded bg-rose-100 px-1">uvicorn api.main:app --reload --port 8000</code> from the repo root, then reload this
         page. Batch Results, Story, and Decision Trace still work without it - they read saved files.
       </div>

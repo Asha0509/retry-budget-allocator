@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -43,7 +44,8 @@ log = logging.getLogger("api")
 app = FastAPI(title="Retry Budget Allocator - Live Simulator API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # Comma-separated list; set CORS_ORIGINS to the deployed dashboard URL in production.
+    allow_origins=os.environ.get("CORS_ORIGINS", "http://localhost:5173").split(","),
     allow_methods=["*"],
     allow_headers=["*"],
 )
