@@ -27,7 +27,9 @@ from pipeline.priors import RecoverabilityPrior
 _ACTION_PLAIN_TEMPLATES: dict[Action, str] = {
     "retry": "We'll try this payment again at a compliant time when it's more likely to succeed.",
     "notify": "We're letting the customer know so they can fix this themselves - retrying automatically won't work here.",
-    "stop": "We've stopped trying - this payment cannot succeed without the customer setting up a new mandate.",
+    # Plain words first, the term in brackets (PRD Sec 6 presentation rule) -
+    # caught by eval/explanation_eval.py's jargon_explained check, Sec 4 Stage 7.
+    "stop": "We've stopped trying - this payment can't go through until the customer sets up their automatic payment again (a new mandate).",
 }
 
 # The generic "stop" template above is wrong for this one specific stop
