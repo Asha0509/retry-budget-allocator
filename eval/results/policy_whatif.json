@@ -1,0 +1,832 @@
+{
+  "generated_at": "2026-10-07T20:17:28+05:30",
+  "n": 60,
+  "seeds": [
+    42,
+    1,
+    2,
+    3,
+    7,
+    13,
+    99,
+    137,
+    500,
+    2026
+  ],
+  "default": {
+    "spacing": "published",
+    "confidence_threshold": 0.5
+  },
+  "spacings": {
+    "sooner": [
+      12,
+      48,
+      120
+    ],
+    "published": [
+      24,
+      72,
+      168
+    ],
+    "later": [
+      48,
+      96,
+      168
+    ]
+  },
+  "thresholds": [
+    0.3,
+    0.5,
+    0.7,
+    0.88,
+    0.92,
+    0.96,
+    1.01
+  ],
+  "stage4_confidence": {
+    "payments": 335,
+    "zero_confidence": 123,
+    "nonzero_min": 0.8743,
+    "nonzero_max": 1.0
+  },
+  "baseline": {
+    "recovered": {
+      "mean": 33.7,
+      "min": 30,
+      "max": 37
+    },
+    "rupees_recovered": {
+      "mean": 86471.4,
+      "min": 74778,
+      "max": 96281
+    },
+    "attempts_spent": {
+      "mean": 144.8,
+      "min": 137,
+      "max": 153
+    },
+    "attempts_wasted": {
+      "mean": 47.1,
+      "min": 39,
+      "max": 60
+    }
+  },
+  "points": [
+    {
+      "spacing": "sooner",
+      "confidence_threshold": 0.3,
+      "spacing_hours": [
+        12,
+        48,
+        120
+      ],
+      "recovered": {
+        "mean": 28.2,
+        "min": 23,
+        "max": 31
+      },
+      "rupees_recovered": {
+        "mean": 71841.9,
+        "min": 45909,
+        "max": 85652
+      },
+      "attempts_spent": {
+        "mean": 84.7,
+        "min": 73,
+        "max": 96
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -5.5,
+        "min": -10,
+        "max": 1
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "sooner",
+      "confidence_threshold": 0.5,
+      "spacing_hours": [
+        12,
+        48,
+        120
+      ],
+      "recovered": {
+        "mean": 28.2,
+        "min": 23,
+        "max": 31
+      },
+      "rupees_recovered": {
+        "mean": 71841.9,
+        "min": 45909,
+        "max": 85652
+      },
+      "attempts_spent": {
+        "mean": 84.7,
+        "min": 73,
+        "max": 96
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -5.5,
+        "min": -10,
+        "max": 1
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "sooner",
+      "confidence_threshold": 0.7,
+      "spacing_hours": [
+        12,
+        48,
+        120
+      ],
+      "recovered": {
+        "mean": 28.2,
+        "min": 23,
+        "max": 31
+      },
+      "rupees_recovered": {
+        "mean": 71841.9,
+        "min": 45909,
+        "max": 85652
+      },
+      "attempts_spent": {
+        "mean": 84.7,
+        "min": 73,
+        "max": 96
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -5.5,
+        "min": -10,
+        "max": 1
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "sooner",
+      "confidence_threshold": 0.88,
+      "spacing_hours": [
+        12,
+        48,
+        120
+      ],
+      "recovered": {
+        "mean": 28.2,
+        "min": 23,
+        "max": 31
+      },
+      "rupees_recovered": {
+        "mean": 71841.9,
+        "min": 45909,
+        "max": 85652
+      },
+      "attempts_spent": {
+        "mean": 84.7,
+        "min": 73,
+        "max": 96
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -5.5,
+        "min": -10,
+        "max": 1
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "sooner",
+      "confidence_threshold": 0.92,
+      "spacing_hours": [
+        12,
+        48,
+        120
+      ],
+      "recovered": {
+        "mean": 28.2,
+        "min": 23,
+        "max": 31
+      },
+      "rupees_recovered": {
+        "mean": 71841.9,
+        "min": 45909,
+        "max": 85652
+      },
+      "attempts_spent": {
+        "mean": 84.4,
+        "min": 73,
+        "max": 96
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -5.5,
+        "min": -10,
+        "max": 1
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "sooner",
+      "confidence_threshold": 0.96,
+      "spacing_hours": [
+        12,
+        48,
+        120
+      ],
+      "recovered": {
+        "mean": 28.2,
+        "min": 23,
+        "max": 32
+      },
+      "rupees_recovered": {
+        "mean": 71711.2,
+        "min": 45909,
+        "max": 88997
+      },
+      "attempts_spent": {
+        "mean": 84.1,
+        "min": 72,
+        "max": 96
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -5.5,
+        "min": -10,
+        "max": 2
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "sooner",
+      "confidence_threshold": 1.01,
+      "spacing_hours": [
+        12,
+        48,
+        120
+      ],
+      "recovered": {
+        "mean": 28.2,
+        "min": 23,
+        "max": 32
+      },
+      "rupees_recovered": {
+        "mean": 71711.2,
+        "min": 45909,
+        "max": 88997
+      },
+      "attempts_spent": {
+        "mean": 84.1,
+        "min": 72,
+        "max": 96
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -5.5,
+        "min": -10,
+        "max": 2
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "published",
+      "confidence_threshold": 0.3,
+      "spacing_hours": [
+        24,
+        72,
+        168
+      ],
+      "recovered": {
+        "mean": 25.8,
+        "min": 20,
+        "max": 29
+      },
+      "rupees_recovered": {
+        "mean": 65785.4,
+        "min": 41015,
+        "max": 80886
+      },
+      "attempts_spent": {
+        "mean": 81.6,
+        "min": 72,
+        "max": 95
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -7.9,
+        "min": -13,
+        "max": -1
+      },
+      "seeds_matching_or_beating_baseline": 0
+    },
+    {
+      "spacing": "published",
+      "confidence_threshold": 0.5,
+      "spacing_hours": [
+        24,
+        72,
+        168
+      ],
+      "recovered": {
+        "mean": 25.8,
+        "min": 20,
+        "max": 29
+      },
+      "rupees_recovered": {
+        "mean": 65785.4,
+        "min": 41015,
+        "max": 80886
+      },
+      "attempts_spent": {
+        "mean": 81.6,
+        "min": 72,
+        "max": 95
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -7.9,
+        "min": -13,
+        "max": -1
+      },
+      "seeds_matching_or_beating_baseline": 0
+    },
+    {
+      "spacing": "published",
+      "confidence_threshold": 0.7,
+      "spacing_hours": [
+        24,
+        72,
+        168
+      ],
+      "recovered": {
+        "mean": 25.8,
+        "min": 20,
+        "max": 29
+      },
+      "rupees_recovered": {
+        "mean": 65785.4,
+        "min": 41015,
+        "max": 80886
+      },
+      "attempts_spent": {
+        "mean": 81.6,
+        "min": 72,
+        "max": 95
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -7.9,
+        "min": -13,
+        "max": -1
+      },
+      "seeds_matching_or_beating_baseline": 0
+    },
+    {
+      "spacing": "published",
+      "confidence_threshold": 0.88,
+      "spacing_hours": [
+        24,
+        72,
+        168
+      ],
+      "recovered": {
+        "mean": 25.8,
+        "min": 20,
+        "max": 29
+      },
+      "rupees_recovered": {
+        "mean": 65785.4,
+        "min": 41015,
+        "max": 80886
+      },
+      "attempts_spent": {
+        "mean": 81.6,
+        "min": 72,
+        "max": 95
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -7.9,
+        "min": -13,
+        "max": -1
+      },
+      "seeds_matching_or_beating_baseline": 0
+    },
+    {
+      "spacing": "published",
+      "confidence_threshold": 0.92,
+      "spacing_hours": [
+        24,
+        72,
+        168
+      ],
+      "recovered": {
+        "mean": 25.8,
+        "min": 20,
+        "max": 29
+      },
+      "rupees_recovered": {
+        "mean": 65785.4,
+        "min": 41015,
+        "max": 80886
+      },
+      "attempts_spent": {
+        "mean": 81.3,
+        "min": 71,
+        "max": 95
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -7.9,
+        "min": -13,
+        "max": -1
+      },
+      "seeds_matching_or_beating_baseline": 0
+    },
+    {
+      "spacing": "published",
+      "confidence_threshold": 0.96,
+      "spacing_hours": [
+        24,
+        72,
+        168
+      ],
+      "recovered": {
+        "mean": 25.8,
+        "min": 20,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 65654.8,
+        "min": 41015,
+        "max": 84231
+      },
+      "attempts_spent": {
+        "mean": 81.2,
+        "min": 69,
+        "max": 95
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -7.9,
+        "min": -13,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "published",
+      "confidence_threshold": 1.01,
+      "spacing_hours": [
+        24,
+        72,
+        168
+      ],
+      "recovered": {
+        "mean": 25.8,
+        "min": 20,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 65654.8,
+        "min": 41015,
+        "max": 84231
+      },
+      "attempts_spent": {
+        "mean": 81.2,
+        "min": 69,
+        "max": 95
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -7.9,
+        "min": -13,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "later",
+      "confidence_threshold": 0.3,
+      "spacing_hours": [
+        48,
+        96,
+        168
+      ],
+      "recovered": {
+        "mean": 25.1,
+        "min": 17,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 64447.6,
+        "min": 39009,
+        "max": 92957
+      },
+      "attempts_spent": {
+        "mean": 86.5,
+        "min": 72,
+        "max": 103
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -8.6,
+        "min": -15,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "later",
+      "confidence_threshold": 0.5,
+      "spacing_hours": [
+        48,
+        96,
+        168
+      ],
+      "recovered": {
+        "mean": 25.1,
+        "min": 17,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 64447.6,
+        "min": 39009,
+        "max": 92957
+      },
+      "attempts_spent": {
+        "mean": 86.5,
+        "min": 72,
+        "max": 103
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -8.6,
+        "min": -15,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "later",
+      "confidence_threshold": 0.7,
+      "spacing_hours": [
+        48,
+        96,
+        168
+      ],
+      "recovered": {
+        "mean": 25.1,
+        "min": 17,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 64447.6,
+        "min": 39009,
+        "max": 92957
+      },
+      "attempts_spent": {
+        "mean": 86.5,
+        "min": 72,
+        "max": 103
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -8.6,
+        "min": -15,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "later",
+      "confidence_threshold": 0.88,
+      "spacing_hours": [
+        48,
+        96,
+        168
+      ],
+      "recovered": {
+        "mean": 25.1,
+        "min": 17,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 64447.6,
+        "min": 39009,
+        "max": 92957
+      },
+      "attempts_spent": {
+        "mean": 86.5,
+        "min": 72,
+        "max": 103
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -8.6,
+        "min": -15,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "later",
+      "confidence_threshold": 0.92,
+      "spacing_hours": [
+        48,
+        96,
+        168
+      ],
+      "recovered": {
+        "mean": 25.1,
+        "min": 17,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 64447.6,
+        "min": 39009,
+        "max": 92957
+      },
+      "attempts_spent": {
+        "mean": 86.5,
+        "min": 72,
+        "max": 103
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -8.6,
+        "min": -15,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "later",
+      "confidence_threshold": 0.96,
+      "spacing_hours": [
+        48,
+        96,
+        168
+      ],
+      "recovered": {
+        "mean": 25.1,
+        "min": 17,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 64447.6,
+        "min": 39009,
+        "max": 92957
+      },
+      "attempts_spent": {
+        "mean": 86.5,
+        "min": 72,
+        "max": 103
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -8.6,
+        "min": -15,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    },
+    {
+      "spacing": "later",
+      "confidence_threshold": 1.01,
+      "spacing_hours": [
+        48,
+        96,
+        168
+      ],
+      "recovered": {
+        "mean": 25.1,
+        "min": 17,
+        "max": 30
+      },
+      "rupees_recovered": {
+        "mean": 64447.6,
+        "min": 39009,
+        "max": 92957
+      },
+      "attempts_spent": {
+        "mean": 86.5,
+        "min": 72,
+        "max": 103
+      },
+      "attempts_wasted": {
+        "mean": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "compliance_violations": 0,
+      "recovered_minus_baseline": {
+        "mean": -8.6,
+        "min": -15,
+        "max": 0
+      },
+      "seeds_matching_or_beating_baseline": 1
+    }
+  ]
+}

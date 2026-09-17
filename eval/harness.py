@@ -29,7 +29,12 @@ from eval.outcome_model import (
     simulate_outcome,
     success_probability,
 )
-from pipeline.allocator import AllocatorDecision, allocate
+from pipeline.allocator import (
+    DEFAULT_POLICY,
+    AllocatorDecision,
+    AllocatorPolicy,
+    allocate,
+)
 from pipeline.classify import classify_cause
 from pipeline.compliance import (
     IST,
@@ -79,6 +84,7 @@ def _simulate_one(
     outcome_params: OutcomeModelParams,
     rng: random.Random,
     include_details: bool = True,
+    allocator_policy: AllocatorPolicy = DEFAULT_POLICY,
 ) -> tuple[PaymentOutcome, list[RecoveryDecision], list[list[StageTrace]]]:
     """Run one policy against one event until it recovers, stops, or exhausts the budget.
 
@@ -98,7 +104,9 @@ def _simulate_one(
 
     funding_estimate = None
     if policy == "allocator" and not include_details and cause == FailureCause.INSUFFICIENT_FUNDS:
-        funding_estimate = estimate_funding_window(event.failure_time, event.prior_debit_dates)
+        funding_estimate = estimate_funding_window(
+            event.failure_time, event.prior_debit_dates, allocator_policy.confidence_threshold
+        )
 
     while True:
         if not attempts_within_cap(attempts_used):
@@ -112,7 +120,8 @@ def _simulate_one(
             action, scheduled_at = decision.action, decision.scheduled_at
         elif policy == "allocator":
             allocator_result: AllocatorDecision = allocate(
-                cause, event.failure_time, attempts_used, funding_estimate, event.billing_cycle_successes
+                cause, event.failure_time, attempts_used, funding_estimate, event.billing_cycle_successes,
+                allocator_policy,
             )
             action, scheduled_at = allocator_result.action, allocator_result.scheduled_at
         else:
@@ -237,14 +246,24 @@ def _write_jsonl_log(run_id: str, events: list[dict]) -> Path:
 
 
 def compute_batch_results(
-    n: int, seed: int, outcome_params: OutcomeModelParams = DEFAULT_PARAMS, include_details: bool = True
+    n: int,
+    seed: int,
+    outcome_params: OutcomeModelParams = DEFAULT_PARAMS,
+    include_details: bool = True,
+    allocator_policy: AllocatorPolicy = DEFAULT_POLICY,
 ) -> tuple[dict, list[dict]]:
     """Pure computation: run both policies over one generated batch, no file I/O.
 
     include_details=False (used by the sensitivity sweep, Sec 5.2) skips
     building per-payment decision/trace detail - a sweep over many parameter
     grid points only needs the aggregate numbers.
+
+    allocator_policy (the what-if study, eval/policy_whatif.py) only applies on
+    that fast path - the detailed path runs pipeline.run with the shipped
+    policy, so a non-default policy there fails loudly instead of being ignored.
     """
+    if include_details and allocator_policy != DEFAULT_POLICY:
+        raise ValueError("a non-default allocator_policy needs include_details=False")
     events = generate_batch(n, seed=seed)
     log_lines: list[dict] = [{"event": "batch_started", "n": n, "seed": seed}]
 
@@ -258,7 +277,9 @@ def compute_batch_results(
         rng_allocator = random.Random(f"{seed}-{event.payment_id}-allocator")
 
         b_outcome, _, _ = _simulate_one(event, cause, "baseline", outcome_params, rng_baseline, include_details)
-        a_outcome, a_decisions, a_traces = _simulate_one(event, cause, "allocator", outcome_params, rng_allocator, include_details)
+        a_outcome, a_decisions, a_traces = _simulate_one(
+            event, cause, "allocator", outcome_params, rng_allocator, include_details, allocator_policy
+        )
 
         baseline_outcomes.append(b_outcome)
         allocator_outcomes.append(a_outcome)

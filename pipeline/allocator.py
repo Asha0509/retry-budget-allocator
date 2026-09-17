@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from pipeline.compliance import (
     IST,
@@ -71,6 +71,32 @@ _DEFAULT_OFFSET_WEIGHTS: dict[int, float] = {24: 0.8, 72: 1.0, 168: 0.6}
 _FUNDING_WINDOW_BONUS = 1.5
 
 
+class AllocatorPolicy(BaseModel):
+    """The allocator's tunable knobs, for the what-if study (Sec 5.2) - defaults are the shipped policy.
+
+    spacing_hours replaces the published 24h/72h/7d offsets; the i-th offset
+    keeps the i-th default offset's cause weight (soonest / middle / latest),
+    so a what-if changes timing only, not the cause preferences.
+    confidence_threshold is Stage 4's fallback cut-off (None = .env / default).
+    """
+
+    spacing_hours: tuple[int, ...] = _SAFE_SPACING_HOURS
+    confidence_threshold: float | None = None
+
+    @field_validator("spacing_hours")
+    @classmethod
+    def _three_increasing_offsets(cls, v: tuple[int, ...]) -> tuple[int, ...]:
+        # One compliant candidate per offset, and allocate() indexes the
+        # ranking by attempts_used - fewer than MAX_RETRY_ATTEMPTS offsets
+        # would run out of windows mid-budget.
+        if len(v) != MAX_RETRY_ATTEMPTS or any(h <= 0 for h in v) or list(v) != sorted(set(v)):
+            raise ValueError(f"spacing_hours must be {MAX_RETRY_ATTEMPTS} strictly increasing positive offsets, got {v}")
+        return v
+
+
+DEFAULT_POLICY = AllocatorPolicy()
+
+
 class CandidateWindow(BaseModel):
     """One scored candidate retry time - kept even when rejected (PRD Sec 6.1)."""
 
@@ -108,12 +134,17 @@ def _score(recoverability: float, offset_weight: float, estimate: FundingWindowE
 
 
 def _score_candidates(
-    cause: FailureCause, recoverability: float, failure_time: datetime, estimate: FundingWindowEstimate
+    cause: FailureCause,
+    recoverability: float,
+    failure_time: datetime,
+    estimate: FundingWindowEstimate,
+    spacing_hours: tuple[int, ...] = _SAFE_SPACING_HOURS,
 ) -> list[CandidateWindow]:
     weights = _OFFSET_WEIGHTS.get(cause, _DEFAULT_OFFSET_WEIGHTS)
     failure_time_ist = failure_time.astimezone(IST)
     candidates: list[CandidateWindow] = []
-    for hours in _SAFE_SPACING_HOURS:
+    for position, hours in enumerate(spacing_hours):
+        weight = weights[_SAFE_SPACING_HOURS[position]]
         naive = failure_time_ist + timedelta(hours=hours)
         label = f"{hours}h"
         if is_peak_window(naive):
@@ -121,10 +152,10 @@ def _score_candidates(
                 CandidateWindow(scheduled_at=naive, offset_label=label, score=0.0, compliant=False, rejected_reason="peak_window")
             )
             shifted = shift_out_of_peak(naive)
-            score = _score(recoverability, weights[hours], estimate, shifted)
+            score = _score(recoverability, weight, estimate, shifted)
             candidates.append(CandidateWindow(scheduled_at=shifted, offset_label=f"{label}_shifted", score=score, compliant=True))
         else:
-            score = _score(recoverability, weights[hours], estimate, naive)
+            score = _score(recoverability, weight, estimate, naive)
             candidates.append(CandidateWindow(scheduled_at=naive, offset_label=label, score=score, compliant=True))
     return candidates
 
@@ -135,6 +166,7 @@ def allocate(
     attempts_used: int,
     funding_estimate: FundingWindowEstimate | None = None,
     billing_cycle_successes: int = 0,
+    policy: AllocatorPolicy = DEFAULT_POLICY,
 ) -> AllocatorDecision:
     """Stage 5: decide notify / retry-at-T / stop (PRD Sec 4)."""
     if failure_time.tzinfo is None:
@@ -203,7 +235,7 @@ def allocate(
         )
 
     estimate = funding_estimate or _fallback_funding_estimate()
-    candidates = _score_candidates(cause, prior.recoverability, failure_time, estimate)
+    candidates = _score_candidates(cause, prior.recoverability, failure_time, estimate, policy.spacing_hours)
     # Ranked, not just "the single best" - candidate generation doesn't
     # depend on attempts_used (it's always the same 3 safe-spacing offsets
     # from the original failure), so a later attempt must pick the next-best
