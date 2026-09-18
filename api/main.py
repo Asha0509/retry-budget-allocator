@@ -17,16 +17,20 @@ Run: uvicorn api.main:app --reload --port 8000
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import logging
 import os
+import time
+from collections import defaultdict, deque
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from api.personas import PERSONAS, get_persona, load_fixture_error
 from eval.baseline import baseline_decide
@@ -51,15 +55,41 @@ app.add_middleware(
 )
 
 
+MAX_AMOUNT_PAISE = 100_000_000  # Rs 10 lakh, far above any real AutoPay debit
+MAX_RAW_ERROR_BYTES = 16_384
+MAX_WEBHOOK_BYTES = 65_536
+RATE_LIMIT_PER_MINUTE = int(os.environ.get("SIMULATE_RATE_LIMIT", "30"))
+_recent_calls: dict[str, deque[float]] = defaultdict(deque)
+
+
+def _rate_limited(client: str, now: float | None = None) -> bool:
+    """Sliding one-minute window per client; protects the public live endpoint."""
+    now = time.monotonic() if now is None else now
+    calls = _recent_calls[client]
+    while calls and now - calls[0] > 60:
+        calls.popleft()
+    if len(calls) >= RATE_LIMIT_PER_MINUTE:
+        return True
+    calls.append(now)
+    return False
+
+
 class SimulateRequest(BaseModel):
     persona: str | None = None
-    amount: int | None = Field(default=None, gt=0, description="paise - a failed debit can't be for zero or negative money")
+    amount: int | None = Field(default=None, gt=0, le=MAX_AMOUNT_PAISE, description="paise - a failed debit can't be for zero, negative or absurd money")
     prior_debit_day_of_month: int | None = Field(default=None, ge=1, le=28)
     n_prior_debits: int = Field(default=0, ge=0, le=24)
     cause: str | None = None  # a FailureCause value - looks up the matching real fixture
     raw_error: dict | None = None  # user-pasted raw JSON, takes precedence over `cause`
     attempts_used: int = Field(default=0, ge=0, le=3)
     billing_cycle_successes: int = Field(default=0, ge=0, le=1)
+
+    @field_validator("raw_error")
+    @classmethod
+    def _raw_error_not_huge(cls, v: dict | None) -> dict | None:
+        if v is not None and len(json.dumps(v)) > MAX_RAW_ERROR_BYTES:
+            raise ValueError(f"raw_error larger than {MAX_RAW_ERROR_BYTES} bytes")
+        return v
 
 
 class SimulateResponse(BaseModel):
@@ -90,9 +120,14 @@ def list_personas() -> list[dict]:
 
 
 @app.post("/api/simulate", response_model=SimulateResponse)
-def simulate(req: SimulateRequest) -> SimulateResponse:
+def simulate(req: SimulateRequest, request: Request) -> SimulateResponse:
     """Run one payment through the real pipeline live (Stages 1-7). No outcome
-    simulation - PRD Sec 5.1 keeps eval/outcome_model.py exclusively batch-side."""
+    simulation - PRD Sec 5.1 keeps eval/outcome_model.py exclusively batch-side.
+    Rate limited per client (SIMULATE_RATE_LIMIT per minute)."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    client_id = forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
+    if _rate_limited(client_id):
+        raise HTTPException(status_code=429, detail="too many simulations; wait a minute and retry")
     failure_time = datetime.now(IST)
 
     if req.persona:
@@ -186,13 +221,24 @@ async def razorpay_webhook(request: Request) -> dict:
     and payment events Razorpay sends, verbatim, to logs/webhooks.jsonl
     (git-ignored in bulk, same convention as the rest of /logs/).
 
-    Deliberately minimal: no signature verification. This exists to observe
-    real event shapes for docs/build-log.md, not to run in production - a
-    real deployment would verify X-Razorpay-Signature against
-    RAZORPAY_WEBHOOK_SECRET before trusting the body at all.
+    The body is only accepted when X-Razorpay-Signature matches an HMAC-SHA256
+    of it under RAZORPAY_WEBHOOK_SECRET. With no secret configured the endpoint
+    is closed (503), so an unauthenticated caller cannot write to the log.
     """
+    secret = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
+    if not secret:
+        raise HTTPException(status_code=503, detail="webhook receiver disabled: RAZORPAY_WEBHOOK_SECRET not set")
     body = await request.body()
-    payload = await request.json()
+    if len(body) > MAX_WEBHOOK_BYTES:
+        raise HTTPException(status_code=413, detail="webhook body too large")
+    expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, request.headers.get("X-Razorpay-Signature", "")):
+        log.warning("webhook rejected: bad signature")
+        raise HTTPException(status_code=401, detail="invalid signature")
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="body is not JSON") from None
     _WEBHOOK_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with _WEBHOOK_LOG_PATH.open("a") as f:
         f.write(

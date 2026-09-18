@@ -26,27 +26,64 @@ def _stub_explanation(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(api_main, "run_explanation", _stub_run_explanation)
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limit():
+    api_main._recent_calls.clear()
+
+
 @pytest.fixture
 def client():
     return TestClient(api_main.app)
 
 
+def _signed(secret: str, body: bytes) -> dict[str, str]:
+    import hashlib
+    import hmac
+
+    return {"X-Razorpay-Signature": hmac.new(secret.encode(), body, hashlib.sha256).hexdigest(), "Content-Type": "application/json"}
+
+
 def test_webhook_logs_raw_payload_verbatim(client, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+
     log_path = tmp_path / "webhooks.jsonl"
     monkeypatch.setattr(api_main, "_WEBHOOK_LOG_PATH", log_path)
+    monkeypatch.setenv("RAZORPAY_WEBHOOK_SECRET", "s3cret")
     payload = {"event": "payment.failed", "payload": {"payment": {"entity": {"id": "pay_test123"}}}}
+    body = json.dumps(payload).encode()
 
-    resp = client.post("/api/webhooks/razorpay", json=payload)
+    resp = client.post("/api/webhooks/razorpay", content=body, headers=_signed("s3cret", body))
 
     assert resp.status_code == 200
     assert resp.json() == {"status": "logged"}
     lines = log_path.read_text().strip().splitlines()
     assert len(lines) == 1
-    import json
-
     logged = json.loads(lines[0])
     assert logged["event"] == "payment.failed"
     assert logged["payload"] == payload
+
+
+def test_webhook_closed_without_secret(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("RAZORPAY_WEBHOOK_SECRET", raising=False)
+    assert client.post("/api/webhooks/razorpay", json={"event": "x"}).status_code == 503
+
+
+def test_webhook_rejects_bad_signature_and_oversize(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("RAZORPAY_WEBHOOK_SECRET", "s3cret")
+    assert client.post("/api/webhooks/razorpay", json={"event": "x"}, headers={"X-Razorpay-Signature": "bad"}).status_code == 401
+    big = b"{" + b" " * 70_000 + b"}"
+    assert client.post("/api/webhooks/razorpay", content=big, headers=_signed("s3cret", big)).status_code == 413
+
+
+def test_simulate_rejects_absurd_inputs(client) -> None:
+    assert client.post("/api/simulate", json={"cause": "insufficient_balance", "amount": 10**12}).status_code == 422
+    assert client.post("/api/simulate", json={"raw_error": {"x": "a" * 20_000}}).status_code == 422
+
+
+def test_simulate_is_rate_limited(client, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(api_main, "RATE_LIMIT_PER_MINUTE", 2)
+    codes = [client.post("/api/simulate", json={"persona": "nope"}).status_code for _ in range(3)]
+    assert codes[-1] == 429 and 429 not in codes[:2]
 
 
 def test_list_personas_returns_all_five(client) -> None:
