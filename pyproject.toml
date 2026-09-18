@@ -1,2 +1,7 @@
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.mutmut]
+source_paths = ["pipeline/compliance.py"]
+also_copy = ["pipeline", "eval", "data", "tests"]
+pytest_add_cli_args_test_selection = ["tests/test_compliance.py"]

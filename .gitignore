@@ -11,3 +11,5 @@ dist/
 data/runs/
 logs/
 !logs/sample_run.jsonl
+mutants/
+.mutmut-cache
