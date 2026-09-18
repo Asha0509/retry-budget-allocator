@@ -176,6 +176,12 @@ flowchart LR
 
 The eval summary (attempts, recoveries, wasted attempts, contract result) is written to each run's summary page by `scripts/ci_eval_summary.py`, which also fails the job if a gate breaks.
 
+### Validate and deploy
+
+`scripts/validate.sh` runs the whole pipeline in order and prints a pass/fail line per stage: lint, tests with coverage, the data contract, the eval harness gates and the dashboard build. These are the checks CI runs, so a green local run predicts a green build.
+
+`render.yaml` is a Render blueprint with `autoDeployTrigger: checksPass`: a push to `main` deploys only after the GitHub checks pass. Secrets are declared with `sync: false` and entered in the Render dashboard, never committed.
+
 ### Is the synthetic data realistic?
 
 There is no real failed-payment data, so realism cannot be measured. What is checked is rule compliance: a Pandera contract (`eval/data_contract.py`) validates 5,000 generated events against NPCI peak windows, the RBI Rs 15,000 authentication threshold, the mandate cap, documented Razorpay error reasons and one debit per cycle. The first run found real defects in the generator, which are fixed. See [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md).

@@ -1,0 +1,33 @@
+# Render blueprint. Deploys only after the GitHub checks on the branch pass.
+services:
+  - type: web
+    name: retry-allocator-api
+    runtime: python
+    plan: starter
+    branch: main
+    autoDeployTrigger: checksPass
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /docs
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: EXPLANATION_MODEL
+        sync: false
+  - type: web
+    name: retry-allocator-dashboard
+    runtime: static
+    branch: main
+    autoDeployTrigger: checksPass
+    rootDir: dashboard
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
