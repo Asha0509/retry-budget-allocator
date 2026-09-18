@@ -4,8 +4,8 @@ import pytest
 
 pytest.importorskip("pandera")
 
-from eval.batch_generator import generate_batch  # noqa: E402
-from eval.data_contract import check, render_markdown, run, to_frame  # noqa: E402
+from eval.batch_generator import generate_batch
+from eval.data_contract import check, render_markdown, run, to_frame
 
 
 def test_generated_batch_passes_every_rule() -> None:

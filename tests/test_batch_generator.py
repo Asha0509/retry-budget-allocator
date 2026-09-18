@@ -77,7 +77,6 @@ def test_first_attempts_are_off_peak() -> None:
 
 
 def test_afa_events_exceed_rbi_threshold_and_others_do_not() -> None:
-    from pipeline.models import FailureCause
 
     events = generate_batch(400, seed=4)
     afa = [e for e in events if e.error.reason == "authentication_failed"]

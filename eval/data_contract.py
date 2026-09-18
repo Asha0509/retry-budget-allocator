@@ -138,7 +138,7 @@ def check(df: pd.DataFrame) -> dict[str, int]:
 def profile(df: pd.DataFrame) -> dict:
     """Plain descriptive numbers for the report (counts, amount spread, history depth)."""
     return {
-        "rows": int(len(df)),
+        "rows": len(df),
         "cause_share": {k: round(v, 3) for k, v in df["cause"].value_counts(normalize=True).items()},
         "amount_rupees": {
             "min": float(df["amount"].min() / 100),
@@ -185,8 +185,10 @@ def render_markdown(result: dict) -> str:
         "Passing means the data is *possible* under the rules, not that real traffic looks like it. The cause mix,",
         "amount distribution and funding-day behaviour are modelled assumptions (see `docs/RESULTS.md`).",
         "",
-        f"Profile: median amount Rs {prof['amount_rupees']['median']:,.0f}, "
-        f"{prof['with_history_share']:.0%} of events carry usable debit history.",
+        (
+            f"Profile: median amount Rs {prof['amount_rupees']['median']:,.0f}, "
+            f"{prof['with_history_share']:.0%} of events carry usable debit history."
+        ),
         "",
     ]
     return "\n".join(lines)
