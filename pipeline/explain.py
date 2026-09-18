@@ -72,6 +72,9 @@ class ExplanationResult(BaseModel):
 
 
 def _client() -> OpenAI:
+    missing = [name for name in ("LLM_BASE_URL", "LLM_API_KEY") if not os.environ.get(name)]
+    if missing:
+        raise RuntimeError(f"LLM explanations need these environment variables: {', '.join(missing)}")
     return OpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"])
 
 
