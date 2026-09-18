@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { runComplianceChecks } from '../lib/compliance.js'
 import { causeLabel, formatMoney } from '../lib/format.js'
+import ExplanationEvalPanel from './ExplanationEvalPanel.jsx'
 
 function StatCard({ label, baseline, allocator, format = (x) => x, better = 'higher' }) {
   const win = better === 'higher' ? allocator >= baseline : allocator <= baseline
@@ -117,6 +118,8 @@ export default function BatchResultsView({ run, sensitivity }) {
       </div>
 
       <ComplianceLivePanel payments={run.payments} />
+
+      <ExplanationEvalPanel />
 
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Per-cause breakdown (allocator)</h3>

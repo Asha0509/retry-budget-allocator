@@ -1,0 +1,67 @@
+{
+  "source": "template",
+  "run_id": "run_20260915T134833",
+  "evaluated_at": "2026-10-07T20:15:05+05:30",
+  "checks": {
+    "action_matches": "The copy must describe the decided action, never a different one.",
+    "amounts_match": "Any rupee figure in any text must be the decision's own amount.",
+    "times_match": "Clock times, dates and weekdays mentioned must match scheduled_at (IST); none allowed without one.",
+    "no_customer_jargon": "Customer notifications must be readable without payments vocabulary.",
+    "jargon_explained": "reasoning_plain may name NPCI/mandate/AutoPay only in brackets, after the plain words.",
+    "no_internal_leak": "No identifiers or allocator internals in any text.",
+    "sms_length": "Each notification fits one SMS segment.",
+    "hinglish_present": "The Hinglish copy is code-mixed Hindi-English, not the English repeated."
+  },
+  "n": 91,
+  "pass_rate": 1.0,
+  "per_check": {
+    "action_matches": {
+      "failed": 0,
+      "pass_rate": 1.0
+    },
+    "amounts_match": {
+      "failed": 0,
+      "pass_rate": 1.0
+    },
+    "times_match": {
+      "failed": 0,
+      "pass_rate": 1.0
+    },
+    "no_customer_jargon": {
+      "failed": 0,
+      "pass_rate": 1.0
+    },
+    "jargon_explained": {
+      "failed": 0,
+      "pass_rate": 1.0
+    },
+    "no_internal_leak": {
+      "failed": 0,
+      "pass_rate": 1.0
+    },
+    "sms_length": {
+      "failed": 0,
+      "pass_rate": 1.0
+    },
+    "hinglish_present": {
+      "failed": 0,
+      "pass_rate": 1.0
+    }
+  },
+  "by_action": {
+    "retry": {
+      "n": 74,
+      "passed": 74
+    },
+    "notify": {
+      "n": 9,
+      "passed": 9
+    },
+    "stop": {
+      "n": 8,
+      "passed": 8
+    }
+  },
+  "model_fallbacks": 0,
+  "failures": []
+}
