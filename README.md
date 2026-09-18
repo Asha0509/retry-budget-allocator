@@ -71,14 +71,14 @@ early — and records why each decision was made, not just what it was.
 ## Results
 
 Over 60 synthesized failed payments (seed 42), the cause-aware allocator
-spends 46% fewer retry attempts than a fixed day-1/2/3 schedule (74 vs 138)
+spends 50% fewer retry attempts than a fixed day-1/2/3 schedule (70 vs 141)
 and wastes zero of them on mandates that can never be recovered (the fixed
-schedule wastes 42). Compliance violations: zero for either policy, and
+schedule wastes 51). Compliance violations: zero for either policy, and
 that attempts-spent advantage holds across every point in a 27-setting
 sensitivity sweep.
 
 What it doesn't do at these parameters is recover more raw payments than
-the naive schedule (29 vs 35) — and rather than just note that and move on,
+the naive schedule (30 vs 35) — and rather than just note that and move on,
 `docs/RESULTS.md` Section 4 digs into why: it's not a confidence problem,
 it's structural. Baseline's dense 3-day schedule out-samples the
 allocator's wider, PRD-mandated 24h/72h/7d schedule whenever a customer's
@@ -86,16 +86,16 @@ funding event lands early. That gap isn't a fluke of one seed either:
 re-drawn at 10 different seeds, baseline wins on raw recovery every single
 time, and seed 42's gap is actually smaller than the 10-seed average — the
 headline sits on the *more flattering* side, not a cherry-picked one
-(Section 5). The "7 of 27" sweep number moves more than that, though —
-run at each of those same 10 seeds, it ranges from 1/27 to 9/27 (mean
-6.6), so read it as roughly representative of that range, not a
+(Section 5). The "6 of 27" sweep number moves more than that, though —
+run at each of those same 10 seeds, it ranges from 3/27 to 21/27 (mean
+8.8), so read it as roughly representative of that range, not a
 seed-independent constant (also Section 5).
 
 That leaves a real question unresolved by either number alone: priced in
 rupees per retry attempt (gateway cost, mandatory pre-debit notification,
 and the risk-weighted cost of a customer revoking the mandate out of
 annoyance — `docs/RESULTS.md` Section 6), the allocator only wins on net
-money above **₹157.23 per attempt** — below that, baseline's extra
+money above **₹147.82 per attempt** — below that, baseline's extra
 recovered revenue outweighs its higher attempt spend. Rather than defend
 one guess for the two least-certain inputs (how often does aggressive
 retrying actually cost a mandate, and what's a customer worth), Section 6
@@ -131,8 +131,8 @@ Stated plainly, because the two are easy to blur and shouldn't be:
 - **Simulated:** whether a scheduled retry actually succeeds is never
   observed — it's drawn from `eval/outcome_model.py`, a model this project
   authored and froze before any allocator logic was tuned, specifically so
-  the comparison against it isn't circular. Every headline number (46%
-  fewer attempts, 29 vs 35 recovered, the ₹157.23 breakeven) is a
+  the comparison against it isn't circular. Every headline number (50%
+  fewer attempts, 30 vs 35 recovered, the ₹147.82 breakeven) is a
   simulation study against that declared model, not a field measurement.
   The 7 cause fixtures used to build realistic error payloads are a mix of
   Razorpay's own published error-code documentation and, for 3 causes
@@ -222,9 +222,10 @@ is, and exactly where to go for the full detail.
   [eval/results/sensitivity.json](eval/results/sensitivity.json).
 - **Multi-seed stability** — the batch itself re-drawn at 10 seeds, not
   just re-scored (`eval/results/multiseed.json`), plus the full 27-point
-  sweep re-run at each of those same seeds to check whether "7 of 27"
-  itself is stable (it ranges 1-9; `eval/results/multiseed_sweep.json`).
+  sweep re-run at each of those same seeds to check whether "6 of 27"
+  itself is stable (it ranges 3-21; `eval/results/multiseed_sweep.json`).
   Both produced by `eval/multiseed.py`.
+- **Synthetic data contract** — every generated event is validated against NPCI peak windows, the RBI Rs 15,000 authentication threshold, the mandate cap and one-debit-per-cycle (`eval/data_contract.py`, report in [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md)). It proves rule compliance, not realism.
 - **Cost-per-attempt breakeven** — the exact crossover point, a swept
   table, and the 2D surface across the two least-certain cost inputs.
   `eval/economics.py` produced

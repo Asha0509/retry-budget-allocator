@@ -1,8 +1,8 @@
 # Results
 
-Run `run_20260915T134833` - 60 synthesized failed payments, seed 42. Reproduce
+Run `run_20261008T100907` - 60 synthesized failed payments, seed 42. Reproduce
 with `python -m eval.harness && python -m eval.sensitivity`. Raw output:
-`eval/results/run_20260915T134833.json`, `eval/results/sensitivity.json`.
+`eval/results/run_20261008T100907.json`, `eval/results/sensitivity.json`.
 
 ## 1. The outcome model, stated before any number (PRD Sec 5.1)
 
@@ -33,19 +33,19 @@ observed - see Limitations):
 
 | Policy | Attempts spent | Payments recovered | ₹ recovered | Attempts wasted on unrecoverable causes | Compliance violations |
 |---|---|---|---|---|---|
-| Fixed schedule (baseline) | 138 | 35 | ₹80,855 | 42 | 0 |
-| Cause-aware allocator | **74** | 29 | ₹70,792 | **0** | 0 |
+| Fixed schedule (baseline) | 141 | 35 | ₹68,015 | 51 | 0 |
+| Cause-aware allocator | **70** | 30 | ₹57,520 | **0** | 0 |
 
-74 attempts against baseline's 138 - 46% fewer - and zero of them spent on
+70 attempts against baseline's 141 - 50% fewer - and zero of them spent on
 causes the frozen model says can never succeed. A mandate that's been
 revoked, expired, or exceeded gets left alone entirely here, where a fixed
 schedule burns all 3 attempts on it regardless.
 
-The default parameters don't produce more raw recoveries, though (29 vs
+The default parameters don't produce more raw recoveries, though (30 vs
 35), and Section 4 is the diagnosis, not just an acknowledgment - it walks
 through why mechanically, plus a scoring-function fix made this session
-that moved the sensitivity sweep's advantage from 3/27 to 7/27 grid points.
-Section 5 checks whether that 29-vs-35 gap itself is stable across seeds
+that moved the sensitivity sweep's advantage from 3/27 to 7/27 grid points (on the earlier batch; 6/27 on the current one, see Section 5).
+Section 5 checks whether that 30-vs-35 gap itself is stable across seeds
 or a property of this one draw (it's stable - baseline wins at all 10
 seeds tried).
 
@@ -54,9 +54,9 @@ outcome model itself is declared rather than sourced (Section 9 has the
 caveat in full): at an illustrative ₹20 per retry attempt (blended
 gateway/ops/support overhead for one attempted debit - nobody publishes a
 real figure for this, so substitute your own number if you have one; the
-arithmetic is the point, not the constant), 64 fewer attempts works out to
-₹1,280 in avoided operational overhead across this 60-payment batch, or
-about ₹21 per payment. 42 of those 64 attempts - two thirds of the savings
+arithmetic is the point, not the constant), 71 fewer attempts works out to
+₹1,420 in avoided operational overhead across this 60-payment batch, or
+about ₹24 per payment. 51 of those 71 attempts - two thirds of the savings
 - were never going to buy a successful outcome in the first place under the
 fixed schedule.
 
@@ -70,17 +70,17 @@ these checks live against the loaded batch in the browser.
 
 | Cause | n | Baseline recovery rate | Allocator recovery rate | Baseline attempts spent | Allocator attempts spent |
 |---|---|---|---|---|---|
-| `insufficient_funds` | 36 | 75% | 67% | 80 | 63 |
-| `bank_technical` | 7 | 100% | 71% | 9 | 11 |
-| `unknown` | 3 | 33% | 0% | 7 | 0 |
-| `mandate_revoked` | 2 | 0% | 0% | 6 | 0 |
-| `mandate_expired` | 2 | 0% | 0% | 6 | 0 |
-| `amount_exceeds_mandate` | 4 | 0% | 0% | 12 | 0 |
-| `afa_required` | 6 | 0% | 0% | 18 | 0 |
+| `insufficient_funds` | 35 | 83% | 69% | 78 | 60 |
+| `bank_technical` | 7 | 86% | 86% | 9 | 10 |
+| `unknown` | 1 | 0% | 0% | 3 | 0 |
+| `mandate_revoked` | 8 | 0% | 0% | 24 | 0 |
+| `mandate_expired` | 3 | 0% | 0% | 9 | 0 |
+| `amount_exceeds_mandate` | 2 | 0% | 0% | 6 | 0 |
+| `afa_required` | 4 | 0% | 0% | 12 | 0 |
 
 The pattern to notice: across the four structurally-unrecoverable causes
-(14 of 60 payments), the allocator spends 0 attempts against baseline's 42
-- every one of those 42 is wasted by definition under the frozen model.
+(17 of 60 payments), the allocator spends 0 attempts against baseline's 51
+- every one of those 51 is wasted by definition under the frozen model.
 `unknown` costs the allocator its one lucky recovery (baseline gets it
 because the model gives `unknown` a nonzero 5% chance and baseline retries
 blindly into it); the allocator's conservative notify-instead-of-guess
@@ -88,8 +88,7 @@ choice trades that single recovery away on purpose, which is a real
 trade-off between caution and raw count, not a bug.
 
 On the two genuinely recoverable causes, baseline actually recovers at a
-higher per-payment rate (75% vs 67% for `insufficient_funds`, 100% vs 71%
-for `bank_technical`) while spending more attempts to get there. Section 4
+higher per-payment rate (83% vs 69% for `insufficient_funds`; `bank_technical` ties at 86%) while spending more attempts to get there. Section 4
 explains this as a timing-density effect - the allocator isn't worse at
 recognizing what's recoverable, it's working from a wider, PRD-mandated
 schedule that samples the relevant window less densely.
@@ -106,8 +105,8 @@ narrative guess.
 Checked directly (`eval/sensitivity.py::_confidence_analysis`): logged
 `cause_confidence` for every payment and cross-referenced it against every
 sweep grid point's win/loss status. `cause_confidence` turns out to be
-bimodal - 1.0 for 57 of 60 payments (an exact, deterministic match on the
-error's `reason` field) and 0.0 for the 3 `unknown` payments, nothing in
+bimodal - 1.0 for 59 of 60 payments (an exact, deterministic match on the
+error's `reason` field) and 0.0 for the 1 `unknown` payment, nothing in
 between - and it's byte-identical across all 27 grid points, because
 classification has no dependency on outcome-model parameters at all. The
 same seeded batch gets reused at every grid point; only the success
@@ -133,14 +132,14 @@ were left as-is - its monotonic decay already matches the outcome model's
 monotonic-decay shape, so there was no contradiction there to fix.
 
 After the fix, the sensitivity sweep's advantage holds at 7 of 27 grid
-points, up from 3/27 (both numbers come from the same, already-fixed
+points on the earlier batch (6 of 27 on the current one), up from 3/27 (both numbers come from the same, already-fixed
 reproducibility bug described in the prior build-log entry, so it's a
 clean before/after). Full reasoning and the exact numbers either side of
 the change: `docs/build-log.md`, 2026-09-04.
 
 ### The remaining gap is structural
 
-Even after the fix, raw recovery count stays a near-tie or a loss at 20 of
+Even after the fix, raw recovery count stays a near-tie or a loss at 21 of
 27 settings, and no amount of reweighting closes that, because it comes
 from something outside the scoring function entirely: baseline's fixed
 schedule is day 1/2/3 (24h/48h/72h, three attempts inside three days),
@@ -165,8 +164,8 @@ day if that day falls between them. Second, `eval/outcome_model.py` is
 population-level rather than per-customer, and was frozen (Sec 5.1) before
 this stage existed, so even a perfect per-customer estimate wouldn't
 change the probability the simulation draws from. One more number worth
-having here (PRD Sec 5.2's confidence-fallback-rate metric): of the 36
-`insufficient_funds` payments where Stage 4 actually ran, 31% (11 of 36)
+having here (PRD Sec 5.2's confidence-fallback-rate metric): of the 35
+`insufficient_funds` payments where Stage 4 actually ran, 40% (14 of 35)
 had thin or inconsistent history and fell back to the same safe spacing
 the allocator was already using before Stage 4 existed.
 
@@ -186,17 +185,17 @@ number.
 
 | | Baseline recovered | Allocator recovered | Recovery gap (baseline − allocator) |
 |---|---|---|---|
-| seed 42 (the headline) | 35 | 29 | 6 |
-| Mean across all 10 seeds | 33.7 | 25.8 | 7.9 |
-| Std. dev. across all 10 seeds | 2.37 | 3.16 | 3.42 |
+| seed 42 (the headline) | 35 | 30 | 5 |
+| Mean across all 10 seeds | 33.5 | 27.0 | 6.5 |
+| Std. dev. across all 10 seeds | 4.63 | 3.69 | 4.08 |
 
 **Baseline wins on raw recovery at all 10 of 10 seeds** - this isn't a
-property of one unlucky draw, it's stable. If anything, seed 42's gap (6)
-is smaller than the 10-seed mean (7.9), so the headline number is on the
+property of one unlucky draw, it's stable. If anything, seed 42's gap (5)
+is smaller than the 10-seed mean (6.5), so the headline number is on the
 *more flattering* side for the allocator relative to the wider sample, not
 a cherry-picked worst case being hidden or a best case being shown.
-Attempts-spent stays favorable throughout too: the allocator spends 72-95
-attempts across all 10 seeds against baseline's 137-153, so that half of
+Attempts-spent stays favorable throughout too: the allocator spends 63-95
+attempts across all 10 seeds against baseline's 140-158, so that half of
 the headline is the stable one. Full per-seed data:
 `eval/results/multiseed.json`. Reproduce with `python -m eval.multiseed`.
 
@@ -208,18 +207,17 @@ computations - and reports how the holds-count itself moves.
 
 | | Advantage holds at (of 27) |
 |---|---|
-| seed 42 (the headline) | 7 |
-| Mean across all 10 seeds | 6.6 |
-| Min / Max across all 10 seeds | 1 / 9 |
+| seed 42 (the headline) | 6 |
+| Mean across all 10 seeds | 8.8 |
+| Min / Max across all 10 seeds | 3 / 21 |
 
 This is more variance than the raw-recovery check above, and it's the
-honest thing to report rather than the flattering half. 7/27 is close to
-the 10-seed mean (6.6) - not cherry-picked - but the range is real:
-seed 13's batch draw holds at only 1 of 27 settings, seeds 3 and 2026 hold
-at 9. The direction of the finding doesn't change (the allocator's raw-
+honest thing to report rather than the flattering half. 6/27 is below
+the 10-seed mean (8.8) - not cherry-picked - and the range is wide:
+the weakest batch draw holds at only 3 of 27 settings, the strongest at 21. The direction of the finding doesn't change (the allocator's raw-
 recovery advantage is real but narrow and settings-dependent under every
-seed tried, never close to universal), but the exact count - "7 of 27" -
-should be read as roughly representative of a range from 1 to 9, not as a
+seed tried, never close to universal), but the exact count - "6 of 27" -
+should be read as one point in a range from 3 to 21, not as a
 precise, seed-independent number. Full per-seed data:
 `eval/results/multiseed_sweep.json`. Reproduce with
 `python -c "from eval.multiseed import run_multiseed_sweep; run_multiseed_sweep()"`
@@ -228,8 +226,8 @@ suite at this size).
 
 ## 6. The breakeven: what cost per attempt makes this worth it
 
-Section 2's headline leaves a real question unresolved: 46% fewer attempts
-against 17% fewer payments recovered. Fewer attempts and fewer recoveries
+Section 2's headline leaves a real question unresolved: 50% fewer attempts
+against 14% fewer payments recovered. Fewer attempts and fewer recoveries
 are both true, and neither number by itself tells a merchant whether to
 use this. `eval/economics.py` answers a narrower, more useful question
 instead: **above what cost per retry attempt does the allocator's attempt
@@ -238,7 +236,7 @@ savings outweigh its lower recovery?**
 Net value is recovered money minus money spent attempting
 (`amount_recovered - attempts_spent * cost_per_attempt`), computed for
 both policies from the same real batch numbers this whole document uses
-(`run_20260915T134833`, `eval/results/economics.json`). The cost side is
+(`run_20261008T100907`, `eval/results/economics.json`). The cost side is
 never one buried number - three components are declared separately,
 because none of them is authoritative and a reader should be able to
 swap in their own:
@@ -250,25 +248,26 @@ swap in their own:
 | Expected cost of customer annoyance leading to mandate revocation | 1% probability × ₹2,000 lifetime value = ₹20 / attempt | The least certain component by far - both the probability and the lifetime-value figure are guesses. A merchant with real mandate-churn data should replace both, not just the product. |
 | **Total (default)** | **₹40.50 / attempt** | |
 
-**Breakeven: ₹157.23 per attempt.** Above that cost, the allocator wins on
-net value; below it, baseline wins, because the extra ₹10,063 baseline
+**Breakeven: ₹147.82 per attempt.** Above that cost, the allocator wins on
+net value; below it, baseline wins, because the extra ₹10,495 baseline
 recovers in this batch outweighs a low per-attempt cost more than the
-allocator's 64 fewer attempts save. At the illustrative default of ₹40.50,
+allocator's 71 fewer attempts save. At the illustrative default of ₹40.50,
 **baseline currently wins on net value** - stated plainly, not tuned away.
 This is the honest form of the question: not "does the allocator win," but
 "at what cost per attempt would it."
 
 | Cost per attempt | Baseline net value | Allocator net value | Allocator wins on money |
 |---|---|---|---|
-| ₹5 | ₹80,165 | ₹70,422 | No |
-| ₹20 (default gateway cost alone) | ₹78,095 | ₹69,312 | No |
-| ₹40.50 (default, all 3 components) | ₹75,266 | ₹67,795 | No |
-| ₹100 | ₹67,055 | ₹63,392 | No |
-| ₹150 | ₹60,155 | ₹59,692 | No |
-| **₹157.23 (breakeven)** | **₹59,157** | **₹59,157** | **Crosses here** |
-| ₹200 | ₹53,255 | ₹55,992 | Yes |
-| ₹300 | ₹39,455 | ₹48,592 | Yes |
-| ₹500 | ₹11,855 | ₹33,792 | Yes |
+| ₹5 | ₹67,310 | ₹57,170 | No |
+| ₹20 (default gateway cost alone) | ₹65,195 | ₹56,120 | No |
+| ₹40.50 (default, all 3 components) | ₹62,305 | ₹54,685 | No |
+| ₹50 | ₹60,965 | ₹54,020 | No |
+| ₹100 | ₹53,915 | ₹50,520 | No |
+| **₹147.82 (breakeven)** | **₹47,172** | **₹47,173** | **Crosses here** |
+| ₹150 | ₹46,865 | ₹47,020 | Yes |
+| ₹200 | ₹39,815 | ₹43,520 | Yes |
+| ₹300 | ₹25,715 | ₹36,520 | Yes |
+| ₹500 | ₹-2,485 | ₹22,520 | Yes |
 
 A reader can answer "should I use this?" from this table alone: estimate
 your own blended cost per attempt (the annoyance-cost component is the one
@@ -310,9 +309,9 @@ regardless of where you land on this grid). Full 30-cell grid:
 
 ## 7. Stop-decision precision
 
-Of the payments the allocator stopped or notified instead of retrying (17
-of 60), 82% were genuinely unrecoverable under the frozen model. The other
-18% are `unknown`-cause payments: the classifier couldn't place a cause,
+Of the payments the allocator stopped or notified instead of retrying (18
+of 60), 94% were genuinely unrecoverable under the frozen model. The other
+6% (one payment) is an `unknown`-cause payment: the classifier couldn't place a cause,
 `priors.py` conservatively chooses notify over a blind retry, and the
 frozen model happens to give `unknown` a small nonzero (5%) success
 chance. Same caution-vs-recovery trade-off as Section 3 - a declared
