@@ -1,4 +1,4 @@
-# Retry Budget Allocator
+## Problem statement
 
 A fixed retry schedule treats a failed UPI AutoPay payment as a scheduling
 problem — retry on day 1, day 2, day 3, and hope. It isn't one. NPCI caps a
@@ -29,7 +29,10 @@ not a label.
 signal than the invariants above, since it measures whether lines
 executed, not whether the logic is correct, but it's there too.
 
-## Why a fixed schedule gets this wrong
+
+**Contents:** [Problem](#problem-statement) · [Solution](#solution) · [File structure](#file-structure) · [User flow](#user-flow) · [LLD](#low-level-design-lld) · [HLD](#high-level-design-hld) · [Scaling](#how-it-would-scale) · [USP](#usp-what-is-different-and-why-it-is-better) · [Tools](#tools-and-software-used) · [Principles](#principles-used) · [Requirements](#functional-and-non-functional-requirements) · [Results](#results) · [Known gaps](#known-gaps) · [CI/CD](#engineering-quality-and-cicd) · [Setup](#setup)
+
+### Why a fixed schedule gets this wrong
 
 Razorpay's own S2S documentation is explicit: when a controlled UPI
 AutoPay payment fails, there's no automatic retry — the merchant decides
@@ -51,7 +54,7 @@ Neither failure is a scheduling bug. They're both the direct cost of
 treating a small, regulated, non-renewable intervention budget as a
 calendar problem instead of an allocation one.
 
-## What this builds
+## Solution
 
 A decision layer that classifies the failure cause, then chooses between
 notifying the customer, retrying at a specific compliant time, or stopping
@@ -70,9 +73,180 @@ early — and records why each decision was made, not just what it was.
   reasons, so the reasoning behind a decision is inspectable, not just its
   conclusion.
 
-## Architecture and design
+**The seven stages** (`pipeline/`): 1 Ingest (validate the event) -> 2 Classify (deterministic lookup of the cause) -> 3 Priors (is it recoverable, and what action shape) -> 4 Funding window (probabilistic, falls back to safe spacing) -> 5 Allocate (score every candidate window, subject to compliance) -> 6 Decision record -> 7 Explain (LLM wording only, template fallback). Each stage returns a structured trace entry.
 
-### High-level design
+
+## File structure
+
+Every tracked file, one line each. Folders first, in the order they matter
+most to a reader; `tests/` mirrors `pipeline/`/`eval/`/`api/` one file at a
+time so it's grouped at the end rather than repeated inline. `__init__.py`
+in `pipeline/`, `eval/`, and `api/` are empty package markers, left out
+below since there's nothing to say about them individually.
+
+    CLAUDE.md                  engineering constraints that governed the build
+    LICENSE                    MIT
+    README.md                  this file
+    requirements.txt           Python dependencies
+    pyproject.toml             pytest + ruff config
+    setup.sh                   one-time bootstrap (venv, deps, .env template)
+    .env.example                credential template - copy to .env, fill in keys
+    .gitignore
+    render.yaml                Render blueprint: API + static dashboard, deploy only after checks pass
+    scripts/validate.sh        one-command validation: lint, tests, data contract, eval gates, dashboard build
+    scripts/ci_eval_summary.py writes the eval summary to the CI run page and fails the job if a gate breaks
+    .github/workflows/         ci.yml (tests, eval gates, dashboard build), quality.yml (vulture, xenon, jscpd),
+                               codeql.yml, scorecard.yml, mutation.yml (weekly mutmut on compliance.py)
+    .github/dependabot.yml     weekly pip, npm and Actions updates
+
+    pipeline/                  the 7-stage decision engine (Sec 4)
+    ├── models.py               shared schemas - FailureCause, RazorpayError, StageTrace
+    ├── ingest.py                Stage 1 - validates a raw event into FailedPaymentEvent
+    ├── classify.py              Stage 2 - deterministic cause lookup, never a model call
+    ├── priors.py                Stage 3 - recoverability score + action shape per cause
+    ├── funding_window.py        Stage 4 - confidence-gated funding-window inference
+    ├── allocator.py             Stage 5 - notify/retry-at-T/stop, every candidate scored
+    ├── decision.py               Stage 6 - assembles every prior stage into one record
+    ├── explain.py                Stage 7 - the one LLM call in this codebase
+    ├── compliance.py            the 3 hard invariants (attempt cap, peak windows, 1/cycle)
+    └── run.py                   orchestrates Stages 2-6 for one ingested event
+
+    eval/                       frozen outcome model, baseline, batch analysis (Sec 5)
+    │                           - never imported by pipeline/, enforced by
+    │                           tests/test_outcome_model_isolation.py
+    ├── outcome_model.py         frozen, seeded success-probability model
+    ├── baseline.py               fixed day-1/2/3 schedule comparator
+    ├── batch_generator.py        synthesizes the 60-payment batch from a fixed anchor time
+    ├── harness.py                 runs both policies over the batch, writes run_*.json
+    ├── sensitivity.py            27-point outcome-model parameter sweep
+    ├── multiseed.py               re-draws the batch at 10 seeds AND re-sweeps at each
+    ├── economics.py               cost-per-attempt breakeven point, sweep, and 2D surface
+    ├── policy_whatif.py           what-if over the allocator's own knobs (funding-window confidence threshold, spacing)
+    ├── explanation_eval.py        faithfulness checks: deterministic rules over (decision, explanation)
+    ├── data_contract.py           Pandera contract over the generated batch (NPCI, RBI, mandate, reason, cycle rules)
+    └── results/                  committed JSON output from the modules above
+        ├── run_20261008T100907.json   the frozen batch run - both policies, every decision
+        ├── sensitivity.json           the 27-setting sweep result
+        ├── multiseed.json, multiseed_sweep.json   the 10-seed stability results
+        ├── economics.json             the breakeven point, sweep, and surface
+        ├── data_contract.json         data-contract result for the 5,000-event batch
+        ├── policy_whatif.json, explanation_eval_*.json   what-if and explanation-eval outputs
+
+    api/                        FastAPI backend
+    ├── main.py                  POST /api/simulate (live pipeline), /api/webhooks/razorpay
+    ├── personas.py                5 named live-simulator scenarios
+    └── razorpay_client.py        opt-in (LIVE_RAZORPAY=1) real Razorpay test-API client
+
+    dashboard/                  React + Tailwind UI
+    ├── index.html
+    ├── package.json / package-lock.json
+    ├── vite.config.js
+    ├── .oxlintrc.json             lint config (npm run lint)
+    ├── .gitignore                 dashboard-local ignores (node_modules, dist)
+    ├── README.md                 how to run the dashboard and refresh its data
+    ├── public/
+    │   ├── favicon.svg
+    │   └── data/                  static copies of eval/results/*.json the dashboard reads
+    └── src/
+        ├── main.jsx                React entry point
+        ├── App.jsx                 landing/dashboard routing, tab state
+        ├── index.css                Tailwind import, fonts, the accent-color token
+        ├── lib/
+        │   ├── useRunData.js       fetches the saved run + sensitivity JSON
+        │   ├── format.js            plain-language labels, money/date formatting
+        │   ├── compliance.js        client-side JS port of the 3 compliance checks
+        │   └── simulate.js          calls the live /api/simulate endpoint
+        └── views/
+            ├── LandingPage.jsx           thesis, headline result, scorecard, one CTA
+            ├── LiveSimulatorView.jsx      live pipeline runs, persona picker, custom input
+            ├── StoryView.jsx               plain-language narrative for one payment
+            ├── DecisionTraceView.jsx      full technical trace for one payment
+            └── BatchResultsView.jsx        stat cards, compliance panel, sensitivity chart
+
+    data/
+    ├── fixtures/                 the 7 cause fixtures + provenance (Sec 5.0)
+    │   ├── README.md              which fixtures are documented/provisional/live, full probe log
+    │   ├── insufficient_funds.json, bank_technical.json, afa_required.json
+    │   │                          Razorpay-documented, verbatim from published error-code docs
+    │   ├── mandate_revoked.json, mandate_expired.json, amount_exceeds_mandate.json
+    │   │                          provisional - inferred from token-lifecycle docs, not published
+    │   ├── unknown.json            what an unclassifiable error object looks like
+    │   ├── _capture_attempts.json  raw evidence from the first live-API capture (2026-09-03)
+    │   └── _live_mandate_probe.json raw evidence from the 2026-09-15 re-verification
+    └── runs/run_20261008T100907.json   the dashboard's read-only data source (Sec 6.2)
+
+    docs/
+    ├── prd.md                     full specification, every claim's source citation
+    ├── architecture.md            pipeline design, data flow, Mermaid diagrams
+    ├── DATA_QUALITY.md            data-contract result and its limits
+    ├── RESULTS.md                 the full results write-up, method, limitations
+    ├── build-log.md               dated, real entries - every bug found and how it was fixed
+    └── images/                    the 5 screenshots used in this README
+
+    tests/                      one file per module above plus:
+    ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ cases)
+    ├── test_allocator_fuzz.py     property-based fuzzing of Stage 5 (2400+ cases)
+    ├── test_ingest_fuzz.py         property-based fuzzing of Stage 1's constrained fields (1400+ cases)
+    ├── test_outcome_model_isolation.py   AST check - pipeline/ never imports eval.outcome_model
+    ├── test_fixtures.py           every captured fixture classifies as its filename claims
+    ├── test_data_contract.py      the Pandera contract accepts good rows and rejects each kind of bad row
+    ├── test_batch_generator.py    generated batches obey the payment-rail rules
+    └── (one test_<module>.py for every pipeline/, eval/, and api/ module above)
+
+    scripts/                    one-off live-API probes, never imported by anything else
+    ├── capture_fixtures.py       first live-API capture (customer/order/payment routes)
+    └── live_mandate_probe.py     2026-09-15 re-verification with fresh credentials
+
+    logs/sample_run.jsonl       one committed example of real per-stage execution evidence
+
+## User flow
+
+```mermaid
+flowchart TD
+    L["Landing page: thesis, headline result with its caveat"] --> LIVE["Live Simulator: pick a customer scenario or paste a payload"]
+    L --> S["Story: one payment in plain language"]
+    LIVE --> S
+    S --> T["Decision Trace: raw error beside its translation,<br/>every stage timing, every candidate window scored"]
+    T --> B["Batch Results: 60 payments, both policies,<br/>invariants re-checked in the browser"]
+    B --> SW["Sensitivity sweep and ranges across seeds"]
+    B --> AU["Audit Trail: filterable, CSV export"]
+    B --> WI["Policy What-If: change spacing and threshold"]
+```
+
+**Explanation.** A reader lands on a plain-language thesis with the headline result and its caveat, then either runs the Live Simulator on a customer scenario or reads one payment as a story. The decision trace shows the raw error next to its translation, stage timings and every scored window. Batch Results compares both policies over 60 payments and re-checks the compliance invariants in the browser; the sweep, audit trail and policy what-if let a reader test how far the result depends on assumptions.
+
+
+## Low-level design (LLD)
+
+```mermaid
+sequenceDiagram
+    participant W as Webhook or batch
+    participant I as ingest.py
+    participant C as classify.py
+    participant P as priors.py
+    participant F as funding_window.py
+    participant A as allocator.py
+    participant K as compliance.py
+    participant X as explain.py
+    W->>I: raw event (amount, mandate cap, error object, history)
+    I-->>W: FailedPaymentEvent or loud validation error
+    I->>C: RazorpayError
+    C-->>P: cause + confidence + what matched
+    P-->>A: recoverable? notify / retry / stop
+    alt cause is insufficient_funds
+        A->>F: prior debit dates
+        F-->>A: likely funding window, or fallback spacing if history is thin
+    end
+    A->>K: peak window? attempts <= 3? one success per cycle?
+    K-->>A: shift out of peak, or reject
+    A-->>X: decision + every scored candidate with rejection reasons
+    X-->>W: plain reasoning + notification copy (LLM or template)
+```
+
+**Explanation.** One failed payment is validated, classified by a lookup, given a recoverability prior and, for insufficient funds, a funding-window estimate from its debit history (falling back to fixed spacing when the history is thin). The allocator scores every candidate window; the compliance module shifts or rejects anything inside a peak window, over the three-attempt cap or breaking one-debit-per-cycle. The decision record keeps all candidates and rejection reasons, and the explainer only rewrites it in plain language.
+
+
+## High-level design (HLD)
 
 ```mermaid
 flowchart LR
@@ -101,50 +275,38 @@ flowchart LR
     UI -. opt-in .-> API --> ING
 ```
 
-The LLM sits off the critical path: stage 7 only rewrites a finished decision into plain language. If the model is unavailable the template text is used and the decision is unchanged.
+**Explanation.** Generated and fixture payments flow through a deterministic pipeline whose compliance invariants are asserted on every attempt. An eval harness runs the allocator and a fixed schedule against a frozen outcome model the pipeline never imports. Results are saved as artifacts the React dashboard reads; only the Live Simulator calls the FastAPI service. The LLM sits off the decision path.
 
-### Low-level design: what happens to one failed payment
 
-```mermaid
-sequenceDiagram
-    participant W as Webhook or batch
-    participant I as ingest.py
-    participant C as classify.py
-    participant P as priors.py
-    participant F as funding_window.py
-    participant A as allocator.py
-    participant K as compliance.py
-    participant X as explain.py
-    W->>I: raw event (amount, mandate cap, error object, history)
-    I-->>W: FailedPaymentEvent or loud validation error
-    I->>C: RazorpayError
-    C-->>P: cause + confidence + what matched
-    P-->>A: recoverable? notify / retry / stop
-    alt cause is insufficient_funds
-        A->>F: prior debit dates
-        F-->>A: likely funding window, or fallback spacing if history is thin
-    end
-    A->>K: peak window? attempts <= 3? one success per cycle?
-    K-->>A: shift out of peak, or reject
-    A-->>X: decision + every scored candidate with rejection reasons
-    X-->>W: plain reasoning + notification copy (LLM or template)
-```
+## How it would scale
 
-### User flow
+| Concern | Today | Next step |
+|---|---|---|
+| Throughput | A 60-payment study and one-at-a-time live runs | The pipeline is stateless per event, so it can run in a worker pool behind a queue fed by the Razorpay webhook |
+| State | Saved run artifacts and an in-process mandate view | A database holding each mandate's attempt count and last debit, so the three-attempt cap and one-debit-per-cycle checks hold across workers; the checks are pure functions and need no change |
+| Funding-window inference | Uses prior debit dates carried on the event | Learn per-customer funding patterns from the merchant's own debit history, with the same confidence gate and fallback spacing |
+| Outcome evidence | Declared outcome model, simulation study | Replace with observed outcomes from real retries (the study design, metrics and gates carry over) and report recovery on live traffic |
+| Policy tuning | 27-point sweep and what-if tab | Tune spacing and thresholds per merchant segment against the break-even rupees-per-attempt rule |
+| LLM wording | One free-tier model, cached | Cache by decision shape, add a second provider, keep it off the critical path |
+| Operations | JSONL logs and CI summaries | Metrics on attempts spent, stops, compliance rejections and explanation fallbacks, with alerts |
+| Regulation | NPCI/RBI rules encoded as constants | Versioned rule set so a rule change is a data change with tests |
 
-```mermaid
-flowchart TD
-    L["Landing page: thesis, headline result with its caveat"] --> LIVE["Live Simulator: pick a customer scenario or paste a payload"]
-    L --> S["Story: one payment in plain language"]
-    LIVE --> S
-    S --> T["Decision Trace: raw error beside its translation,<br/>every stage timing, every candidate window scored"]
-    T --> B["Batch Results: 60 payments, both policies,<br/>invariants re-checked in the browser"]
-    B --> SW["Sensitivity sweep and ranges across seeds"]
-    B --> AU["Audit Trail: filterable, CSV export"]
-    B --> WI["Policy What-If: change spacing and threshold"]
-```
 
-### Tools, and why each one
+## USP: what is different and why it is better
+
+| Feature | Common approach | What this does |
+|---|---|---|
+| Framing | Retry on a fixed schedule | Treats the three non-renewable attempts as a budget to allocate, with an explicit stop |
+| Cause-awareness | One schedule for every failure | Classifies the Razorpay error object by deterministic lookup, so unrecoverable causes (revoked or expired mandates) get no wasted attempts: 0 wasted against 51 for the fixed schedule |
+| Compliance | A policy document | Three invariants asserted in code, covered by tests and mutation testing (31 of 32 mutants killed; the last is equivalent), and re-checked live in the browser |
+| AI judgment | Model everywhere | The LLM only writes wording; it cannot change a decision, and an outage changes only the explanation text |
+| Transparency | Decision only | Every candidate window with its score and rejection reason, the raw error beside its translation, and per-stage timings |
+| Evaluation honesty | A flattering headline | Outcome model stated and frozen before tuning; sensitivity sweep; 10-seed stability; the allocator loses on raw recoveries (30 vs 35) and wins on money only above Rs 147.82 per attempt, and says so |
+| Data validity | "Synthetic data" with no checks | A Pandera contract over NPCI peak windows, the RBI Rs 15,000 threshold, mandate caps, documented reasons and one debit per cycle |
+| Build quality | Coverage only | Coverage, property-based fuzzing, mutation testing, dead-code, complexity and duplication gates |
+
+
+## Tools and software used
 
 | Tool | Used for | Why |
 |---|---|---|
@@ -160,31 +322,46 @@ flowchart TD
 | **GitHub Actions, CodeQL, Dependabot, OpenSSF Scorecard** | CI/CD and supply-chain checks | Every push is tested, evaluated, scanned and kept up to date |
 | **Render** | Hosting | Static dashboard plus one small API service, deployed from `main` once CI is green |
 
-### CI/CD
+## Principles used
 
-```mermaid
-flowchart LR
-    P["Push or pull request"] --> T["Tests + coverage<br/>ruff"]
-    T --> G["Eval gates<br/>0 compliance violations<br/>0 wasted attempts<br/>data contract passes"]
-    T --> D["Dashboard lint + build"]
-    P --> Q["Quality<br/>vulture, xenon, jscpd"]
-    P --> S["CodeQL"]
-    W["Weekly"] --> M["Mutation test<br/>compliance.py"]
-    G --> R["Render deploy from main"]
-    D --> R
-```
+* **Deterministic where possible.** Classification, compliance and scoring are plain code; no model touches a decision.
+* **Hard constraints are structural.** Invariants are checked on every attempt and fail loudly, not logged.
+* **No circular evaluation.** The outcome model lives apart from the pipeline; an AST test fails if the pipeline imports it.
+* **Report what loses.** Results include where the allocator is worse, and the sensitivity of every headline.
+* **Show the reasoning.** All scored candidates, the raw payload and stage traces are kept in the record.
+* **Fail loud at the edge.** Pydantic validation rejects malformed events; the data contract fails the build if generated data breaks a rule.
+* **Offline by default.** Live Razorpay calls need an explicit flag; CI never touches the network.
+* **Keep a build log.** Real bugs and fixes are recorded in `docs/build-log.md` as they happen.
 
-The eval summary (attempts, recoveries, wasted attempts, contract result) is written to each run's summary page by `scripts/ci_eval_summary.py`, which also fails the job if a gate breaks.
 
-### Validate and deploy
+## Functional and non-functional requirements
 
-`scripts/validate.sh` runs the whole pipeline in order and prints a pass/fail line per stage: lint, tests with coverage, the data contract, the eval harness gates and the dashboard build. These are the checks CI runs, so a green local run predicts a green build.
+**Functional**
 
-`render.yaml` is a Render blueprint with `autoDeployTrigger: checksPass`: a push to `main` deploys only after the GitHub checks pass. Secrets are declared with `sync: false` and entered in the Render dashboard, never committed.
+| Requirement | How it is implemented |
+|---|---|
+| Classify why a payment failed | `pipeline/classify.py`, lookup over the Razorpay error object |
+| Choose notify, retry at a time, or stop | `pipeline/allocator.py` over priors and the funding window |
+| Never exceed the regulated budget | `pipeline/compliance.py` (3 attempts, no peak windows, 1 debit per cycle) |
+| Infer a likely funding window without overclaiming | `pipeline/funding_window.py`, confidence-gated with 24h/72h/7d fallback |
+| Explain each decision in plain language | `pipeline/explain.py`, LLM wording with template fallback |
+| Compare against a fixed schedule | `eval/` harness, baseline, sweep, multi-seed, economics |
+| Let a reader inspect and try it | React dashboard (landing, live simulator, story, trace, batch results) |
 
-### Is the synthetic data realistic?
+**Non-functional**
 
-There is no real failed-payment data, so realism cannot be measured. What is checked is rule compliance: a Pandera contract (`eval/data_contract.py`) validates 5,000 generated events against NPCI peak windows, the RBI Rs 15,000 authentication threshold, the mandate cap, documented Razorpay error reasons and one debit per cycle. The first run found real defects in the generator, which are fixed. See [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md).
+| Quality | Target | How it is implemented and checked |
+|---|---|---|
+| Correctness of compliance | Zero violations | Structural assertions, unit and property tests, eval gate of zero violations; mutation testing on `compliance.py` |
+| Test depth | Beyond line coverage | 98% line coverage on `pipeline/`, fuzzing of Stages 1, 2 and 5, mutmut weekly |
+| Data validity | Rule-compliant synthetic data | Pandera data contract run in CI over 5,000 events |
+| Reproducibility | Same input, same output | Seeded generators, frozen outcome model, committed run artifacts |
+| Reliability of demos | An API outage degrades nothing | Dashboard reads saved artifacts; explanation text cached to disk; live mode opt-in |
+| Observability | Every stage visible | Structured trace entries per stage, JSONL logs in `logs/` |
+| Maintainability | Small, clean code | ruff, vulture (dead code), xenon/radon (complexity), jscpd (duplication) on every push. A Ponytail minimal-code review pass is planned and has not been run on this repo yet |
+| Security | No secrets in code, scanned | `.env` ignored, CodeQL, OpenSSF Scorecard, Dependabot |
+| Accessibility of language | Readable by a non-expert | Plain sentence first, technical detail underneath (the presentation rule in the build constraints) |
+
 
 ## Results
 
@@ -382,116 +559,31 @@ is, and exactly where to go for the full detail.
   a gap rather than quietly build around it. For more detail, see
   [CLAUDE.md](CLAUDE.md).
 
-## File structure
+## Engineering quality and CI/CD
 
-Every tracked file, one line each. Folders first, in the order they matter
-most to a reader; `tests/` mirrors `pipeline/`/`eval/`/`api/` one file at a
-time so it's grouped at the end rather than repeated inline. `__init__.py`
-in `pipeline/`, `eval/`, and `api/` are empty package markers, left out
-below since there's nothing to say about them individually.
+```mermaid
+flowchart LR
+    P["Push or pull request"] --> T["Tests + coverage<br/>ruff"]
+    T --> G["Eval gates<br/>0 compliance violations<br/>0 wasted attempts<br/>data contract passes"]
+    T --> D["Dashboard lint + build"]
+    P --> Q["Quality<br/>vulture, xenon, jscpd"]
+    P --> S["CodeQL"]
+    W["Weekly"] --> M["Mutation test<br/>compliance.py"]
+    G --> R["Render deploy from main"]
+    D --> R
+```
 
-    CLAUDE.md                  engineering constraints that governed the build
-    LICENSE                    MIT
-    README.md                  this file
-    requirements.txt           Python dependencies
-    pyproject.toml             pytest + ruff config
-    setup.sh                   one-time bootstrap (venv, deps, .env template)
-    .env.example                credential template - copy to .env, fill in keys
-    .gitignore
-    .github/workflows/ci.yml   GitHub Actions - pytest + ruff on every push
+The eval summary (attempts, recoveries, wasted attempts, contract result) is written to each run's summary page by `scripts/ci_eval_summary.py`, which also fails the job if a gate breaks.
 
-    pipeline/                  the 7-stage decision engine (Sec 4)
-    ├── models.py               shared schemas - FailureCause, RazorpayError, StageTrace
-    ├── ingest.py                Stage 1 - validates a raw event into FailedPaymentEvent
-    ├── classify.py              Stage 2 - deterministic cause lookup, never a model call
-    ├── priors.py                Stage 3 - recoverability score + action shape per cause
-    ├── funding_window.py        Stage 4 - confidence-gated funding-window inference
-    ├── allocator.py             Stage 5 - notify/retry-at-T/stop, every candidate scored
-    ├── decision.py               Stage 6 - assembles every prior stage into one record
-    ├── explain.py                Stage 7 - the one LLM call in this codebase
-    ├── compliance.py            the 3 hard invariants (attempt cap, peak windows, 1/cycle)
-    └── run.py                   orchestrates Stages 2-6 for one ingested event
+### Validate and deploy
 
-    eval/                       frozen outcome model, baseline, batch analysis (Sec 5)
-    │                           - never imported by pipeline/, enforced by
-    │                           tests/test_outcome_model_isolation.py
-    ├── outcome_model.py         frozen, seeded success-probability model
-    ├── baseline.py               fixed day-1/2/3 schedule comparator
-    ├── batch_generator.py        synthesizes the 60-payment batch from a fixed anchor time
-    ├── harness.py                 runs both policies over the batch, writes run_*.json
-    ├── sensitivity.py            27-point outcome-model parameter sweep
-    ├── multiseed.py               re-draws the batch at 10 seeds AND re-sweeps at each
-    ├── economics.py               cost-per-attempt breakeven point, sweep, and 2D surface
-    └── results/                  committed JSON output from the 5 modules above
-        ├── run_20260915T134833.json   the frozen batch run - both policies, every decision
-        ├── sensitivity.json           the 27-setting sweep result
-        ├── multiseed.json             the 10-seed stability result (default parameters)
-        ├── multiseed_sweep.json       the 10-seed stability result (full 27-point sweep)
-        └── economics.json             the breakeven point, sweep, and surface
+`scripts/validate.sh` runs the whole pipeline in order and prints a pass/fail line per stage: lint, tests with coverage, the data contract, the eval harness gates and the dashboard build. These are the checks CI runs, so a green local run predicts a green build.
 
-    api/                        FastAPI backend
-    ├── main.py                  POST /api/simulate (live pipeline), /api/webhooks/razorpay
-    ├── personas.py                5 named live-simulator scenarios
-    └── razorpay_client.py        opt-in (LIVE_RAZORPAY=1) real Razorpay test-API client
+`render.yaml` is a Render blueprint with `autoDeployTrigger: checksPass`: a push to `main` deploys only after the GitHub checks pass. Secrets are declared with `sync: false` and entered in the Render dashboard, never committed.
 
-    dashboard/                  React + Tailwind UI
-    ├── index.html
-    ├── package.json / package-lock.json
-    ├── vite.config.js
-    ├── .oxlintrc.json             lint config (npm run lint)
-    ├── .gitignore                 dashboard-local ignores (node_modules, dist)
-    ├── README.md                 how to run the dashboard and refresh its data
-    ├── public/
-    │   ├── favicon.svg
-    │   └── data/                  static copies of eval/results/*.json the dashboard reads
-    └── src/
-        ├── main.jsx                React entry point
-        ├── App.jsx                 landing/dashboard routing, tab state
-        ├── index.css                Tailwind import, fonts, the accent-color token
-        ├── lib/
-        │   ├── useRunData.js       fetches the saved run + sensitivity JSON
-        │   ├── format.js            plain-language labels, money/date formatting
-        │   ├── compliance.js        client-side JS port of the 3 compliance checks
-        │   └── simulate.js          calls the live /api/simulate endpoint
-        └── views/
-            ├── LandingPage.jsx           thesis, headline result, scorecard, one CTA
-            ├── LiveSimulatorView.jsx      live pipeline runs, persona picker, custom input
-            ├── StoryView.jsx               plain-language narrative for one payment
-            ├── DecisionTraceView.jsx      full technical trace for one payment
-            └── BatchResultsView.jsx        stat cards, compliance panel, sensitivity chart
+### Is the synthetic data realistic?
 
-    data/
-    ├── fixtures/                 the 7 cause fixtures + provenance (Sec 5.0)
-    │   ├── README.md              which fixtures are documented/provisional/live, full probe log
-    │   ├── insufficient_funds.json, bank_technical.json, afa_required.json
-    │   │                          Razorpay-documented, verbatim from published error-code docs
-    │   ├── mandate_revoked.json, mandate_expired.json, amount_exceeds_mandate.json
-    │   │                          provisional - inferred from token-lifecycle docs, not published
-    │   ├── unknown.json            what an unclassifiable error object looks like
-    │   ├── _capture_attempts.json  raw evidence from the first live-API capture (2026-09-03)
-    │   └── _live_mandate_probe.json raw evidence from the 2026-09-15 re-verification
-    └── runs/run_20260915T134833.json   the dashboard's read-only data source (Sec 6.2)
-
-    docs/
-    ├── prd.md                     full specification, every claim's source citation
-    ├── architecture.md            pipeline design, data flow, Mermaid diagrams
-    ├── RESULTS.md                 the full results write-up, method, limitations
-    ├── build-log.md               dated, real entries - every bug found and how it was fixed
-    └── images/                    the 5 screenshots used in this README
-
-    tests/                      one file per module above plus:
-    ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ cases)
-    ├── test_allocator_fuzz.py     property-based fuzzing of Stage 5 (2400+ cases)
-    ├── test_ingest_fuzz.py         property-based fuzzing of Stage 1's constrained fields (1400+ cases)
-    ├── test_outcome_model_isolation.py   AST check - pipeline/ never imports eval.outcome_model
-    ├── test_fixtures.py           every captured fixture classifies as its filename claims
-    └── (one test_<module>.py for every pipeline/, eval/, and api/ module above)
-
-    scripts/                    one-off live-API probes, never imported by anything else
-    ├── capture_fixtures.py       first live-API capture (customer/order/payment routes)
-    └── live_mandate_probe.py     2026-09-15 re-verification with fresh credentials
-
-    logs/sample_run.jsonl       one committed example of real per-stage execution evidence
+There is no real failed-payment data, so realism cannot be measured. What is checked is rule compliance: a Pandera contract (`eval/data_contract.py`) validates 5,000 generated events against NPCI peak windows, the RBI Rs 15,000 authentication threshold, the mandate cap, documented Razorpay error reasons and one debit per cycle. The first run found real defects in the generator, which are fixed. See [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md).
 
 ## Setup
 
