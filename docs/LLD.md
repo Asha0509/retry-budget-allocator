@@ -709,7 +709,8 @@ React 19 + Vite + Tailwind 4 + Recharts. Static build; reads JSON from
 | `lib/compliance.js` | JS port of the three invariants, run over every loaded decision (`runComplianceChecks`) so the claim is checked on screen |
 | `lib/site.js`, `lib/format.js`, `lib/csv.js` | Shared copy (stages, interventions, glossary, doc links), plain-language labels and money formatting, CSV export for the audit trail |
 | `components/HeroDiagram.jsx` | Click a failure reason, see which of the three interventions it routes to |
-| `views/LandingPage.jsx`, `GuideView.jsx` | Thesis with its caveat; guided tour of one real payment and a map of every page |
+| `views/LandingPage.jsx`, `GuideView.jsx` | Thesis with its caveat; the Start here guide to one real payment and a map of every page |
+| `components/Tour.jsx` | Docked app tour. Steps live in `lib/site.js` (`TOUR_STEPS`); it navigates by calling App's `goToPage`, and is rendered at one fixed position in App so it keeps its step when the view changes between the overview and the dashboard |
 | `views/LiveSimulatorView.jsx` | Persona picker or custom input; calls the API; shows allocator versus baseline |
 | `views/StoryView.jsx`, `DecisionTraceView.jsx` | Plain-language narrative; raw error beside its translation, per-stage timings, every candidate window with its score and reference probability |
 | `views/BatchResultsView.jsx`, `ExplanationEvalPanel.jsx` | Both policies' totals, live compliance panel, per-cause table, 27-point sweep chart, explanation faithfulness |

@@ -51,6 +51,7 @@ inside an entry are the figures at the time; the current numbers are in
 | E26 | 2026-09-18 (git history) | Tests | Mutation testing found untested compliance boundaries |
 | E27 | 2026-10-08 | Docs | Drift found while writing the design docs |
 | E28 | 2026-10-12 | CI | Lint step failed on unchanged code after an unpinned tool upgraded |
+| E29 | 2026-10-12 | Dashboard | App tour reset to step 1 when it crossed between pages |
 
 ## Entries
 
@@ -605,6 +606,22 @@ this file.
   with no code change. Reproduce with the CI's version, not the local one.
 - **Evidence.** build-log 2026-10-12.
 
+### E29 - The new app tour reset to step 1 when it changed pages (2026-10-12)
+
+- **What broke.** Stepping from the overview page to the first dashboard tab sent the
+  tour back to "1 of 9", so it could never get past step 2.
+- **How detected.** A scripted browser walk through all nine steps, not a unit test.
+  It printed the step counter after every click and it jumped backwards.
+- **Root cause.** `Tour` was rendered in two different places in `App.jsx`, one in
+  the overview return and one in the dashboard return. React treats those as two
+  different positions, so it unmounted the tour and mounted a new one, which started
+  at step 1 again.
+- **Fix.** Both returns now put the tour at the same position in a fragment, so it
+  stays mounted while the page behind it changes. LLD.md records why.
+- **Lesson.** State that must survive navigation has to live in a component that
+  does not move in the tree. Walk a multi-step flow end to end in a browser.
+- **Evidence.** build-log 2026-10-12 (second row).
+
 ## Patterns across the log
 
 | Pattern | Entries |
@@ -617,3 +634,4 @@ this file.
 | The dev-server and tooling gap that tests cannot see | E11, E17 |
 | Prose copied from memory instead of the artifact | E14, E20, E27 |
 | An unpinned tool changed under a green build | E28 |
+| A UI flow that only an end-to-end walk can catch | E11, E17, E29 |

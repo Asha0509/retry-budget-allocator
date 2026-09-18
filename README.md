@@ -13,10 +13,17 @@ ignores *why* a payment failed is the wrong tool for it.
 
 ### Take the tour
 
-The dashboard opens on a guided walkthrough that follows one real failed
-payment from the saved run through every stage, with a plain-language
-glossary beside it. Each step links to the tab where you can go deeper, and
-an "Every page, in one place" map underneath says what each tab holds.
+Press **Take the tour** (or open `/?tour=1`) and a docked card walks through the
+overview page and all eight dashboard tabs, one step per page, while the page
+itself stays visible behind it. Each step says in plain words what the page is
+for and lists what is on it. The same tour pattern is used in the other two apps.
+
+![App tour: a docked card on the Decision Trace tab saying what the page shows](docs/images/app-tour.png)
+
+The **Start here** tab is the longer version. It follows one real failed payment
+from the saved run through every stage, with a plain-language glossary beside it.
+Each step links to the tab where you can go deeper, and an "Every page, in one
+place" map underneath says what each tab holds.
 
 ![Guided tour: the scored candidate windows for one payment, with the chosen slot highlighted](docs/images/tour-step4.png)
 
@@ -166,18 +173,19 @@ retry-budget-allocator/
 │       ├── App.jsx                             landing/dashboard routing, tab state
 │       ├── index.css                           Tailwind import, fonts, the accent-color token
 │       ├── components/
-│       │   └── HeroDiagram.jsx                 click a failure reason, see which of the 3 interventions it routes to
+│       │   ├── HeroDiagram.jsx                 click a failure reason, see which of the 3 interventions it routes to
+│       │   └── Tour.jsx                        docked app tour: one step per page, navigates the tabs
 │       ├── lib/
 │       │   ├── useRunData.js                   fetches the saved run + sensitivity JSON
 │       │   ├── useJson.js                      optional saved artifacts (seeds, economics, data contract)
-│       │   ├── site.js                         shared copy: stages, interventions, rules, glossary, page map, doc links
+│       │   ├── site.js                         shared copy: stages, interventions, rules, glossary, page map, tour steps, doc links
 │       │   ├── format.js                       plain-language labels, money/date formatting
 │       │   ├── csv.js                          CSV writer + download for the audit-trail export
 │       │   ├── compliance.js                   client-side JS port of the 3 compliance checks
 │       │   └── simulate.js                     calls the live /api/simulate endpoint
 │       └── views/
 │           ├── LandingPage.jsx                 hero + interactive diagram, 7 stages, results, rules, AI role, honesty notes, docs
-│           ├── GuideView.jsx                   guided tour of one real payment, glossary, map of every page
+│           ├── GuideView.jsx                   "Start here": one real payment step by step, glossary, map of every page
 │           ├── EvalsView.jsx                   seed stability, break-even economics, data contract, explanation eval
 │           ├── LiveSimulatorView.jsx           live pipeline runs, persona picker, custom input
 │           ├── StoryView.jsx                   plain-language narrative for one payment

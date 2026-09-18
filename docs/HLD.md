@@ -96,7 +96,7 @@ flowchart LR
 | Compliance module | `pipeline/compliance.py` | The three invariants as pure predicates, plus the shift-out-of-peak helper. No dependency on the allocator | Yes |
 | Evaluation harness | `eval/` | Frozen outcome model, fixed-schedule baseline, seeded batch generator, harness, sensitivity sweep, multi-seed check, economics, policy what-if, explanation eval, data contract | Yes (seeded) |
 | API service | `api/` | `POST /api/simulate` (the same pipeline, live), `GET /api/personas`, signed webhook receiver, opt-in Razorpay test-mode client | Yes, except the Stage 7 call |
-| Dashboard | `dashboard/` | Static React app: landing page, guided tour, live simulator, story, decision trace, batch results, evals, audit trail, policy what-if | n/a |
+| Dashboard | `dashboard/` | Static React app: landing page, docked app tour, start-here guide, live simulator, story, decision trace, batch results, evals, audit trail, policy what-if | n/a |
 | Saved artifacts | `eval/results/*.json`, `dashboard/public/data/*.json` | The only data the dashboard reads by default | n/a |
 | Fixtures | `data/fixtures/` | Seven cause fixtures with provenance (documented, provisional, live) and the raw record of every live probe | n/a |
 | Build and quality gates | `.github/workflows/`, `scripts/validate.sh` | Tests, eval gates, data contract, lint, dead code, complexity, duplication, CodeQL, weekly mutation test of the compliance module | n/a |
