@@ -20,6 +20,8 @@ an "Every page, in one place" map underneath says what each tab holds.
 
 ![Guided tour: the scored candidate windows for one payment, with the chosen slot highlighted](docs/images/tour-step4.png)
 
+![Every page, in one place: the tour's map of what each tab holds](docs/images/page-map.png)
+
 ### Explore
 
 ![Live Simulator: pick a scenario, run it live, see where the allocator and a fixed schedule disagree](docs/images/live-simulator.png)
