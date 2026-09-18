@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import AuditTrailView from './views/AuditTrailView.jsx'
 import BatchResultsView from './views/BatchResultsView.jsx'
 import DecisionTraceView from './views/DecisionTraceView.jsx'
 import LandingPage from './views/LandingPage.jsx'
 import LiveSimulatorView from './views/LiveSimulatorView.jsx'
 import StoryView from './views/StoryView.jsx'
+import WhatIfView from './views/WhatIfView.jsx'
 import { useRunData } from './lib/useRunData.js'
 
 const TABS = [
@@ -11,6 +13,8 @@ const TABS = [
   { id: 'story', label: 'Story' },
   { id: 'trace', label: 'Decision Trace' },
   { id: 'batch', label: 'Batch Results' },
+  { id: 'audit', label: 'Audit Trail' },
+  { id: 'whatif', label: 'Policy What-If' },
 ]
 
 export default function App() {
@@ -44,11 +48,11 @@ export default function App() {
     return <LandingPage run={run} onEnterDashboard={enterDashboard} />
   }
 
-  // The Live Simulator tab needs no batch data at all (it talks to its own
+  // The Live Simulator and Policy What-If tabs need no batch run at all (it talks to its own
   // FastAPI backend) - only Story/Decision Trace/Batch Results depend on a
   // saved run artifact having loaded, so a failed/loading batch load must
   // not block the live tab.
-  const needsRunData = tab !== 'live'
+  const needsRunData = tab !== 'live' && tab !== 'whatif'
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -66,12 +70,12 @@ export default function App() {
         )}
       </header>
 
-      <nav className="mb-6 flex gap-1 border-b border-slate-200">
+      <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`px-4 py-2 text-sm font-medium transition ${
+            className={`shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium transition ${
               tab === t.id ? 'border-b-2 border-blue-600 text-blue-700' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -81,6 +85,7 @@ export default function App() {
       </nav>
 
       {tab === 'live' && <LiveSimulatorView />}
+      {tab === 'whatif' && <WhatIfView />}
 
       {needsRunData && loading && <div className="py-12 text-center text-slate-500">Loading run…</div>}
       {needsRunData && error && (
@@ -112,6 +117,7 @@ export default function App() {
           {tab === 'story' && <StoryView payment={selectedPayment} />}
           {tab === 'trace' && <DecisionTraceView payment={selectedPayment} />}
           {tab === 'batch' && <BatchResultsView run={run} sensitivity={sensitivity} />}
+          {tab === 'audit' && <AuditTrailView run={run} />}
         </>
       )}
     </div>

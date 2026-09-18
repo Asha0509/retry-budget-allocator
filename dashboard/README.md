@@ -26,8 +26,8 @@ uvicorn api.main:app --reload --port 8000
 
 ## Refresh the data
 
-`public/data/latest_run.json` and `public/data/sensitivity.json` are copies
-of the Python eval harness's own output. To update them after a new batch
+Everything in `public/data/` is a copy of the Python eval scripts' own
+output (batch run, sensitivity sweep, explanation eval, policy what-if). To update them after a new batch
 run:
 
 ```
@@ -36,4 +36,8 @@ python -m eval.harness
 python -m eval.sensitivity
 cp eval/results/run_*.json dashboard/public/data/latest_run.json
 cp eval/results/sensitivity.json dashboard/public/data/sensitivity.json
+python -m eval.explanation_eval --source template
+python -m eval.explanation_eval --source cached
+python -m eval.policy_whatif
+cp eval/results/explanation_eval_*.json eval/results/policy_whatif.json dashboard/public/data/
 ```
