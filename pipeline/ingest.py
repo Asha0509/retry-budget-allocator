@@ -38,6 +38,8 @@ class FailedPaymentEvent(BaseModel):
     # allocate() and eval.baseline.baseline_decide() both re-check this too,
     # for callers that build an AllocatorDecision without going through
     # ingest() first (eval/harness.py's include_details=False fast path).
+    # Registered per-debit cap on the UPI AutoPay mandate (paise); None if unknown.
+    mandate_max_amount: int | None = Field(default=None, gt=0)
     billing_cycle_successes: int = Field(default=0, ge=0, le=1)
     prior_debit_dates: list[datetime] = []  # Stage 4 input (PRD Sec 4) - customer's past successful debits
 

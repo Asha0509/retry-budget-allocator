@@ -16,7 +16,7 @@ import random
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from pipeline.compliance import IST
+from pipeline.compliance import IST, is_peak_window
 from pipeline.ingest import FailedPaymentEvent, ingest
 from pipeline.models import FailureCause
 
@@ -35,8 +35,14 @@ CAUSE_MIX: dict[FailureCause, float] = {
     FailureCause.UNKNOWN: 0.02,
 }
 
-_MIN_AMOUNT_PAISE = 10_000  # RS 100
-_MAX_AMOUNT_PAISE = 500_000  # RS 5,000
+# Amounts are drawn from round rupee price points (subscriptions are priced in
+# whole rupees, not random paise). Ordinary debits stay under the RBI
+# additional-factor-authentication threshold of Rs 15,000; AFA events sit above it.
+_PRICE_POINTS_RUPEES = (99, 149, 199, 299, 499, 799, 999, 1499, 1999, 2499, 4999, 5999, 7499, 9999, 12_999)
+_AFA_PRICE_POINTS_RUPEES = (15_999, 19_999, 24_999, 49_999)
+# Mandate caps are the registered maximum per debit (Razorpay UPI AutoPay mandates).
+_MANDATE_CAP_RUPEES = (5_000, 10_000, 15_000)
+_PAISE = 100
 _DATE_SPREAD_DAYS = 30
 
 # A fixed reference point, NOT datetime.now(). Failure times are anchored to
@@ -69,22 +75,51 @@ def _load_fixture_errors() -> dict[FailureCause, dict]:
     return errors
 
 
+def _months_back(moment: datetime, months: int) -> tuple[int, int]:
+    """(year, month) of `months` calendar months before `moment`."""
+    index = moment.year * 12 + (moment.month - 1) - months
+    return index // 12, index % 12 + 1
+
+
 def _synthesize_prior_debit_dates(rng: random.Random, failure_time: datetime) -> list[datetime]:
     """A per-customer hidden 'typical funded day', observed noisily (Sec 4 Stage 4 input).
 
-    funding_window.py never sees the hidden day, only these noisy dates - the
-    same information asymmetry as the real inference problem.
+    One debit per calendar month (PRD Sec 2: at most one successful debit per
+    cycle), so month arithmetic is calendar-based, not a fixed 30-day step.
+    funding_window.py never sees the hidden day, only these noisy dates.
     """
     if rng.random() > _PROBABILITY_OF_USABLE_HISTORY:
         return []
     hidden_day = rng.randint(1, 28)
     n_debits = rng.randint(_MIN_PRIOR_DEBITS, _MAX_PRIOR_DEBITS)
     dates = []
-    for months_back in range(1, n_debits + 1):
+    for back in range(1, n_debits + 1):
         noisy_day = max(1, min(28, hidden_day + rng.randint(-_PRIOR_DEBIT_DAY_NOISE, _PRIOR_DEBIT_DAY_NOISE)))
-        month_date = failure_time - timedelta(days=30 * months_back)
-        dates.append(month_date.replace(day=noisy_day))
+        year, month = _months_back(failure_time, back)
+        dates.append(failure_time.replace(year=year, month=month, day=noisy_day))
     return sorted(dates)
+
+
+def _offpeak_failure_time(rng: random.Random) -> datetime:
+    """A failure time outside the NPCI peak windows: first attempts are made off-peak."""
+    while True:
+        candidate = _BATCH_ANCHOR_TIME - timedelta(days=rng.uniform(0, _DATE_SPREAD_DAYS), hours=rng.uniform(0, 24))
+        if not is_peak_window(candidate):
+            return candidate
+
+
+def _amount_and_cap(rng: random.Random, cause: FailureCause) -> tuple[int, int]:
+    """(amount, mandate cap) in paise, consistent with the failure cause."""
+    if cause == FailureCause.AFA_REQUIRED:
+        return rng.choice(_AFA_PRICE_POINTS_RUPEES) * _PAISE, 50_000 * _PAISE
+    if cause == FailureCause.AMOUNT_EXCEEDS_MANDATE:
+        # Only caps that some ordinary price point can exceed.
+        cap = rng.choice([c for c in _MANDATE_CAP_RUPEES if c < max(_PRICE_POINTS_RUPEES)]) * _PAISE
+        over = [p * _PAISE for p in _PRICE_POINTS_RUPEES if p * _PAISE > cap]
+        return rng.choice(over), cap
+    cap = rng.choice(_MANDATE_CAP_RUPEES) * _PAISE
+    ordinary = [p * _PAISE for p in _PRICE_POINTS_RUPEES if p * _PAISE <= cap]
+    return rng.choice(ordinary), cap
 
 
 def generate_batch(n: int, seed: int = 42) -> list[FailedPaymentEvent]:
@@ -99,13 +134,15 @@ def generate_batch(n: int, seed: int = 42) -> list[FailedPaymentEvent]:
     events = []
     for i in range(n):
         cause = rng.choices(causes, weights=weights, k=1)[0]
-        failure_time = _BATCH_ANCHOR_TIME - timedelta(days=rng.uniform(0, _DATE_SPREAD_DAYS), hours=rng.uniform(0, 24))
+        failure_time = _offpeak_failure_time(rng)
+        amount, mandate_cap = _amount_and_cap(rng, cause)
         prior_debit_dates = _synthesize_prior_debit_dates(rng, failure_time) if cause == FailureCause.INSUFFICIENT_FUNDS else []
         raw_event = {
             "payment_id": f"pay_SYNTH{i:05d}",
             "token_id": f"token_SYNTH{i:05d}",
             "customer_id": f"cust_SYNTH{i:05d}",
-            "amount": rng.randint(_MIN_AMOUNT_PAISE, _MAX_AMOUNT_PAISE),
+            "amount": amount,
+            "mandate_max_amount": mandate_cap,
             "error": fixture_errors[cause],
             "prior_debit_dates": [d.isoformat() for d in prior_debit_dates],
             "attempts_used": 0,

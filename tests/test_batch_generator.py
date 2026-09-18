@@ -37,7 +37,7 @@ def test_failure_times_are_anchored_not_wall_clock() -> None:
 
 def test_amounts_are_positive_and_within_declared_range() -> None:
     events = generate_batch(50, seed=2)
-    assert all(10_000 <= e.amount <= 500_000 for e in events)
+    assert all(9_900 <= e.amount <= 5_000_000 for e in events)
 
 
 def test_every_event_starts_with_zero_attempts_used() -> None:
@@ -68,3 +68,25 @@ def test_cause_mix_roughly_matches_declared_weights_at_scale() -> None:
 def test_rejects_nonpositive_n() -> None:
     with pytest.raises(ValueError, match="n must be"):
         generate_batch(0)
+
+
+def test_first_attempts_are_off_peak() -> None:
+    from pipeline.compliance import is_peak_window
+
+    assert not any(is_peak_window(e.failure_time) for e in generate_batch(300, seed=3))
+
+
+def test_afa_events_exceed_rbi_threshold_and_others_do_not() -> None:
+    from pipeline.models import FailureCause
+
+    events = generate_batch(400, seed=4)
+    afa = [e for e in events if e.error.reason == "authentication_failed"]
+    assert afa and all(e.amount > 1_500_000 for e in afa)
+
+
+def test_mandate_cap_present_and_prior_debits_one_per_month() -> None:
+    events = generate_batch(400, seed=5)
+    assert all(e.mandate_max_amount for e in events)
+    for e in events:
+        months = [(d.year, d.month) for d in e.prior_debit_dates]
+        assert len(months) == len(set(months))
