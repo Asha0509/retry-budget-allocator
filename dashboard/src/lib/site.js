@@ -56,9 +56,9 @@ export const GLOSSARY = [
   ['Outcome model', 'The declared rules we use to decide whether a simulated retry succeeds. We wrote it, so results are about spending a budget well under that model, not real recovery rates.'],
 ]
 
-// What is on every dashboard tab, for the "Every page, in one place" map in the tour.
+// What is on every dashboard tab, for the "Every page, in one place" map on the Start here tab.
 export const TAB_MAP = [
-  { id: 'guide', label: 'Start here', has: 'This tour: one real failed payment explained step by step, a glossary and this map.' },
+  { id: 'guide', label: 'Start here', has: 'One real failed payment explained step by step, a glossary and this map.' },
   { id: 'live', label: 'Live Simulator', has: 'Pick a scenario (Priya, Rahul, Ananya, Karan, Meera) or build your own failed payment and run the real pipeline now. Shows the seven stages with timings, the allocator against a fixed schedule, and the customer message.' },
   { id: 'story', label: 'Story', has: 'One payment from the saved batch told in plain sentences: what failed, why, what we decided, and what the customer is told.' },
   { id: 'trace', label: 'Decision Trace', has: 'The same payment for engineers: raw bank error beside its plain-language translation, every stage with timings, and every time slot that was scored and why the losers lost.' },
@@ -66,4 +66,97 @@ export const TAB_MAP = [
   { id: 'evals', label: 'Evals', has: 'Seed stability, break-even economics, the input data contract and whether the written explanations stay faithful to the decisions.' },
   { id: 'audit', label: 'Audit Trail', has: 'Every decision in a table, each row re-checked against the three rules. Open a row for its reasoning, all considered slots and the raw error.' },
   { id: 'whatif', label: 'Policy What-If', has: 'Change how the allocator is set up (spacing and the confidence it needs) and see how recoveries move, averaged over several batches.' },
+]
+
+// One step per page for the docked app tour. `page` is where the tour takes you;
+// the numbers behind each page live in the saved run artifacts, not here.
+export const TOUR_STEPS = [
+  {
+    page: 'landing',
+    title: 'Overview page',
+    what: 'Explains the problem in a minute: a failed recurring payment, only three more tries allowed, and what to do with them.',
+    has: [
+      'The seven stages, with the one step that uses a language model marked',
+      '"Results": the headline comparison against a fixed retry schedule',
+      '"What is real": what was measured on a simulation and what was not, and links to the write-ups',
+    ],
+  },
+  {
+    page: 'guide',
+    title: 'Start here',
+    what: 'A guided walk through one failed payment, so the rest of the pages make sense.',
+    has: [
+      'One real payment explained step by step, from the bank error to the decision',
+      'A glossary of AutoPay, mandate, peak window and the other terms',
+      '"Every page, in one place": a map of what each tab holds',
+    ],
+  },
+  {
+    page: 'live',
+    title: 'Live Simulator',
+    what: 'Run the real decision pipeline on a failed payment right now.',
+    has: [
+      'Five ready scenarios (Priya, Rahul, Ananya, Karan, Meera) or build your own',
+      'The seven stages with how long each took',
+      'The allocator beside a fixed schedule, and the message the customer would get',
+    ],
+  },
+  {
+    page: 'story',
+    title: 'Story',
+    what: 'One payment from the saved batch, told in plain sentences.',
+    has: [
+      'What failed, why, what we decided and why',
+      'The message the customer is told',
+      'A picker to switch to any other payment in the batch',
+    ],
+  },
+  {
+    page: 'trace',
+    title: 'Decision Trace',
+    what: 'The same payment for engineers: the evidence behind the decision.',
+    has: [
+      'The raw bank error beside its plain-language translation',
+      'Every stage with its timing',
+      'Every time slot that was scored, with the arithmetic and why each loser lost',
+    ],
+  },
+  {
+    page: 'batch',
+    title: 'Batch Results',
+    what: 'All 60 simulated payments, allocator against a fixed schedule.',
+    has: [
+      'Attempts used, payments recovered and rupees for both policies',
+      'The three rules re-checked live in your browser',
+      'Per-cause breakdown, stop-decision precision and the sensitivity sweep',
+    ],
+  },
+  {
+    page: 'evals',
+    title: 'Evals',
+    what: 'Checks on the study itself, not just its headline numbers.',
+    has: [
+      'Seed stability and break-even economics',
+      'The data contract the synthetic batch has to pass',
+      'Whether the written explanations stay faithful to the decisions',
+    ],
+  },
+  {
+    page: 'audit',
+    title: 'Audit Trail',
+    what: 'Every decision in one table, each row re-checked against the three rules.',
+    has: [
+      'Open a row for its reasoning, all considered slots and the raw error',
+      'A pass or fail mark per rule on every row',
+    ],
+  },
+  {
+    page: 'whatif',
+    title: 'Policy What-If',
+    what: 'Change how the allocator is set up and watch the results move.',
+    has: [
+      'Spacing and the confidence needed before trusting a guessed payday',
+      'Averaged over several batches, so one lucky run cannot mislead',
+    ],
+  },
 ]

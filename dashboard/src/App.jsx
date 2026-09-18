@@ -8,6 +8,7 @@ import LandingPage from './views/LandingPage.jsx'
 import LiveSimulatorView from './views/LiveSimulatorView.jsx'
 import StoryView from './views/StoryView.jsx'
 import WhatIfView from './views/WhatIfView.jsx'
+import Tour from './components/Tour.jsx'
 import { useRunData } from './lib/useRunData.js'
 
 const TABS = [
@@ -44,6 +45,22 @@ export default function App() {
     setPage('dashboard')
   }
 
+  const [tourOpen, setTourOpen] = useState(() => new URLSearchParams(window.location.search).get('tour') === '1')
+  const closeTour = () => {
+    setTourOpen(false)
+    if (window.location.search) window.history.replaceState(null, '', window.location.pathname + window.location.hash)
+  }
+  // The tour starts on the overview page, then walks the dashboard tabs.
+  const goToTourPage = (id) => {
+    if (id === 'landing') {
+      window.location.hash = ''
+      setPage('landing')
+    } else {
+      enterDashboard(id)
+    }
+  }
+  const tour = <Tour open={tourOpen} onClose={closeTour} goToPage={goToTourPage} />
+
   // Every hook above/below this line must run on every render regardless of
   // `page` - the early return for the landing page has to come after all of
   // them, never before, or hook call order changes between renders (React's
@@ -55,7 +72,12 @@ export default function App() {
   }, [run, selectedPaymentId])
 
   if (page === 'landing') {
-    return <LandingPage run={run} onEnterDashboard={enterDashboard} />
+    return (
+      <>
+        <LandingPage run={run} onEnterDashboard={enterDashboard} onTour={() => setTourOpen(true)} />
+        {tour}
+      </>
+    )
   }
 
   // The Live Simulator and Policy What-If tabs need no batch run at all (it talks to its own
@@ -65,8 +87,12 @@ export default function App() {
   const needsRunData = !['live', 'whatif', 'evals'].includes(tab)
 
   return (
+    <>
     <div className="mx-auto max-w-6xl px-4 py-6">
-      <a href="#" onClick={() => setPage('landing')} className="mb-3 inline-block text-sm text-indigo-700 underline underline-offset-2">Back to overview</a>
+      <div className="mb-3 flex items-center justify-between">
+        <a href="#" onClick={() => setPage('landing')} className="text-sm text-indigo-700 underline underline-offset-2">Back to overview</a>
+        <button onClick={() => setTourOpen(true)} className="rounded-md border border-indigo-300 px-3 py-1 text-sm font-medium text-indigo-700 hover:bg-indigo-50">App tour</button>
+      </div>
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">A constrained allocation problem, not a scheduling one</p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-900">Retry Budget Allocator</h1>
@@ -134,5 +160,7 @@ export default function App() {
         </>
       )}
     </div>
+    {tour}
+    </>
   )
 }

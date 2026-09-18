@@ -30,7 +30,7 @@ function Stat({ label, value, detail }) {
   )
 }
 
-export default function LandingPage({ run, onEnterDashboard }) {
+export default function LandingPage({ run, onEnterDashboard, onTour }) {
   const multiseed = useJson('/data/multiseed.json').data
   const economics = useJson('/data/economics.json').data
   const base = run?.results_table?.baseline
@@ -51,7 +51,7 @@ export default function LandingPage({ run, onEnterDashboard }) {
             <a className="hidden hover:text-white sm:inline" href="#results">Results</a>
             <a className="hidden hover:text-white sm:inline" href="#honest">What is real</a>
             <a className="hidden hover:text-white sm:inline" href="#docs">Docs</a>
-            <button onClick={() => onEnterDashboard('guide')} className="rounded-md bg-indigo-400 px-3 py-1.5 text-[13px] font-medium text-slate-900 hover:bg-indigo-300">
+            <button onClick={onTour} className="rounded-md bg-indigo-400 px-3 py-1.5 text-[13px] font-medium text-slate-900 hover:bg-indigo-300">
               Take the tour
             </button>
           </nav>
@@ -74,7 +74,7 @@ export default function LandingPage({ run, onEnterDashboard }) {
               <button onClick={() => onEnterDashboard('live')} className="rounded-md bg-indigo-400 px-5 py-3 text-sm font-medium text-slate-900 hover:bg-indigo-300">
                 Try a failed payment
               </button>
-              <button onClick={() => onEnterDashboard('guide')} className="rounded-md border border-white/25 px-5 py-3 text-sm font-medium text-white hover:bg-white/10">
+              <button onClick={onTour} className="rounded-md border border-white/25 px-5 py-3 text-sm font-medium text-white hover:bg-white/10">
                 Take the 3-minute tour
               </button>
             </div>
