@@ -146,7 +146,7 @@ retry-budget-allocator/
 │       ├── data_contract.json                  data-contract result for the 5,000-event batch
 │       └── policy_whatif.json, explanation_eval_*.json  what-if and explanation-eval outputs
 ├── api/                                        FastAPI backend
-│   ├── main.py                                 POST /api/simulate (live pipeline), /api/webhooks/razorpay
+│   ├── main.py                                 POST /api/simulate (live pipeline, rate limited, size-capped), /api/webhooks/razorpay (HMAC-signed, closed without a secret)
 │   ├── personas.py                             5 named live-simulator scenarios
 │   └── razorpay_client.py                      opt-in (LIVE_RAZORPAY=1) real Razorpay test-API client
 ├── dashboard/                                  React + Tailwind UI
@@ -372,7 +372,7 @@ flowchart LR
 * **No circular evaluation.** The outcome model lives apart from the pipeline; an AST test fails if the pipeline imports it.
 * **Report what loses.** Results include where the allocator is worse, and the sensitivity of every headline.
 * **Show the reasoning.** All scored candidates, the raw payload and stage traces are kept in the record.
-* **Fail loud at the edge.** Pydantic validation rejects malformed events; the data contract fails the build if generated data breaks a rule.
+* **Fail loud at the edge.** Pydantic validation rejects malformed events and absurd amounts or oversized error payloads, the live endpoint is rate limited, the webhook only accepts signed bodies; the data contract fails the build if generated data breaks a rule.
 * **Offline by default.** Live Razorpay calls need an explicit flag; CI never touches the network.
 * **Keep a build log.** Real bugs and fixes are recorded in `docs/build-log.md` as they happen.
 

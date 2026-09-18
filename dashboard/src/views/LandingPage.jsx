@@ -4,7 +4,7 @@ import { formatMoney } from '../lib/format.js'
 import { DOCS, INTERVENTIONS, INVARIANTS, REPO, STAGES } from '../lib/site.js'
 
 // Snapshot of `pytest --collect-only -q`; update when the suite grows.
-const TEST_COUNT = 427
+const TEST_COUNT = 431
 
 function Section({ id, eyebrow, title, intro, children, tone = 'light' }) {
   const bg = tone === 'alt' ? 'bg-white' : 'bg-[#f8fafc]'
