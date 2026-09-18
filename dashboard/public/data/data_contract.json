@@ -1,0 +1,30 @@
+{
+  "n": 5000,
+  "seed": 42,
+  "failing_rows_by_check": {
+    "npci_first_attempt_offpeak": 0,
+    "rbi_afa_threshold": 0,
+    "razorpay_mandate_cap": 0,
+    "documented_error_reason": 0,
+    "one_debit_per_cycle_history": 0
+  },
+  "passed": true,
+  "profile": {
+    "rows": 5000,
+    "cause_share": {
+      "insufficient_funds": 0.549,
+      "bank_technical": 0.158,
+      "mandate_revoked": 0.102,
+      "afa_required": 0.075,
+      "mandate_expired": 0.053,
+      "amount_exceeds_mandate": 0.043,
+      "unknown": 0.019
+    },
+    "amount_rupees": {
+      "min": 99.0,
+      "median": 1499.0,
+      "max": 49999.0
+    },
+    "with_history_share": 0.334
+  }
+}

@@ -1,0 +1,342 @@
+{
+  "assumptions": {
+    "gateway_cost_rupees": 20.0,
+    "notification_cost_rupees": 0.5,
+    "annoyance_revocation_probability_per_attempt": 0.01,
+    "customer_lifetime_value_rupees": 2000.0,
+    "expected_annoyance_cost_rupees": 20.0,
+    "total_rupees": 40.5
+  },
+  "breakeven_cost_per_attempt_rupees": 147.82,
+  "breakeven_note": "above this cost per attempt, the allocator wins on net money despite recovering fewer payments (attempt savings outweigh lost recovery); below it, baseline wins on net money (recovering more payments outweighs its higher attempt spend).",
+  "sweep": [
+    {
+      "cost_per_attempt_rupees": 5.0,
+      "baseline_net_value_rupees": 67310.0,
+      "allocator_net_value_rupees": 57170.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 20.0,
+      "baseline_net_value_rupees": 65195.0,
+      "allocator_net_value_rupees": 56120.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 50.0,
+      "baseline_net_value_rupees": 60965.0,
+      "allocator_net_value_rupees": 54020.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 100.0,
+      "baseline_net_value_rupees": 53915.0,
+      "allocator_net_value_rupees": 50520.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "cost_per_attempt_rupees": 147.82,
+      "baseline_net_value_rupees": 47172.38,
+      "allocator_net_value_rupees": 47172.6,
+      "allocator_wins_on_money": true
+    },
+    {
+      "cost_per_attempt_rupees": 150.0,
+      "baseline_net_value_rupees": 46865.0,
+      "allocator_net_value_rupees": 47020.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "cost_per_attempt_rupees": 200.0,
+      "baseline_net_value_rupees": 39815.0,
+      "allocator_net_value_rupees": 43520.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "cost_per_attempt_rupees": 300.0,
+      "baseline_net_value_rupees": 25715.0,
+      "allocator_net_value_rupees": 36520.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "cost_per_attempt_rupees": 500.0,
+      "baseline_net_value_rupees": -2485.0,
+      "allocator_net_value_rupees": 22520.0,
+      "allocator_wins_on_money": true
+    }
+  ],
+  "surface": [
+    {
+      "annoyance_revocation_probability_per_attempt": 0.0,
+      "customer_lifetime_value_rupees": 500.0,
+      "expected_annoyance_cost_rupees": 0.0,
+      "total_cost_per_attempt_rupees": 20.5,
+      "baseline_net_value_rupees": 65124.5,
+      "allocator_net_value_rupees": 56085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.0,
+      "customer_lifetime_value_rupees": 1000.0,
+      "expected_annoyance_cost_rupees": 0.0,
+      "total_cost_per_attempt_rupees": 20.5,
+      "baseline_net_value_rupees": 65124.5,
+      "allocator_net_value_rupees": 56085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.0,
+      "customer_lifetime_value_rupees": 2000.0,
+      "expected_annoyance_cost_rupees": 0.0,
+      "total_cost_per_attempt_rupees": 20.5,
+      "baseline_net_value_rupees": 65124.5,
+      "allocator_net_value_rupees": 56085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.0,
+      "customer_lifetime_value_rupees": 5000.0,
+      "expected_annoyance_cost_rupees": 0.0,
+      "total_cost_per_attempt_rupees": 20.5,
+      "baseline_net_value_rupees": 65124.5,
+      "allocator_net_value_rupees": 56085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.0,
+      "customer_lifetime_value_rupees": 10000.0,
+      "expected_annoyance_cost_rupees": 0.0,
+      "total_cost_per_attempt_rupees": 20.5,
+      "baseline_net_value_rupees": 65124.5,
+      "allocator_net_value_rupees": 56085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.005,
+      "customer_lifetime_value_rupees": 500.0,
+      "expected_annoyance_cost_rupees": 2.5,
+      "total_cost_per_attempt_rupees": 23.0,
+      "baseline_net_value_rupees": 64772.0,
+      "allocator_net_value_rupees": 55910.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.005,
+      "customer_lifetime_value_rupees": 1000.0,
+      "expected_annoyance_cost_rupees": 5.0,
+      "total_cost_per_attempt_rupees": 25.5,
+      "baseline_net_value_rupees": 64419.5,
+      "allocator_net_value_rupees": 55735.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.005,
+      "customer_lifetime_value_rupees": 2000.0,
+      "expected_annoyance_cost_rupees": 10.0,
+      "total_cost_per_attempt_rupees": 30.5,
+      "baseline_net_value_rupees": 63714.5,
+      "allocator_net_value_rupees": 55385.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.005,
+      "customer_lifetime_value_rupees": 5000.0,
+      "expected_annoyance_cost_rupees": 25.0,
+      "total_cost_per_attempt_rupees": 45.5,
+      "baseline_net_value_rupees": 61599.5,
+      "allocator_net_value_rupees": 54335.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.005,
+      "customer_lifetime_value_rupees": 10000.0,
+      "expected_annoyance_cost_rupees": 50.0,
+      "total_cost_per_attempt_rupees": 70.5,
+      "baseline_net_value_rupees": 58074.5,
+      "allocator_net_value_rupees": 52585.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.01,
+      "customer_lifetime_value_rupees": 500.0,
+      "expected_annoyance_cost_rupees": 5.0,
+      "total_cost_per_attempt_rupees": 25.5,
+      "baseline_net_value_rupees": 64419.5,
+      "allocator_net_value_rupees": 55735.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.01,
+      "customer_lifetime_value_rupees": 1000.0,
+      "expected_annoyance_cost_rupees": 10.0,
+      "total_cost_per_attempt_rupees": 30.5,
+      "baseline_net_value_rupees": 63714.5,
+      "allocator_net_value_rupees": 55385.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.01,
+      "customer_lifetime_value_rupees": 2000.0,
+      "expected_annoyance_cost_rupees": 20.0,
+      "total_cost_per_attempt_rupees": 40.5,
+      "baseline_net_value_rupees": 62304.5,
+      "allocator_net_value_rupees": 54685.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.01,
+      "customer_lifetime_value_rupees": 5000.0,
+      "expected_annoyance_cost_rupees": 50.0,
+      "total_cost_per_attempt_rupees": 70.5,
+      "baseline_net_value_rupees": 58074.5,
+      "allocator_net_value_rupees": 52585.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.01,
+      "customer_lifetime_value_rupees": 10000.0,
+      "expected_annoyance_cost_rupees": 100.0,
+      "total_cost_per_attempt_rupees": 120.5,
+      "baseline_net_value_rupees": 51024.5,
+      "allocator_net_value_rupees": 49085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.02,
+      "customer_lifetime_value_rupees": 500.0,
+      "expected_annoyance_cost_rupees": 10.0,
+      "total_cost_per_attempt_rupees": 30.5,
+      "baseline_net_value_rupees": 63714.5,
+      "allocator_net_value_rupees": 55385.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.02,
+      "customer_lifetime_value_rupees": 1000.0,
+      "expected_annoyance_cost_rupees": 20.0,
+      "total_cost_per_attempt_rupees": 40.5,
+      "baseline_net_value_rupees": 62304.5,
+      "allocator_net_value_rupees": 54685.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.02,
+      "customer_lifetime_value_rupees": 2000.0,
+      "expected_annoyance_cost_rupees": 40.0,
+      "total_cost_per_attempt_rupees": 60.5,
+      "baseline_net_value_rupees": 59484.5,
+      "allocator_net_value_rupees": 53285.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.02,
+      "customer_lifetime_value_rupees": 5000.0,
+      "expected_annoyance_cost_rupees": 100.0,
+      "total_cost_per_attempt_rupees": 120.5,
+      "baseline_net_value_rupees": 51024.5,
+      "allocator_net_value_rupees": 49085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.02,
+      "customer_lifetime_value_rupees": 10000.0,
+      "expected_annoyance_cost_rupees": 200.0,
+      "total_cost_per_attempt_rupees": 220.5,
+      "baseline_net_value_rupees": 36924.5,
+      "allocator_net_value_rupees": 42085.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.05,
+      "customer_lifetime_value_rupees": 500.0,
+      "expected_annoyance_cost_rupees": 25.0,
+      "total_cost_per_attempt_rupees": 45.5,
+      "baseline_net_value_rupees": 61599.5,
+      "allocator_net_value_rupees": 54335.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.05,
+      "customer_lifetime_value_rupees": 1000.0,
+      "expected_annoyance_cost_rupees": 50.0,
+      "total_cost_per_attempt_rupees": 70.5,
+      "baseline_net_value_rupees": 58074.5,
+      "allocator_net_value_rupees": 52585.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.05,
+      "customer_lifetime_value_rupees": 2000.0,
+      "expected_annoyance_cost_rupees": 100.0,
+      "total_cost_per_attempt_rupees": 120.5,
+      "baseline_net_value_rupees": 51024.5,
+      "allocator_net_value_rupees": 49085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.05,
+      "customer_lifetime_value_rupees": 5000.0,
+      "expected_annoyance_cost_rupees": 250.0,
+      "total_cost_per_attempt_rupees": 270.5,
+      "baseline_net_value_rupees": 29874.5,
+      "allocator_net_value_rupees": 38585.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.05,
+      "customer_lifetime_value_rupees": 10000.0,
+      "expected_annoyance_cost_rupees": 500.0,
+      "total_cost_per_attempt_rupees": 520.5,
+      "baseline_net_value_rupees": -5375.5,
+      "allocator_net_value_rupees": 21085.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.1,
+      "customer_lifetime_value_rupees": 500.0,
+      "expected_annoyance_cost_rupees": 50.0,
+      "total_cost_per_attempt_rupees": 70.5,
+      "baseline_net_value_rupees": 58074.5,
+      "allocator_net_value_rupees": 52585.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.1,
+      "customer_lifetime_value_rupees": 1000.0,
+      "expected_annoyance_cost_rupees": 100.0,
+      "total_cost_per_attempt_rupees": 120.5,
+      "baseline_net_value_rupees": 51024.5,
+      "allocator_net_value_rupees": 49085.0,
+      "allocator_wins_on_money": false
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.1,
+      "customer_lifetime_value_rupees": 2000.0,
+      "expected_annoyance_cost_rupees": 200.0,
+      "total_cost_per_attempt_rupees": 220.5,
+      "baseline_net_value_rupees": 36924.5,
+      "allocator_net_value_rupees": 42085.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.1,
+      "customer_lifetime_value_rupees": 5000.0,
+      "expected_annoyance_cost_rupees": 500.0,
+      "total_cost_per_attempt_rupees": 520.5,
+      "baseline_net_value_rupees": -5375.5,
+      "allocator_net_value_rupees": 21085.0,
+      "allocator_wins_on_money": true
+    },
+    {
+      "annoyance_revocation_probability_per_attempt": 0.1,
+      "customer_lifetime_value_rupees": 10000.0,
+      "expected_annoyance_cost_rupees": 1000.0,
+      "total_cost_per_attempt_rupees": 1020.5,
+      "baseline_net_value_rupees": -75875.5,
+      "allocator_net_value_rupees": -13915.0,
+      "allocator_wins_on_money": true
+    }
+  ],
+  "surface_note": "one row per (revocation-probability, lifetime-value) grid cell - not a single defended number for either parameter. gateway_cost_rupees (20.0) and notification_cost_rupees (0.50) are held fixed at the illustrative defaults above for every cell.",
+  "surface_fraction_allocator_wins": 0.2
+}

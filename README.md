@@ -9,11 +9,23 @@ attempts, spent without knowing in advance which failures can even be
 recovered, is a constrained allocation problem — and a fixed schedule that
 ignores *why* a payment failed is the wrong tool for it.
 
-![Landing page: thesis, headline result with its caveat, and a plain scorecard](docs/images/landing.png)
+![Landing page: the three interventions, how it decides, measured results with their caveats](docs/images/landing-full.png)
+
+### Take the tour
+
+The dashboard opens on a guided walkthrough that follows one real failed
+payment from the saved run through every stage, with a plain-language
+glossary beside it. Each step links to the tab where you can go deeper.
+
+![Guided tour: the scored candidate windows for one payment, with the chosen slot highlighted](docs/images/tour-step4.png)
+
+### Explore
+
 ![Live Simulator: pick a scenario, run it live, see where the allocator and a fixed schedule disagree](docs/images/live-simulator.png)
-![Full trace: raw error payload, per-stage timings, every candidate window scored](docs/images/full-trace.png)
+![Full trace: raw error payload, per-stage timings, every candidate window scored](docs/images/decision-trace.png)
 ![Batch Results: attempts/recovery/rupees for both policies, compliance invariants checked live in the browser](docs/images/batch-results.png)
 ![Per-cause breakdown and the 27-point sensitivity sweep, reported honestly including where the allocator loses](docs/images/batch-results-sweep.png)
+![Evals: seed stability, break-even economics, data contract and explanation faithfulness, read from saved artifacts](docs/images/evals.png)
 
 Three compliance invariants — never more than 3 attempts, never inside a
 peak window, never more than one successful debit per cycle — are asserted
@@ -151,13 +163,19 @@ below since there's nothing to say about them individually.
         ├── main.jsx                React entry point
         ├── App.jsx                 landing/dashboard routing, tab state
         ├── index.css                Tailwind import, fonts, the accent-color token
+        ├── components/
+        │   └── HeroDiagram.jsx      click a failure reason, see which of the 3 interventions it routes to
         ├── lib/
         │   ├── useRunData.js       fetches the saved run + sensitivity JSON
+        │   ├── useJson.js           optional saved artifacts (seeds, economics, data contract)
+        │   ├── site.js              shared copy: stages, interventions, rules, glossary, doc links
         │   ├── format.js            plain-language labels, money/date formatting
         │   ├── compliance.js        client-side JS port of the 3 compliance checks
         │   └── simulate.js          calls the live /api/simulate endpoint
         └── views/
-            ├── LandingPage.jsx           thesis, headline result, scorecard, one CTA
+            ├── LandingPage.jsx           hero + interactive diagram, 7 stages, results, rules, AI role, honesty notes, docs
+            ├── GuideView.jsx               guided tour of one real payment, glossary, tab map
+            ├── EvalsView.jsx               seed stability, break-even economics, data contract, explanation eval
             ├── LiveSimulatorView.jsx      live pipeline runs, persona picker, custom input
             ├── StoryView.jsx               plain-language narrative for one payment
             ├── DecisionTraceView.jsx      full technical trace for one payment
@@ -181,7 +199,7 @@ below since there's nothing to say about them individually.
     ├── DATA_QUALITY.md            data-contract result and its limits
     ├── RESULTS.md                 the full results write-up, method, limitations
     ├── build-log.md               dated, real entries - every bug found and how it was fixed
-    └── images/                    the 5 screenshots used in this README
+    └── images/                    the screenshots used in this README
 
     tests/                      one file per module above plus:
     ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ cases)

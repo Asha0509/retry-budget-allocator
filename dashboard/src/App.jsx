@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import AuditTrailView from './views/AuditTrailView.jsx'
 import BatchResultsView from './views/BatchResultsView.jsx'
+import EvalsView from './views/EvalsView.jsx'
+import GuideView from './views/GuideView.jsx'
 import DecisionTraceView from './views/DecisionTraceView.jsx'
 import LandingPage from './views/LandingPage.jsx'
 import LiveSimulatorView from './views/LiveSimulatorView.jsx'
@@ -9,28 +11,36 @@ import WhatIfView from './views/WhatIfView.jsx'
 import { useRunData } from './lib/useRunData.js'
 
 const TABS = [
+  { id: 'guide', label: 'Start here' },
   { id: 'live', label: 'Live Simulator' },
   { id: 'story', label: 'Story' },
   { id: 'trace', label: 'Decision Trace' },
   { id: 'batch', label: 'Batch Results' },
+  { id: 'evals', label: 'Evals' },
   { id: 'audit', label: 'Audit Trail' },
   { id: 'whatif', label: 'Policy What-If' },
 ]
 
 export default function App() {
   const { loading, error, run, sensitivity } = useRunData()
-  const [tab, setTab] = useState('live')
+  const [tab, setTab] = useState(() => window.location.hash.split('/')[1] || 'guide')
   const [selectedPaymentId, setSelectedPaymentId] = useState(null)
-  const [page, setPage] = useState(() => (window.location.hash === '#dashboard' ? 'dashboard' : 'landing'))
+  const [page, setPage] = useState(() => (window.location.hash.startsWith('#dashboard') ? 'dashboard' : 'landing'))
 
   useEffect(() => {
-    const onHashChange = () => setPage(window.location.hash === '#dashboard' ? 'dashboard' : 'landing')
+    const onHashChange = () => setPage(window.location.hash.startsWith('#dashboard') ? 'dashboard' : 'landing')
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  const enterDashboard = () => {
-    window.location.hash = '#dashboard'
+  const goTo = (id) => {
+    setTab(id)
+    window.location.hash = `#dashboard/${id}`
+    window.scrollTo({ top: 0 })
+  }
+
+  const enterDashboard = (id = 'guide') => {
+    goTo(id)
     setPage('dashboard')
   }
 
@@ -52,10 +62,11 @@ export default function App() {
   // FastAPI backend) - only Story/Decision Trace/Batch Results depend on a
   // saved run artifact having loaded, so a failed/loading batch load must
   // not block the live tab.
-  const needsRunData = tab !== 'live' && tab !== 'whatif'
+  const needsRunData = !['live', 'whatif', 'evals'].includes(tab)
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
+      <a href="#" onClick={() => setPage('landing')} className="mb-3 inline-block text-sm text-indigo-700 underline underline-offset-2">Back to overview</a>
       <header className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">A constrained allocation problem, not a scheduling one</p>
         <h1 className="mt-1 text-2xl font-semibold text-slate-900">Retry Budget Allocator</h1>
@@ -74,7 +85,7 @@ export default function App() {
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => goTo(t.id)}
             className={`shrink-0 whitespace-nowrap px-4 py-2 text-sm font-medium transition ${
               tab === t.id ? 'border-b-2 border-blue-600 text-blue-700' : 'text-slate-500 hover:text-slate-800'
             }`}
@@ -84,10 +95,12 @@ export default function App() {
         ))}
       </nav>
 
+      {tab === 'guide' && <GuideView run={run} goTo={goTo} />}
+      {tab === 'evals' && <EvalsView />}
       {tab === 'live' && <LiveSimulatorView />}
       {tab === 'whatif' && <WhatIfView />}
 
-      {needsRunData && loading && <div className="py-12 text-center text-slate-500">Loading run…</div>}
+      {needsRunData && tab !== 'guide' && loading && <div className="py-12 text-center text-slate-500">Loading run…</div>}
       {needsRunData && error && (
         <div className="py-12 text-center text-rose-600">
           Could not load a saved run artifact ({error.message}). Run <code className="rounded bg-rose-50 px-1">python -m eval.harness</code>{' '}
