@@ -1,0 +1,29 @@
+name: Code quality
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt vulture xenon
+      - name: Dead code
+        run: vulture pipeline eval api --min-confidence 80 --ignore-names cls
+      - name: Complexity (no block worse than C, every module B or better, average A)
+        run: xenon --max-absolute C --max-modules B --max-average A pipeline eval api
+  duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Copy-paste detection
+        run: npx --yes jscpd@4 --min-lines 12 --threshold 8 --ignore "**/node_modules/**,**/tests/**,**/data/**,**/*.json" pipeline eval api dashboard/src

@@ -1,0 +1,24 @@
+name: Mutation testing
+on:
+  schedule:
+    - cron: '23 3 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt -r requirements-dev.txt mutmut
+      - name: Mutate the compliance invariants
+        run: mutmut run
+      - name: Survivors
+        run: |
+          mutmut results | tee survivors.txt
+          # One known-equivalent mutant (<= vs < at a window end that is rewritten to itself).
+          test "$(grep -c survived survivors.txt)" -le 1
