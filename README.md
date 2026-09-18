@@ -112,7 +112,7 @@ retry-budget-allocator/
 ├── render.yaml                                 Render blueprint: API + static dashboard, deploy only after checks pass
 ├── .github/
 │   ├── workflows/                              ci.yml (tests, eval gates, dashboard build), quality.yml (vulture, xenon, jscpd), codeql.yml, scorecard.yml, mutation.yml (weekly mutmut on compliance.py)
-│   └── dependabot.yml                          weekly pip, npm and Actions updates
+│   └── dependabot.yml                          monthly, grouped pip, npm and Actions updates
 ├── scripts/
 │   ├── validate.sh                             one-command validation: lint, tests, data contract, eval gates, dashboard build
 │   ├── ci_eval_summary.py                      writes the eval summary to the CI run page; fails the job if a gate breaks
@@ -194,13 +194,16 @@ retry-budget-allocator/
 │   │   ├── unknown.json                        what an unclassifiable error object looks like
 │   │   ├── _capture_attempts.json              raw evidence from the first live-API capture (2026-09-03)
 │   │   └── _live_mandate_probe.json            raw evidence from the 2026-09-15 re-verification
-│   └── runs/run_20261008T100907.json           the dashboard's read-only data source (Sec 6.2)
+│   └── runs/                                   git-ignored local copy of each harness run; the dashboard reads dashboard/public/data/latest_run.json (Sec 6.2)
 ├── docs/
 │   ├── prd.md                                  full specification, every claim's source citation
 │   ├── architecture.md                         pipeline design, data flow, Mermaid diagrams
+│   ├── HLD.md                                  high-level design: context, components, AI boundary, deployment, security, failure modes
+│   ├── LLD.md                                  low-level design: per-module signatures, models, algorithms, logs, tests, sequence diagrams
+│   ├── RESULTS.md                              the results write-up: outcome model first, change vs baseline, sweep, seeds, what did not work
 │   ├── DATA_QUALITY.md                         data-contract result and its limits
-│   ├── RESULTS.md                              the full results write-up, method, limitations
 │   ├── build-log.md                            dated, real entries - every bug found and how it was fixed
+│   ├── errorlog.md                             every real error: date, what broke, how found, root cause, fix, lesson
 │   └── images/                                 screenshots used in this README
 ├── tests/                                      one test_<module>.py per pipeline/, eval/ and api/ module, plus
 │   ├── test_classify_fuzz.py                   property-based fuzzing of Stage 2 (1200+ cases)
@@ -210,7 +213,7 @@ retry-budget-allocator/
 │   ├── test_fixtures.py                        every captured fixture classifies as its filename claims
 │   ├── test_data_contract.py                   the contract accepts good rows and rejects each kind of bad row
 │   └── test_batch_generator.py                 generated batches obey the payment-rail rules
-└── logs/sample_run.jsonl                       one committed example of real per-stage execution evidence
+└── logs/sample_run.jsonl                       one committed sample of the batch log format (from an earlier run; it holds no caught error)
 ```
 
 ### How the files connect
@@ -263,6 +266,9 @@ flowchart TD
 
 ## Low-level design (LLD)
 
+Module-by-module detail, signatures, algorithms and more sequence diagrams:
+[docs/LLD.md](docs/LLD.md).
+
 ```mermaid
 sequenceDiagram
     participant W as Webhook or batch
@@ -292,6 +298,8 @@ sequenceDiagram
 
 
 ## High-level design (HLD)
+
+Context, deployment, security and failure modes: [docs/HLD.md](docs/HLD.md).
 
 ```mermaid
 flowchart LR
@@ -457,13 +465,14 @@ Stated plainly, because the two are easy to blur and shouldn't be:
   or pick, through a small local FastAPI backend, with real per-stage
   timing. The compliance checks are real assertions, not display copy.
   Contact with Razorpay's live test API is real and ongoing: customer and
-  order creation succeed against it, and 4 distinct mandate-creation
-  routes tried across two sessions (`/payments/create/upi`, `/payments`,
-  `/payments/create/ajax`, `/payments/create/recurring`) all return a
-  real, captured rejection — evidence that headless mandate creation is
-  gated behind a Razorpay Support activation this account doesn't yet
+  order creation succeed against it. Of 4 mandate-creation routes tried
+  across two sessions, the two that exercise UPI recurring creation
+  (`/payments/create/upi`, `/payments/create/recurring`) return a real,
+  captured not-found rejection — evidence that headless mandate creation
+  is gated behind a Razorpay Support activation this account doesn't yet
   have live, re-confirmed as recently as 2026-09-15 with fresh
-  credentials. `api/razorpay_client.py` is a real, tested, opt-in client
+  credentials. The other two (`/payments`, `/payments/create/ajax`) return
+  401, which is not gating evidence. `api/razorpay_client.py` is a real, tested, opt-in client
   for this (`LIVE_RAZORPAY=1`) — not fully validated against production,
   since nothing has gotten past this gate yet. See
   `data/fixtures/README.md` for the precise breakdown of every route
@@ -488,9 +497,10 @@ Specific enough to act on, not hedged into meaninglessness:
   fix that isn't activated yet.** No real success/failure data backs any
   number in this repo. Closing this needs real outcome data from actual
   retry attempts, which needs the mandate-creation gate below to lift
-  first. 4 distinct creation routes tried live (most recently 2026-09-15,
-  with fresh credentials and an account the user believed already had
-  activation) all still return the same rejection — this is a
+  first. 4 creation routes tried live (most recently 2026-09-15, with
+  fresh credentials and an account the user believed already had
+  activation): the two UPI recurring routes still return the same
+  rejection and the other two return 401 — this is a
   Razorpay-Support-conversation prerequisite now, not a code problem
   (`docs/build-log.md`, `data/fixtures/README.md`).
 - **The classifier's lookup table covers what's documented, not what
@@ -534,15 +544,32 @@ Every claim in this README traces back to a real file in the repo, not
 narrative. This section is the map: a one-line summary of what each thing
 is, and exactly where to go for the full detail.
 
-**Documentation** (`docs/`)
+**Documentation** (`docs/`) — results live in
+[docs/RESULTS.md](docs/RESULTS.md); the five design and record documents are
+RESULTS, architecture, HLD, LLD and errorlog.
 
 - **Results and method** — the outcome model declared before any number,
-  the headline, the per-cause breakdown, the multi-seed stability check,
-  the breakeven surface, what didn't work, and every limitation, all in
-  one place. For more detail, see [docs/RESULTS.md](docs/RESULTS.md).
+  the headline, exactly how the allocator differs from the fixed schedule
+  (attempts, recoveries, wasted attempts, rupees, violations, per cause),
+  the full 27-point sensitivity sweep, the multi-seed stability check, the
+  breakeven surface, the policy what-if, what didn't work, and every
+  limitation, all in one place. For more detail, see
+  [docs/RESULTS.md](docs/RESULTS.md).
 - **Architecture** — the 7-stage pipeline, data flow, and Mermaid diagrams
   of how a payment actually moves through the system. For more detail,
   see [docs/architecture.md](docs/architecture.md).
+- **High-level design** — problem, goals and non-goals, system context,
+  components, data flow, the AI versus deterministic boundary, deployment
+  (Render static site plus API), security, scalability, failure modes and the
+  alternatives rejected. For more detail, see [docs/HLD.md](docs/HLD.md).
+- **Low-level design** — per module: responsibilities, function signatures,
+  Pydantic data models, the classifier lookup, allocator scoring arithmetic,
+  compliance checks, outcome-model isolation, error handling, trace and log
+  formats, the test strategy per stage, and sequence diagrams. For more
+  detail, see [docs/LLD.md](docs/LLD.md).
+- **Error log** — every real error faced, with date, what broke, how it was
+  detected, root cause, fix and lesson. For more detail, see
+  [docs/errorlog.md](docs/errorlog.md).
 - **Full specification** — the original problem brief and every factual
   claim's source citation (NPCI limits, recoverability rates, retry
   spacing). For more detail, see [docs/prd.md](docs/prd.md).
@@ -555,7 +582,7 @@ is, and exactly where to go for the full detail.
 
 - **The frozen batch study** — 60 synthesized payments, both policies,
   every decision, scored against the outcome model below.
-  `eval/harness.py` produced [eval/results/run_20260915T134833.json](eval/results/run_20260915T134833.json).
+  `eval/harness.py` produced [eval/results/run_20261008T100907.json](eval/results/run_20261008T100907.json).
 - **Sensitivity sweep** — the same batch re-scored across 27 outcome-model
   parameter settings, so one favorable setting can't hide behind the
   headline. `eval/sensitivity.py` produced
@@ -578,14 +605,16 @@ is, and exactly where to go for the full detail.
 
 **Raw runtime logs** (`logs/`)
 
-- One real, committed example of structured per-stage execution
-  evidence — stage entered/completed, errors caught, fallback triggered —
-  is what the build log's narrative entries are actually mined from, not
-  written from memory. For more detail, see
-  [logs/sample_run.jsonl](logs/sample_run.jsonl). Every full batch run
-  writes its own timestamped `logs/<run_id>.jsonl` locally; the rest are
-  git-ignored in bulk (regenerable, not narrative evidence) except this
-  one committed sample.
+- Every full batch run writes a timestamped `logs/<run_id>.jsonl` of batch
+  events (batch started, each allocator decision, each generated
+  explanation, any compliance violation, completion); per-stage timings
+  live in the traces inside the run artifact, and a model failure is
+  logged to the console and falls back to the template. The format is
+  documented in [docs/LLD.md](docs/LLD.md) Section 8. The logs are
+  git-ignored in bulk (regenerable) except one committed sample,
+  [logs/sample_run.jsonl](logs/sample_run.jsonl), which comes from an
+  earlier run and shows the format only: it contains no caught error. The
+  handled failures are written up in [docs/errorlog.md](docs/errorlog.md).
 
 **Fixture and live-API provenance** (`data/fixtures/`)
 

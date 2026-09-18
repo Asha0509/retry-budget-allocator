@@ -308,8 +308,8 @@ sensitivity sweep (`docs/RESULTS.md` Section 4) shows actually
 outperforms the wider schedule when a customer's funding event lands
 early. The wider schedule stays anyway, because it's the one PRD Sec 2
 documents, not because it wins on every metric - which is exactly the
-case CLAUDE.md anticipates: "if the allocator only wins under one
-parameter setting, that is the finding, report it."
+case the project's constraints file anticipates: "if the allocator only
+wins under one parameter setting, that is the finding, report it."
 
 **Scoring function: `recoverability x a declared offset preference`, not
 a probability.** The allocator's `_OFFSET_WEIGHTS` (`pipeline/
