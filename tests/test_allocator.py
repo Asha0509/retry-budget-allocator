@@ -151,7 +151,7 @@ def test_out_of_range_attempts_used_fails_loud_not_open(bad_attempts_used: int) 
 
 
 def test_allocate_requires_timezone_aware_failure_time() -> None:
-    naive = datetime(2026, 9, 3, 8, 0)  # noqa: DTZ001 - deliberately naive, testing rejection
+    naive = datetime(2026, 9, 3, 8, 0)
     with pytest.raises(ValueError, match="timezone-aware"):
         allocate(FailureCause.INSUFFICIENT_FUNDS, naive, attempts_used=0)
 

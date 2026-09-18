@@ -4,7 +4,7 @@ These are the claims most likely to be challenged - proven here before any
 allocator logic is built (CLAUDE.md hard constraint).
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -50,15 +50,15 @@ def test_is_peak_window_boundaries_in_ist(hhmm: str, expected: bool) -> None:
 
 def test_is_peak_window_converts_non_ist_input_correctly() -> None:
     # 07:30 UTC == 13:00 IST (UTC+5:30) - the peak window's excluded end edge.
-    dt_utc = datetime(2026, 9, 3, 7, 30, tzinfo=timezone.utc)
+    dt_utc = datetime(2026, 9, 3, 7, 30, tzinfo=UTC)
     assert is_peak_window(dt_utc) is False
     # 07:29 UTC == 12:59 IST - one minute inside the peak window.
-    dt_utc = datetime(2026, 9, 3, 7, 29, tzinfo=timezone.utc)
+    dt_utc = datetime(2026, 9, 3, 7, 29, tzinfo=UTC)
     assert is_peak_window(dt_utc) is True
 
 
 def test_is_peak_window_rejects_naive_datetime() -> None:
-    naive = datetime(2026, 9, 3, 11, 0)  # noqa: DTZ001 - deliberately naive, testing rejection
+    naive = datetime(2026, 9, 3, 11, 0)
     with pytest.raises(ValueError, match=r"^is_peak_window requires a timezone-aware datetime \(peak windows are IST\)$"):
         is_peak_window(naive)
 
@@ -98,14 +98,14 @@ def test_peak_window_edges_are_start_inclusive_end_exclusive(moment: datetime, e
 
 
 def test_peak_window_converts_from_other_timezones() -> None:
-    utc_0430 = datetime(2026, 9, 1, 4, 30, tzinfo=timezone.utc)  # 10:00 IST
+    utc_0430 = datetime(2026, 9, 1, 4, 30, tzinfo=UTC)  # 10:00 IST
     assert is_peak_window(utc_0430)
     assert not is_peak_window(utc_0430 - timedelta(seconds=1))
 
 
 def test_peak_window_rejects_naive_datetime() -> None:
     with pytest.raises(ValueError, match=r"^is_peak_window requires a timezone-aware datetime \(peak windows are IST\)$"):
-        is_peak_window(datetime(2026, 9, 1, 11, 0))  # noqa: DTZ001 - naive on purpose
+        is_peak_window(datetime(2026, 9, 1, 11, 0))
 
 
 @pytest.mark.parametrize(("used", "ok"), [(-1, False), (0, True), (3, True), (4, False)])

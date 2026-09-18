@@ -12,7 +12,7 @@ already check, now over a much larger generated space.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from hypothesis import given, settings
@@ -23,9 +23,10 @@ from pipeline.compliance import MAX_RETRY_ATTEMPTS, is_peak_window
 from pipeline.models import FailureCause
 
 _failure_times = st.datetimes(
-    min_value=datetime(2020, 1, 1),  # noqa: DTZ001 - hypothesis requires naive bounds here; tzinfo comes from `timezones=` below
-    max_value=datetime(2035, 1, 1),  # noqa: DTZ001
-    timezones=st.just(timezone.utc),
+    # Hypothesis needs naive bounds here; tzinfo comes from `timezones=` below.
+    min_value=datetime(2020, 1, 1),
+    max_value=datetime(2035, 1, 1),
+    timezones=st.just(UTC),
 )
 _valid_attempts_used = st.integers(min_value=0, max_value=MAX_RETRY_ATTEMPTS - 1)
 _retry_causes = st.sampled_from([FailureCause.INSUFFICIENT_FUNDS, FailureCause.BANK_TECHNICAL])
