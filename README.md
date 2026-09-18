@@ -23,6 +23,8 @@ claim: "compliant" here means an assertion that fails loudly if violated,
 not a label.
 
 [![CI](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/ci.yml)
+[![Code quality](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/quality.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/quality.yml)
+[![CodeQL](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/codeql.yml/badge.svg)](https://github.com/Asha0509/retry-budget-allocator/actions/workflows/codeql.yml)
 98% test coverage on `pipeline/`, enforced in CI on every push — a weaker
 signal than the invariants above, since it measures whether lines
 executed, not whether the logic is correct, but it's there too.
@@ -67,6 +69,116 @@ early — and records why each decision was made, not just what it was.
   returns all candidate retry windows with their scores and rejection
   reasons, so the reasoning behind a decision is inspectable, not just its
   conclusion.
+
+## Architecture and design
+
+### High-level design
+
+```mermaid
+flowchart LR
+    subgraph Inputs
+        FX["Captured Razorpay error fixtures<br/>(documented error codes)"]
+        GEN["Batch generator<br/>seeded, rule-compliant"]
+    end
+    subgraph Pipeline["Deterministic pipeline (pipeline/)"]
+        ING["1 Ingest<br/>Pydantic validation"] --> CLS["2 Classify<br/>lookup, never a model"]
+        CLS --> PRI["3 Priors<br/>recoverability + action shape"]
+        PRI --> FW["4 Funding window<br/>probabilistic, with fallback"]
+        FW --> ALC["5 Allocate<br/>score every window"]
+        ALC --> DEC["6 Decision record"]
+    end
+    EXP["7 Explain<br/>LLM writes the wording only<br/>template fallback"]
+    COMP[["Compliance invariants<br/>3 attempts / no peak / 1 per cycle"]]
+    OUT[("Saved run artifacts<br/>eval/results, data/runs")]
+    EVAL["Eval harness<br/>allocator vs fixed schedule<br/>against a frozen outcome model"]
+    UI["React dashboard<br/>reads saved artifacts"]
+    API["FastAPI<br/>live simulator only"]
+
+    FX --> GEN --> ING
+    DEC --> EXP
+    COMP -. asserted on every attempt .- ALC
+    DEC --> EVAL --> OUT --> UI
+    UI -. opt-in .-> API --> ING
+```
+
+The LLM sits off the critical path: stage 7 only rewrites a finished decision into plain language. If the model is unavailable the template text is used and the decision is unchanged.
+
+### Low-level design: what happens to one failed payment
+
+```mermaid
+sequenceDiagram
+    participant W as Webhook or batch
+    participant I as ingest.py
+    participant C as classify.py
+    participant P as priors.py
+    participant F as funding_window.py
+    participant A as allocator.py
+    participant K as compliance.py
+    participant X as explain.py
+    W->>I: raw event (amount, mandate cap, error object, history)
+    I-->>W: FailedPaymentEvent or loud validation error
+    I->>C: RazorpayError
+    C-->>P: cause + confidence + what matched
+    P-->>A: recoverable? notify / retry / stop
+    alt cause is insufficient_funds
+        A->>F: prior debit dates
+        F-->>A: likely funding window, or fallback spacing if history is thin
+    end
+    A->>K: peak window? attempts <= 3? one success per cycle?
+    K-->>A: shift out of peak, or reject
+    A-->>X: decision + every scored candidate with rejection reasons
+    X-->>W: plain reasoning + notification copy (LLM or template)
+```
+
+### User flow
+
+```mermaid
+flowchart TD
+    L["Landing page: thesis, headline result with its caveat"] --> LIVE["Live Simulator: pick a customer scenario or paste a payload"]
+    L --> S["Story: one payment in plain language"]
+    LIVE --> S
+    S --> T["Decision Trace: raw error beside its translation,<br/>every stage timing, every candidate window scored"]
+    T --> B["Batch Results: 60 payments, both policies,<br/>invariants re-checked in the browser"]
+    B --> SW["Sensitivity sweep and ranges across seeds"]
+    B --> AU["Audit Trail: filterable, CSV export"]
+    B --> WI["Policy What-If: change spacing and threshold"]
+```
+
+### Tools, and why each one
+
+| Tool | Used for | Why |
+|---|---|---|
+| **Python 3.11, Pydantic v2** | Event, decision and trace schemas | A malformed event must fail at the boundary; the typed models double as documentation of every stage's contract |
+| **FastAPI + Uvicorn** | Live simulator API, Razorpay webhook receiver | Typed request/response models and automatic OpenAPI docs; only the live tab needs it |
+| **Razorpay SDK (test mode)** | One captured integration tier | The error shapes are real and documented; the large batch replays that exact schema |
+| **OpenAI-compatible client, OpenRouter free tier** | Explanation wording only | No cost, swappable via `EXPLANATION_MODEL`; kept off the decision path so an outage cannot change a decision |
+| **pandas + Pandera** | Synthetic data contract | Declarative, named rules over the whole batch with a count of failing rows per rule |
+| **pytest, pytest-cov, Hypothesis** | Unit, property and fuzz tests | Fuzzing the allocator and ingestion found a real fail-open bug early |
+| **mutmut** | Mutation testing of `compliance.py` | Coverage says lines ran, not that the assertions bite; mutation testing found nine untested boundary changes (31 of 32 mutants now killed, the last is equivalent) |
+| **ruff, vulture, xenon/radon, jscpd** | Lint, dead code, complexity, duplication | Cheap, objective gates that run on every push |
+| **React 19 + Vite, Tailwind 4, Recharts** | Dashboard | Fast static build, plain charts for the sweep and the breakeven surface |
+| **GitHub Actions, CodeQL, Dependabot, OpenSSF Scorecard** | CI/CD and supply-chain checks | Every push is tested, evaluated, scanned and kept up to date |
+| **Render** | Hosting | Static dashboard plus one small API service, deployed from `main` once CI is green |
+
+### CI/CD
+
+```mermaid
+flowchart LR
+    P["Push or pull request"] --> T["Tests + coverage<br/>ruff"]
+    T --> G["Eval gates<br/>0 compliance violations<br/>0 wasted attempts<br/>data contract passes"]
+    T --> D["Dashboard lint + build"]
+    P --> Q["Quality<br/>vulture, xenon, jscpd"]
+    P --> S["CodeQL"]
+    W["Weekly"] --> M["Mutation test<br/>compliance.py"]
+    G --> R["Render deploy from main"]
+    D --> R
+```
+
+The eval summary (attempts, recoveries, wasted attempts, contract result) is written to each run's summary page by `scripts/ci_eval_summary.py`, which also fails the job if a gate breaks.
+
+### Is the synthetic data realistic?
+
+There is no real failed-payment data, so realism cannot be measured. What is checked is rule compliance: a Pandera contract (`eval/data_contract.py`) validates 5,000 generated events against NPCI peak windows, the RBI Rs 15,000 authentication threshold, the mandate cap, documented Razorpay error reasons and one debit per cycle. The first run found real defects in the generator, which are fixed. See [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md).
 
 ## Results
 
