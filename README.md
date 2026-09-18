@@ -15,7 +15,8 @@ ignores *why* a payment failed is the wrong tool for it.
 
 The dashboard opens on a guided walkthrough that follows one real failed
 payment from the saved run through every stage, with a plain-language
-glossary beside it. Each step links to the tab where you can go deeper.
+glossary beside it. Each step links to the tab where you can go deeper, and
+an "Every page, in one place" map underneath says what each tab holds.
 
 ![Guided tour: the scored candidate windows for one payment, with the chosen slot highlighted](docs/images/tour-step4.png)
 
@@ -90,132 +91,156 @@ early — and records why each decision was made, not just what it was.
 
 ## File structure
 
-Every tracked file, one line each. Folders first, in the order they matter
-most to a reader; `tests/` mirrors `pipeline/`/`eval/`/`api/` one file at a
-time so it's grouped at the end rather than repeated inline. `__init__.py`
+Every tracked file, one line each, as a single tree so the nesting is
+visible. `tests/` mirrors `pipeline/`/`eval/`/`api/` one file at a time, so
+it is described once at the end rather than repeated inline. `__init__.py`
 in `pipeline/`, `eval/`, and `api/` are empty package markers, left out
 below since there's nothing to say about them individually.
 
-    CLAUDE.md                  engineering constraints that governed the build
-    LICENSE                    MIT
-    README.md                  this file
-    requirements.txt           Python dependencies
-    pyproject.toml             pytest + ruff config
-    setup.sh                   one-time bootstrap (venv, deps, .env template)
-    .env.example                credential template - copy to .env, fill in keys
-    .gitignore
-    render.yaml                Render blueprint: API + static dashboard, deploy only after checks pass
-    scripts/validate.sh        one-command validation: lint, tests, data contract, eval gates, dashboard build
-    scripts/ci_eval_summary.py writes the eval summary to the CI run page and fails the job if a gate breaks
-    .github/workflows/         ci.yml (tests, eval gates, dashboard build), quality.yml (vulture, xenon, jscpd),
-                               codeql.yml, scorecard.yml, mutation.yml (weekly mutmut on compliance.py)
-    .github/dependabot.yml     weekly pip, npm and Actions updates
+```text
+retry-budget-allocator/
+├── CLAUDE.md                                   engineering constraints that governed the build
+├── LICENSE                                     MIT
+├── README.md                                   this file
+├── requirements.txt                            Python dependencies
+├── pyproject.toml                              pytest + ruff config
+├── setup.sh                                    one-time bootstrap (venv, deps, .env template)
+├── .env.example                                credential template - copy to .env, fill in keys
+├── .gitignore
+├── render.yaml                                 Render blueprint: API + static dashboard, deploy only after checks pass
+├── .github/
+│   ├── workflows/                              ci.yml (tests, eval gates, dashboard build), quality.yml (vulture, xenon, jscpd), codeql.yml, scorecard.yml, mutation.yml (weekly mutmut on compliance.py)
+│   └── dependabot.yml                          weekly pip, npm and Actions updates
+├── scripts/
+│   ├── validate.sh                             one-command validation: lint, tests, data contract, eval gates, dashboard build
+│   ├── ci_eval_summary.py                      writes the eval summary to the CI run page; fails the job if a gate breaks
+│   ├── capture_fixtures.py                     first live-API capture (customer/order/payment routes)
+│   └── live_mandate_probe.py                   2026-09-15 re-verification with fresh credentials
+├── pipeline/                                   the 7-stage decision engine (Sec 4)
+│   ├── models.py                               shared schemas - FailureCause, RazorpayError, StageTrace
+│   ├── ingest.py                               Stage 1 - validates a raw event into FailedPaymentEvent
+│   ├── classify.py                             Stage 2 - deterministic cause lookup, never a model call
+│   ├── priors.py                               Stage 3 - recoverability score + action shape per cause
+│   ├── funding_window.py                       Stage 4 - confidence-gated funding-window inference
+│   ├── allocator.py                            Stage 5 - notify/retry-at-T/stop, every candidate scored
+│   ├── decision.py                             Stage 6 - assembles every prior stage into one record
+│   ├── explain.py                              Stage 7 - the one LLM call in this codebase
+│   ├── compliance.py                           the 3 hard invariants (attempt cap, peak windows, 1/cycle)
+│   └── run.py                                  orchestrates Stages 2-6 for one ingested event
+├── eval/                                       frozen outcome model, baseline, batch analysis (Sec 5); never imported by pipeline/
+│   ├── outcome_model.py                        frozen, seeded success-probability model
+│   ├── baseline.py                             fixed day-1/2/3 schedule comparator
+│   ├── batch_generator.py                      synthesizes the 60-payment batch from a fixed anchor time
+│   ├── harness.py                              runs both policies over the batch, writes run_*.json
+│   ├── sensitivity.py                          27-point outcome-model parameter sweep
+│   ├── multiseed.py                            re-draws the batch at 10 seeds and re-sweeps at each
+│   ├── economics.py                            cost-per-attempt breakeven point, sweep, and 2D surface
+│   ├── policy_whatif.py                        what-if over the allocator's own knobs (confidence threshold, spacing)
+│   ├── explanation_eval.py                     faithfulness checks over (decision, explanation)
+│   ├── data_contract.py                        Pandera contract over the generated batch
+│   └── results/                                committed JSON output from the modules above
+│       ├── run_20261008T100907.json            the frozen batch run - both policies, every decision
+│       ├── sensitivity.json                    the 27-setting sweep result
+│       ├── multiseed.json, multiseed_sweep.json  the 10-seed stability results
+│       ├── economics.json                      the breakeven point, sweep, and surface
+│       ├── data_contract.json                  data-contract result for the 5,000-event batch
+│       └── policy_whatif.json, explanation_eval_*.json  what-if and explanation-eval outputs
+├── api/                                        FastAPI backend
+│   ├── main.py                                 POST /api/simulate (live pipeline), /api/webhooks/razorpay
+│   ├── personas.py                             5 named live-simulator scenarios
+│   └── razorpay_client.py                      opt-in (LIVE_RAZORPAY=1) real Razorpay test-API client
+├── dashboard/                                  React + Tailwind UI
+│   ├── index.html
+│   ├── package.json, package-lock.json
+│   ├── vite.config.js
+│   ├── .oxlintrc.json                          lint config (npm run lint)
+│   ├── .gitignore                              dashboard-local ignores (node_modules, dist)
+│   ├── README.md                               how to run the dashboard and refresh its data
+│   ├── public/
+│   │   ├── favicon.svg
+│   │   └── data/                               static copies of eval/results/*.json the dashboard reads
+│   └── src/
+│       ├── main.jsx                            React entry point
+│       ├── App.jsx                             landing/dashboard routing, tab state
+│       ├── index.css                           Tailwind import, fonts, the accent-color token
+│       ├── components/
+│       │   └── HeroDiagram.jsx                 click a failure reason, see which of the 3 interventions it routes to
+│       ├── lib/
+│       │   ├── useRunData.js                   fetches the saved run + sensitivity JSON
+│       │   ├── useJson.js                      optional saved artifacts (seeds, economics, data contract)
+│       │   ├── site.js                         shared copy: stages, interventions, rules, glossary, page map, doc links
+│       │   ├── format.js                       plain-language labels, money/date formatting
+│       │   ├── csv.js                          CSV writer + download for the audit-trail export
+│       │   ├── compliance.js                   client-side JS port of the 3 compliance checks
+│       │   └── simulate.js                     calls the live /api/simulate endpoint
+│       └── views/
+│           ├── LandingPage.jsx                 hero + interactive diagram, 7 stages, results, rules, AI role, honesty notes, docs
+│           ├── GuideView.jsx                   guided tour of one real payment, glossary, map of every page
+│           ├── EvalsView.jsx                   seed stability, break-even economics, data contract, explanation eval
+│           ├── LiveSimulatorView.jsx           live pipeline runs, persona picker, custom input
+│           ├── StoryView.jsx                   plain-language narrative for one payment
+│           ├── DecisionTraceView.jsx           full technical trace for one payment
+│           ├── BatchResultsView.jsx            stat cards, compliance panel, sensitivity chart
+│           ├── ExplanationEvalPanel.jsx        explanation faithfulness results shown on the Evals tab
+│           ├── AuditTrailView.jsx              every decision with its rule checks
+│           └── WhatIfView.jsx                  change the allocator's knobs, see recoveries move
+├── data/
+│   ├── fixtures/                               the 7 cause fixtures + provenance (Sec 5.0)
+│   │   ├── README.md                           which fixtures are documented/provisional/live, full probe log
+│   │   ├── insufficient_funds.json, bank_technical.json, afa_required.json  Razorpay-documented, verbatim from published docs
+│   │   ├── mandate_revoked.json, mandate_expired.json, amount_exceeds_mandate.json  provisional - inferred, not published
+│   │   ├── unknown.json                        what an unclassifiable error object looks like
+│   │   ├── _capture_attempts.json              raw evidence from the first live-API capture (2026-09-03)
+│   │   └── _live_mandate_probe.json            raw evidence from the 2026-09-15 re-verification
+│   └── runs/run_20261008T100907.json           the dashboard's read-only data source (Sec 6.2)
+├── docs/
+│   ├── prd.md                                  full specification, every claim's source citation
+│   ├── architecture.md                         pipeline design, data flow, Mermaid diagrams
+│   ├── DATA_QUALITY.md                         data-contract result and its limits
+│   ├── RESULTS.md                              the full results write-up, method, limitations
+│   ├── build-log.md                            dated, real entries - every bug found and how it was fixed
+│   └── images/                                 screenshots used in this README
+├── tests/                                      one test_<module>.py per pipeline/, eval/ and api/ module, plus
+│   ├── test_classify_fuzz.py                   property-based fuzzing of Stage 2 (1200+ cases)
+│   ├── test_allocator_fuzz.py                  property-based fuzzing of Stage 5 (2400+ cases)
+│   ├── test_ingest_fuzz.py                     property-based fuzzing of Stage 1 (1400+ cases)
+│   ├── test_outcome_model_isolation.py         AST check - pipeline/ never imports eval.outcome_model
+│   ├── test_fixtures.py                        every captured fixture classifies as its filename claims
+│   ├── test_data_contract.py                   the contract accepts good rows and rejects each kind of bad row
+│   └── test_batch_generator.py                 generated batches obey the payment-rail rules
+└── logs/sample_run.jsonl                       one committed example of real per-stage execution evidence
+```
 
-    pipeline/                  the 7-stage decision engine (Sec 4)
-    ├── models.py               shared schemas - FailureCause, RazorpayError, StageTrace
-    ├── ingest.py                Stage 1 - validates a raw event into FailedPaymentEvent
-    ├── classify.py              Stage 2 - deterministic cause lookup, never a model call
-    ├── priors.py                Stage 3 - recoverability score + action shape per cause
-    ├── funding_window.py        Stage 4 - confidence-gated funding-window inference
-    ├── allocator.py             Stage 5 - notify/retry-at-T/stop, every candidate scored
-    ├── decision.py               Stage 6 - assembles every prior stage into one record
-    ├── explain.py                Stage 7 - the one LLM call in this codebase
-    ├── compliance.py            the 3 hard invariants (attempt cap, peak windows, 1/cycle)
-    └── run.py                   orchestrates Stages 2-6 for one ingested event
+### How the files connect
 
-    eval/                       frozen outcome model, baseline, batch analysis (Sec 5)
-    │                           - never imported by pipeline/, enforced by
-    │                           tests/test_outcome_model_isolation.py
-    ├── outcome_model.py         frozen, seeded success-probability model
-    ├── baseline.py               fixed day-1/2/3 schedule comparator
-    ├── batch_generator.py        synthesizes the 60-payment batch from a fixed anchor time
-    ├── harness.py                 runs both policies over the batch, writes run_*.json
-    ├── sensitivity.py            27-point outcome-model parameter sweep
-    ├── multiseed.py               re-draws the batch at 10 seeds AND re-sweeps at each
-    ├── economics.py               cost-per-attempt breakeven point, sweep, and 2D surface
-    ├── policy_whatif.py           what-if over the allocator's own knobs (funding-window confidence threshold, spacing)
-    ├── explanation_eval.py        faithfulness checks: deterministic rules over (decision, explanation)
-    ├── data_contract.py           Pandera contract over the generated batch (NPCI, RBI, mandate, reason, cycle rules)
-    └── results/                  committed JSON output from the modules above
-        ├── run_20261008T100907.json   the frozen batch run - both policies, every decision
-        ├── sensitivity.json           the 27-setting sweep result
-        ├── multiseed.json, multiseed_sweep.json   the 10-seed stability results
-        ├── economics.json             the breakeven point, sweep, and surface
-        ├── data_contract.json         data-contract result for the 5,000-event batch
-        ├── policy_whatif.json, explanation_eval_*.json   what-if and explanation-eval outputs
+Arrows mean "imports" or "reads". The dashed line is the one rule that is
+enforced by a test: `pipeline/` never sees the outcome model.
 
-    api/                        FastAPI backend
-    ├── main.py                  POST /api/simulate (live pipeline), /api/webhooks/razorpay
-    ├── personas.py                5 named live-simulator scenarios
-    └── razorpay_client.py        opt-in (LIVE_RAZORPAY=1) real Razorpay test-API client
-
-    dashboard/                  React + Tailwind UI
-    ├── index.html
-    ├── package.json / package-lock.json
-    ├── vite.config.js
-    ├── .oxlintrc.json             lint config (npm run lint)
-    ├── .gitignore                 dashboard-local ignores (node_modules, dist)
-    ├── README.md                 how to run the dashboard and refresh its data
-    ├── public/
-    │   ├── favicon.svg
-    │   └── data/                  static copies of eval/results/*.json the dashboard reads
-    └── src/
-        ├── main.jsx                React entry point
-        ├── App.jsx                 landing/dashboard routing, tab state
-        ├── index.css                Tailwind import, fonts, the accent-color token
-        ├── components/
-        │   └── HeroDiagram.jsx      click a failure reason, see which of the 3 interventions it routes to
-        ├── lib/
-        │   ├── useRunData.js       fetches the saved run + sensitivity JSON
-        │   ├── useJson.js           optional saved artifacts (seeds, economics, data contract)
-        │   ├── site.js              shared copy: stages, interventions, rules, glossary, doc links
-        │   ├── format.js            plain-language labels, money/date formatting
-        │   ├── compliance.js        client-side JS port of the 3 compliance checks
-        │   └── simulate.js          calls the live /api/simulate endpoint
-        └── views/
-            ├── LandingPage.jsx           hero + interactive diagram, 7 stages, results, rules, AI role, honesty notes, docs
-            ├── GuideView.jsx               guided tour of one real payment, glossary, tab map
-            ├── EvalsView.jsx               seed stability, break-even economics, data contract, explanation eval
-            ├── LiveSimulatorView.jsx      live pipeline runs, persona picker, custom input
-            ├── StoryView.jsx               plain-language narrative for one payment
-            ├── DecisionTraceView.jsx      full technical trace for one payment
-            └── BatchResultsView.jsx        stat cards, compliance panel, sensitivity chart
-
-    data/
-    ├── fixtures/                 the 7 cause fixtures + provenance (Sec 5.0)
-    │   ├── README.md              which fixtures are documented/provisional/live, full probe log
-    │   ├── insufficient_funds.json, bank_technical.json, afa_required.json
-    │   │                          Razorpay-documented, verbatim from published error-code docs
-    │   ├── mandate_revoked.json, mandate_expired.json, amount_exceeds_mandate.json
-    │   │                          provisional - inferred from token-lifecycle docs, not published
-    │   ├── unknown.json            what an unclassifiable error object looks like
-    │   ├── _capture_attempts.json  raw evidence from the first live-API capture (2026-09-03)
-    │   └── _live_mandate_probe.json raw evidence from the 2026-09-15 re-verification
-    └── runs/run_20261008T100907.json   the dashboard's read-only data source (Sec 6.2)
-
-    docs/
-    ├── prd.md                     full specification, every claim's source citation
-    ├── architecture.md            pipeline design, data flow, Mermaid diagrams
-    ├── DATA_QUALITY.md            data-contract result and its limits
-    ├── RESULTS.md                 the full results write-up, method, limitations
-    ├── build-log.md               dated, real entries - every bug found and how it was fixed
-    └── images/                    the screenshots used in this README
-
-    tests/                      one file per module above plus:
-    ├── test_classify_fuzz.py     property-based fuzzing of Stage 2 (1200+ cases)
-    ├── test_allocator_fuzz.py     property-based fuzzing of Stage 5 (2400+ cases)
-    ├── test_ingest_fuzz.py         property-based fuzzing of Stage 1's constrained fields (1400+ cases)
-    ├── test_outcome_model_isolation.py   AST check - pipeline/ never imports eval.outcome_model
-    ├── test_fixtures.py           every captured fixture classifies as its filename claims
-    ├── test_data_contract.py      the Pandera contract accepts good rows and rejects each kind of bad row
-    ├── test_batch_generator.py    generated batches obey the payment-rail rules
-    └── (one test_<module>.py for every pipeline/, eval/, and api/ module above)
-
-    scripts/                    one-off live-API probes, never imported by anything else
-    ├── capture_fixtures.py       first live-API capture (customer/order/payment routes)
-    └── live_mandate_probe.py     2026-09-15 re-verification with fresh credentials
-
-    logs/sample_run.jsonl       one committed example of real per-stage execution evidence
+```mermaid
+flowchart LR
+  subgraph pipeline
+    ingest --> classify --> priors --> funding_window --> allocator --> decision --> explain
+    compliance -.-> allocator
+    compliance -.-> decision
+    run[run.py] --> ingest
+  end
+  subgraph eval
+    batch_generator --> harness
+    baseline --> harness
+    outcome_model --> harness
+    harness --> results[("eval/results/*.json")]
+    sensitivity --> results
+    multiseed --> results
+    economics --> results
+  end
+  harness --> run
+  outcome_model -. "never imported by" .-x run
+  results --> data[("data/runs and dashboard/public/data")]
+  data --> dashboard[dashboard views]
+  api[api/main.py] --> run
+  api --> baseline
+  dashboard -- Live Simulator --> api
+```
 
 ## User flow
 
