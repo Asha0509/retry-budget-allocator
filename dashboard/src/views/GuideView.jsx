@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { actionLabel, causeLabel, formatDateTime, formatMoney } from '../lib/format.js'
-import { GLOSSARY } from '../lib/site.js'
+import { GLOSSARY, TAB_MAP } from '../lib/site.js'
 
 // A guided walkthrough of one real failed payment from the saved batch run, so a
 // first-time visitor can see what each stage does before opening the other tabs.
@@ -133,11 +133,20 @@ export default function GuideView({ run, goTo }) {
             </div>
           ))}
         </dl>
-        <div className="mt-6 rounded-md bg-slate-50 p-3 text-[12.5px] leading-snug text-slate-600">
-          <p className="font-medium text-slate-900">The tabs</p>
-          <p className="mt-1">Live Simulator computes a decision now. Story and Decision Trace explain one payment. Batch Results and Evals show all 60. Audit Trail lists every check. Policy What-If lets you change the assumptions.</p>
-        </div>
       </aside>
+
+      <section className="lg:col-span-3">
+        <h3 className="text-lg font-semibold text-slate-900">Every page, in one place</h3>
+        <p className="mt-1 text-sm text-slate-600">What each tab holds, so you know where to look.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {TAB_MAP.map((t) => (
+            <button key={t.id} onClick={() => goTo(t.id)} className="rounded-lg border border-slate-200 bg-white p-4 text-left hover:border-indigo-400">
+              <span className="font-semibold text-slate-900">{t.label}</span>
+              <span className="mt-1 block text-[13px] leading-snug text-slate-600">{t.has}</span>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

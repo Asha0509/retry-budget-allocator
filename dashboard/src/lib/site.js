@@ -55,3 +55,15 @@ export const GLOSSARY = [
   ['Baseline', 'A fixed schedule that retries at set intervals regardless of why the payment failed. The thing we compare against.'],
   ['Outcome model', 'The declared rules we use to decide whether a simulated retry succeeds. We wrote it, so results are about spending a budget well under that model, not real recovery rates.'],
 ]
+
+// What is on every dashboard tab, for the "Every page, in one place" map in the tour.
+export const TAB_MAP = [
+  { id: 'guide', label: 'Start here', has: 'This tour: one real failed payment explained step by step, a glossary and this map.' },
+  { id: 'live', label: 'Live Simulator', has: 'Pick a scenario (Priya, Rahul, Ananya, Karan, Meera) or build your own failed payment and run the real pipeline now. Shows the seven stages with timings, the allocator against a fixed schedule, and the customer message.' },
+  { id: 'story', label: 'Story', has: 'One payment from the saved batch told in plain sentences: what failed, why, what we decided, and what the customer is told.' },
+  { id: 'trace', label: 'Decision Trace', has: 'The same payment for engineers: raw bank error beside its plain-language translation, every stage with timings, and every time slot that was scored and why the losers lost.' },
+  { id: 'batch', label: 'Batch Results', has: 'All 60 simulated payments: attempts, recoveries and rupees for both policies, the three rules re-checked live in your browser, the per-cause breakdown, stop-decision precision and the sensitivity sweep.' },
+  { id: 'evals', label: 'Evals', has: 'Seed stability, break-even economics, the input data contract and whether the written explanations stay faithful to the decisions.' },
+  { id: 'audit', label: 'Audit Trail', has: 'Every decision in a table, each row re-checked against the three rules. Open a row for its reasoning, all considered slots and the raw error.' },
+  { id: 'whatif', label: 'Policy What-If', has: 'Change how the allocator is set up (spacing and the confidence it needs) and see how recoveries move, averaged over several batches.' },
+]
