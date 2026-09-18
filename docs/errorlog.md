@@ -50,6 +50,7 @@ inside an entry are the figures at the time; the current numbers are in
 | E25 | 2026-09-18 (git history) | CI | Security-scorecard action image pull started failing |
 | E26 | 2026-09-18 (git history) | Tests | Mutation testing found untested compliance boundaries |
 | E27 | 2026-10-08 | Docs | Drift found while writing the design docs |
+| E28 | 2026-10-12 | CI | Lint step failed on unchanged code after an unpinned tool upgraded |
 
 ## Entries
 
@@ -586,6 +587,24 @@ this file.
 - **Lesson.** Counts, names and cross-references should come from the artifacts, and the
   claims that guard the project's credibility are the ones to re-verify first.
 
+### E28 - CI lint failed on unchanged code because ruff was unpinned (2026-10-12)
+
+- **What broke.** The push that added the design docs turned the CI lint step red
+  (10 findings, all in `tests/`: `UP017` and unused `noqa: DTZ001`). The same test
+  files had passed on 2026-10-08.
+- **How detected.** The failing run's log. It showed `ruff-0.17.0` being installed,
+  while the local copy was 0.16.8 and passed. The markdown files were not involved:
+  the lint step only reads Python.
+- **Root cause.** `requirements.txt` said `ruff>=0.6`, so every CI run installed
+  whatever was newest. 0.17.0 became the newest between the two runs and enabled
+  checks the older version did not run.
+- **Fix.** Applied the 0.17.0 fixes to the four test files, pinned `ruff==0.17.0`
+  (the monthly Dependabot group will propose bumps as a reviewable change), and
+  re-ran lint, the 431 tests and the eval gates.
+- **Lesson.** A lint tool is part of the build. Pin it, or a green repo can turn red
+  with no code change. Reproduce with the CI's version, not the local one.
+- **Evidence.** build-log 2026-10-12.
+
 ## Patterns across the log
 
 | Pattern | Entries |
@@ -597,3 +616,4 @@ this file.
 | A study assumption proved wrong and was reported, not hidden | E04, E22 |
 | The dev-server and tooling gap that tests cannot see | E11, E17 |
 | Prose copied from memory instead of the artifact | E14, E20, E27 |
+| An unpinned tool changed under a green build | E28 |
