@@ -1,5 +1,10 @@
 # Architecture
 
+Results (every number, the outcome model, the sensitivity sweep, what did not
+work) live in [RESULTS.md](RESULTS.md). Related design docs:
+[HLD.md](HLD.md) (system view), [LLD.md](LLD.md) (module-level design),
+[errorlog.md](errorlog.md) (every real error and its fix).
+
 ## Pipeline flowchart (PRD Sec 4)
 
 Seven stages, one event at a time. Stage 4 only runs for `insufficient_funds`;
@@ -155,25 +160,32 @@ contract is identical either way:
 - **Integration tier (small, live):** `scripts/capture_fixtures.py` ran
   against Razorpay's TEST-mode API. Customer and order creation
   succeeded; UPI AutoPay mandate/charge creation is gated behind a
-  Razorpay Support activation this account doesn't have, confirmed via 4
-  distinct creation-style routes tried across two sessions plus an
-  external source (`data/fixtures/README.md` has the full finding). What
+  Razorpay Support activation this account doesn't have. Four
+  creation-style routes were tried across two sessions: two of them
+  (`/payments/create/upi`, `/payments/create/recurring`) return the same
+  not-found rejection, and two (`/payments`, `/payments/create/ajax`)
+  return 401, which is not gating evidence. An independent published source
+  agrees (`data/fixtures/README.md` has the full finding). What
   did get captured live - one error payload (`data/fixtures/unknown.json`)
   and the real customer/order responses (`data/fixtures/
   _capture_attempts.json`) - is evidence of a genuine integration attempt
   against the real account, not something written by hand. Re-verified
-  2026-09-15 with fresh credentials and a 4th, previously-untried route
+  2026-09-15 with fresh credentials and a previously-untried route
   (`scripts/live_mandate_probe.py`, `data/fixtures/
   _live_mandate_probe.json`) - same gate, same rejection. See
   `docs/build-log.md`, 2026-09-15.
-- **Batch tier (large, replayed):** the other 6 fixtures come verbatim
-  from Razorpay's own published error-code documentation
-  (`code`/`description`/`source`/`step`/`reason` fields), with the three
-  mandate/AFA-layer causes explicitly marked provisional since Razorpay
-  doesn't publish a dedicated `reason` for any of them.
-  `eval/batch_generator.py` synthesizes 60 events by resampling these
-  exact fixture payloads, so `classify.py` sees the same schema it would
-  see from a live capture.
+- **Batch tier (large, replayed):** of the other 6 fixtures, three
+  (`insufficient_funds`, `bank_technical`, `afa_required`) come from
+  Razorpay's own published error-code documentation
+  (`code`/`description`/`source`/`step`/`reason` fields), and three
+  (`mandate_revoked`, `mandate_expired`, `amount_exceeds_mandate`) are
+  explicitly marked provisional because Razorpay doesn't publish a
+  dedicated `reason` for any of them.
+  `eval/batch_generator.py` synthesizes the 60-event batch by resampling
+  these exact fixture payloads, so `classify.py` sees the same schema it
+  would see from a live capture. The generator's output is checked against
+  the published rules of the rails it imitates by a Pandera contract
+  (`eval/data_contract.py`, result in [DATA_QUALITY.md](DATA_QUALITY.md)).
 
 ## Outcome model isolation (PRD Sec 5.1)
 
@@ -208,7 +220,10 @@ opt-in, for showing the real integration when the network cooperates."
 
 **Architecture:** `api/main.py` is a small FastAPI process (`uvicorn
 api.main:app --port 8000`) exposing `POST /api/simulate` so the browser
-can call it. It doesn't reimplement any decision logic - it calls the
+can call it. The public endpoint is hardened (see [HLD.md](HLD.md),
+Security): `amount` is capped at Rs 10 lakh, `raw_error` at 16 KB, each
+client gets 30 simulations a minute, and CORS origins come from
+`CORS_ORIGINS`. It doesn't reimplement any decision logic - it calls the
 same functions the batch harness calls: `pipeline.ingest.run_ingestion`,
 `pipeline.run.run_pipeline` (Stages 2-6), `pipeline.explain.
 run_explanation` (Stage 7, a live LLM call with its existing fallback
@@ -254,29 +269,34 @@ built for `scripts/live_mandate_probe.py`'s live re-verification runs
 `api/main.py` also exposes `POST /api/webhooks/razorpay`, a minimal
 receiver that logs the raw payload of any mandate/payment event to
 `logs/webhooks.jsonl` (git-ignored, same convention as the rest of
-`/logs/`). Deliberately no signature verification - it exists to observe
-real event shapes, not to run in production.
+`/logs/`). It accepts a body only when `X-Razorpay-Signature` matches an
+HMAC-SHA256 of it under `RAZORPAY_WEBHOOK_SECRET`; with no secret set it
+returns 503, and bodies over 64 KB return 413. It was unsigned until the
+2026-10-08 hardening pass (see [errorlog.md](errorlog.md)). It only
+observes real event shapes - nothing it receives feeds the pipeline.
 
 ## Design trade-offs - considered and rejected
 
 Three specific decisions, each framed as what else was on the table and
 why it lost - not just the choice that shipped.
 
-**Funding-confidence threshold = 0.6 (`FUNDING_CONFIDENCE_THRESHOLD` in
-`.env`).** `pipeline/funding_window.py` blends a customer's observed
+**Funding-confidence threshold = 0.5 in code, 0.6 in `.env.example`
+(`FUNDING_CONFIDENCE_THRESHOLD`).** `pipeline/funding_window.py` blends a customer's observed
 debit history with a generic salary-credit prior; confidence rises with
 more, more-consistent observations. A lower threshold, say 0.3, would let
 thinner history clear the bar and produce a window estimate more often -
 more coverage, but weaker estimates start getting treated as trustworthy,
 which is exactly the overclaiming PRD Sec 8 warns is "the most likely way
-to be picked apart in a demo." A higher threshold, say 0.85, would almost
-never clear given the batch generator's synthetic history (3-5 noisy
-observations per customer, see `_synthesize_prior_debit_dates`), making
-Stage 4 functionally always-fallback and not worth having built. 0.6 sits
-at the midpoint: consistent 3+ observation histories clear it (see
-`docs/RESULTS.md` Section 4 - 31% fallback rate in practice), thin or
-scattered ones don't. Not derived from any delinquency data, because
-there isn't any in this project - a declared choice, adjustable via
+to be picked apart in a demo." A higher threshold, say 0.85, would have
+risked making Stage 4 always-fallback and not worth having built. What the
+policy what-if later measured (`docs/RESULTS.md` Section 10) is that on this
+batch generator the choice barely matters: Stage 4's confidence is close to
+binary (0 for thin history, 0.87 to 1.0 otherwise), so every threshold from
+0.3 to 0.88 gives identical results, and the shipped run falls back on 40%
+of `insufficient_funds` payments (14 of 35, Section 4). The code default is
+0.5 (`DEFAULT_CONFIDENCE_THRESHOLD`); `.env.example` sets 0.6, and either
+value gives the same numbers here. Not derived from any delinquency data,
+because there isn't any in this project - a declared choice, adjustable via
 `.env` with no code change.
 
 **Retry offsets fixed at 24h / 72h / 168h.** Not a tunable - PRD Sec 2
