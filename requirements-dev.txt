@@ -1,2 +1,2 @@
-pandera>=0.20
-pandas>=2.2
+pandera>=0.33.1
+pandas>=3.0.6
